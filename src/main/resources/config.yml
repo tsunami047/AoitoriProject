@@ -1,0 +1,5 @@
+version: 1.0
+message:
+  prefix: "&7AoitoriProject &f>> "
+
+safeOpCommands: []
