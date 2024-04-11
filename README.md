@@ -1,6 +1,6 @@
 ![图片](https://github.com/tsunami047/AoitoriProject/assets/134914438/8045d350-31be-4c83-bbf3-9042cfb90852)
 
-青鸟项目
+青鸟Project
 =======
 <br>这是一个用来减少Minecraft Bukkit Plugin重复劳动的项目，包含了如下功能
 1. [针对MC后端开发的持久化组件](https://github.com/tsunami047/AoitoriProject/wiki/%E6%8C%81%E4%B9%85%E5%8C%96)：使用了caffeine、redis、mysql作为缓存/存储数据库，reflectasm作为反射库、jeromq作为消息中间件，可以定义实体、定义实体关系、充分发挥关系数据模型优势，使用同步缓存、异步读写、玩家独占数据等优化手段提高读写效率，提高开发效率。
