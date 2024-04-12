@@ -1,7 +1,7 @@
 package io.aoitori043.aoitoriproject.config.impl;
 
-import io.aoitori043.aoitoriproject.config.InjectDirectory;
-import io.aoitori043.aoitoriproject.config.InjectFile;
+import io.aoitori043.aoitoriproject.config.InjectMappers;
+import io.aoitori043.aoitoriproject.config.InjectMapper;
 import io.aoitori043.aoitoriproject.config.NotToString;
 
 import java.lang.reflect.Field;
@@ -22,7 +22,7 @@ public abstract class AutoConfigPrint {
     public void printToConsole() {
         for (Field field : getClass().getFields()) {
             field.setAccessible(true);
-            if (field.getAnnotation(InjectFile.class) != null || field.getAnnotation(InjectDirectory.class) != null) {
+            if (field.getAnnotation(InjectMapper.class) != null || field.getAnnotation(InjectMappers.class) != null) {
                 try {
                     Object o = field.get(isStaticField(field) ? null : this);
                     printFieldValue(field, o);

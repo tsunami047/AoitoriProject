@@ -1,6 +1,6 @@
 package io.aoitori043.aoitoriproject.config.impl;
 
-import io.aoitori043.aoitoriproject.config.InjectFile;
+import io.aoitori043.aoitoriproject.config.InjectMapper;
 import io.aoitori043.aoitoriproject.config.InjectYaml;
 import io.aoitori043.aoitoriproject.database.DatabaseProperties;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,7 +14,7 @@ public abstract class BasicDatabaseImpl extends EmptyConfigImpl {
 
     @InjectYaml(path = "database")
     public YamlConfiguration databaseConfig;
-    @InjectFile(path = "database", mapper = DatabaseProperties.class)
+    @InjectMapper(path = "database")
     public static DatabaseProperties databaseConfigMapping;
 
     public void loadConfig() {

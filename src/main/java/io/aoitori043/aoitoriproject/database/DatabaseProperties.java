@@ -24,13 +24,13 @@ public class DatabaseProperties {
         public int kafka$port;
     }
 
-    @GetFoldMapping(mapper = Cache.class)
+    @GetFoldMapping
     public static Cache cache;
 
-    @GetFoldMapping(mapper = HikariConfigMapping.class)
+    @GetFoldMapping
     public static HikariConfigMapping hikariMySQLProperties;
 
-    @GetFoldMapping(mapper = JedisPoolMapping.class)
+    @GetFoldMapping
     public static JedisPoolMapping redisPoolProperties;
 
 }

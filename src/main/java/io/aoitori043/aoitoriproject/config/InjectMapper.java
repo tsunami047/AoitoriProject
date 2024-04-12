@@ -7,20 +7,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @Author: natsumi
- * @CreateTime: 2024-03-26  00:31
- * @Description: ?
- */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface InjectDirectory {
+public @interface InjectMapper {
 
     @NotNull
-    String dir();
-
-    @NotNull
-    Class<?> mapper();
-
+    String path();
 
 }

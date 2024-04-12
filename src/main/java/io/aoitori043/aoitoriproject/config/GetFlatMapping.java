@@ -17,9 +17,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GetFlatMapping {
-    @NotNull
-    Class<?> mapper();
+//    @NotNull
+//    Class<?> mapper();
     String[] stringKeys() default {};
-    @NotNull
-    Class<? extends Enum> enumKeys();
+//    @NotNull
+//    Class<? extends Enum> enumKeys();
 }
