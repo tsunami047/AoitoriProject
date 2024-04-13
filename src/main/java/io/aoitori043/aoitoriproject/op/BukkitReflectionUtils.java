@@ -2,7 +2,7 @@ package io.aoitori043.aoitoriproject.op;
 
 import com.google.gson.Gson;
 import com.mojang.authlib.GameProfile;
-import io.aoitori043.aoitoriproject.impl.ConfigHandler;
+import io.aoitori043.aoitoriproject.impl.HandlerInjection;
 import net.minecraft.server.v1_12_R1.MinecraftServer;
 import net.minecraft.server.v1_12_R1.OpListEntry;
 import net.minecraft.server.v1_12_R1.PlayerList;
@@ -75,7 +75,7 @@ public class BukkitReflectionUtils {
         opMap = (Map<String, Object>) io.aoitori043.aoitoriproject.ReflectionUtil.getPrivateAndSuperField(ops, "d");
         PlayerOPList[] playerOPLists = new Gson().fromJson(readFileToString(c), PlayerOPList[].class);
         oplist = Arrays.stream(playerOPLists).map(PlayerOPList::getName).collect(Collectors.toList());
-        YamlConfiguration basicConfig = ConfigHandler.instance.basicConfig;
+        YamlConfiguration basicConfig = HandlerInjection.instance.basicConfig;
         safeCommand = new ArrayList<>();
         List<String> allow_other_plugin_execute_cmd = basicConfig.getStringList("safeOpCommands");
         for (String s : allow_other_plugin_execute_cmd) {

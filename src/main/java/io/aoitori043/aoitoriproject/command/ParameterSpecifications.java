@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @Description: ?
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 public @interface ParameterSpecifications {
     ParameterSpecification[] value();
 }

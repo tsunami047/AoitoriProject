@@ -10,14 +10,14 @@ import java.util.Optional;
  * @CreateTime: 2024-03-25  00:35
  * @Description: ?
  */
-public abstract class BasicConfigImpl extends EmptyConfigImpl{
+public abstract class BasicMapper extends EmptyMapper {
 
 
     @InjectYaml(path = "config")
     public YamlConfiguration basicConfig;
     public String pluginPrefix;
 
-    public BasicConfigImpl() {
+    public BasicMapper() {
         double version = basicConfig.getDouble("version");
         Optional.of(version).filter(v -> v == 1.0).orElseThrow(() -> new IllegalArgumentException("Invalid version: " + version));
         pluginPrefix = basicConfig.getString("message.prefix").replaceAll("&", "§");

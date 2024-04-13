@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface ExecutePermission {
-    boolean isOp() default false;
+    boolean isOp() default true;
     @Nullable
     String permission() default "nope.";
 }

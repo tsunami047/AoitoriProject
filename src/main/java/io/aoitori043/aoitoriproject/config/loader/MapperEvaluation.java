@@ -1,21 +1,23 @@
-package io.aoitori043.aoitoriproject.config.impl;
+package io.aoitori043.aoitoriproject.config.loader;
 
 import io.aoitori043.aoitoriproject.config.GetFlatMapping;
 import io.aoitori043.aoitoriproject.config.GetFoldMapping;
 import io.aoitori043.aoitoriproject.config.GetMapping;
+import io.aoitori043.aoitoriproject.config.impl.MapperInjection;
+import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.lang.reflect.*;
 import java.util.*;
 
-import static io.aoitori043.aoitoriproject.config.impl.ConfigMapping.isStaticField;
+import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
 
 /**
  * @Author: natsumi
  * @CreateTime: 2024-03-27  20:09
  * @Description: ?
  */
-public class YamlFieldMapper {
+public class MapperEvaluation {
 
     public static <T> T createInstance(Class<T> clazz) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Constructor<T> constructor = clazz.getConstructor();
@@ -35,13 +37,13 @@ public class YamlFieldMapper {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
                 }
-            } else if (field.getType() == int.class) {
+            } else if (field.getType() == int.class || field.getType() == Integer.class) {
                 field.set(fieldSetObj, section.getInt(propertyName));
                 return;
-            } else if (field.getType() == double.class || field.getType() == float.class) {
+            } else if (field.getType() == double.class || field.getType() == float.class || field.getType() == Double.class || field.getType() == Float.class) {
                 field.set(fieldSetObj, section.getDouble(propertyName));
                 return;
-            } else if (field.getType() == boolean.class) {
+            } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
                 field.set(fieldSetObj, section.getBoolean(propertyName));
                 return;
             } else if (field.getType() == List.class) {
@@ -57,10 +59,11 @@ public class YamlFieldMapper {
                 e.printStackTrace();
             }
         }
-        handleAnnotation(object, section, field, propertyName);
-        field.setAccessible(true);
-        if (field.getType().isAssignableFrom(Map.class)) {
-            LinkedHashMap map = new LinkedHashMap<>();
+        if (mappingInject(fieldSetObj, section, field, propertyName)) {
+            return;
+        }
+        if (Map.class.isAssignableFrom(field.getType())) {
+            AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
             Type type = field.getGenericType();
             Type[] typeArguments;
             if (type instanceof ParameterizedType) {
@@ -71,29 +74,34 @@ public class YamlFieldMapper {
             }
             if(typeArguments[1] instanceof List){
                 ConfigurationSection listSection = section.getConfigurationSection(field.getName());
-                Set<String> keys = listSection.getKeys(false);
-                for (String key : keys) {
-                    List<String> stringList = listSection.getStringList(key);
-                    map.put(key,stringList);
+                if(listSection !=null){
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        List<String> stringList = listSection.getStringList(key);
+                        map.put(key,stringList);
+                    }
+                    field.set(fieldSetObj, map);
                 }
-                field.set(field.getName(), map);
             }else if(typeArguments[1] == String.class){
                 ConfigurationSection listSection = section.getConfigurationSection(field.getName());
-                Set<String> keys = listSection.getKeys(false);
-                for (String key : keys) {
-                    map.put(key,listSection.getString(key));
+                if(listSection!=null){
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        map.put(key,listSection.getString(key));
+                    }
+                    field.set(fieldSetObj, map);
                 }
-                field.set(field.getName(), map);
             }
-
         }
+
+
     }
 
 
-    public static void handleAnnotation(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
-        handleReferToAnnotation(object, section, field, propertyName);
-        handleFoldAnnotation(object, section, field, propertyName);
-        handleFlatReferToAnnotation(object, section, field);
+    public static boolean mappingInject(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
+        return injectMapping(object, section, field, propertyName) |
+        injectFoldMapping (object, section, field, propertyName) |
+        injectFlatMapping(object, section, field);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -106,7 +114,7 @@ public class YamlFieldMapper {
     }
 
 
-    public static void fillDefaultValue(Object instance, Object indexData, Object parentData) {
+    public static void injectDefaultValue(Object instance, Object indexData, Object parentData) {
         for (Field declaredField : instance.getClass().getDeclaredFields()) {
             try {
                 if (declaredField.getName().equals("index")) {
@@ -134,12 +142,12 @@ public class YamlFieldMapper {
     }
 
 
-    private static void handleFlatReferToAnnotation(Object object, ConfigurationSection section, Field field) {
+    private static boolean injectFlatMapping(Object object, ConfigurationSection section, Field field) {
         try {
             GetFlatMapping getFlatMapping = field.getAnnotation(GetFlatMapping.class);
             Class<?> clazz = field.getType();
             if (getFlatMapping == null || !Map.class.isAssignableFrom(clazz)) {
-                return;
+                return false;
             }
 
             Type type = field.getGenericType();
@@ -156,11 +164,11 @@ public class YamlFieldMapper {
             if (getFlatMapping.stringKeys().length != 0) {
                 for (String key : getFlatMapping.stringKeys()) {
                     ConfigurationSection subSection = section.getConfigurationSection(key.replace("$", "."));
-                    if (subSection == null) return;
+                    if (subSection == null) return true;
                     Object instance = createInstance((Class<?>)typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
-                    fillDefaultValue(instance, key, object);
-                    ConfigMapper.runAnnotatedMethods(instance);
+                    injectDefaultValue(instance, key, object);
+                    MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
             } else {
@@ -168,49 +176,43 @@ public class YamlFieldMapper {
                 for (Enum enumConstant : enumConstants) {
                     String name = enumConstant.name();
                     ConfigurationSection subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
-                    if (subSection == null) return;
+                    if (subSection == null) return true;
                     Object instance = createInstance((Class<?>)typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
-                    fillDefaultValue(instance, enumConstant, object);
-                    ConfigMapper.runAnnotatedMethods(instance);
+                    injectDefaultValue(instance, enumConstant, object);
+                    MapperInjection.runAnnotatedMethods(instance);
                     map.put(enumConstant, instance);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return true;
     }
 
-    private static boolean handleFoldAnnotation(Object object, ConfigurationSection section, Field field, String propertyName) {
+    private static boolean injectFoldMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetFoldMapping getFoldMapping = field.getAnnotation(GetFoldMapping.class);
             if (getFoldMapping == null) {
                 return false;
             }
-            Type type = field.getGenericType();
-            Type[] typeArguments;
-            if (type instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) type;
-                typeArguments = parameterizedType.getActualTypeArguments();
-            }else{
-                throw new IllegalArgumentException("泛型参数缺少");
-            }
             ConfigurationSection referToSection = section.getConfigurationSection(propertyName);
-            Object instance = createInstance((Class<?>)typeArguments[1]);
+            Object instance = createInstance((Class<?>)field.getType());
             if (referToSection == null) {
                 return true;
             }
             ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
-            fillDefaultValue(instance, propertyName, object);
-            ConfigMapper.runAnnotatedMethods(instance);
+            injectDefaultValue(instance, propertyName, object);
+            MapperInjection.runAnnotatedMethods(instance);
             field.set(object, instance);
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return true;
     }
 
-    private static boolean handleReferToAnnotation(Object object, ConfigurationSection section, Field field, String propertyName) {
+    private static boolean injectMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetMapping getMapping = field.getAnnotation(GetMapping.class);
             if (getMapping == null || !Map.class.isAssignableFrom(field.getType())) {
@@ -232,15 +234,16 @@ public class YamlFieldMapper {
                 ConfigurationSection configurationSection = referToSection.getConfigurationSection(key);
                 Object instance = createInstance((Class<?>)typeArguments[1]);
                 ConfigMapping.loadFromConfig(instance, null, configurationSection);
-                fillDefaultValue(instance, key, object);
-                ConfigMapper.runAnnotatedMethods(instance);
+                injectDefaultValue(instance, key, object);
+                MapperInjection.runAnnotatedMethods(instance);
                 map.put(key, instance);
             }
             field.set(object, map);
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return true;
     }
 
 }

@@ -1,7 +1,7 @@
 package io.aoitori043.aoitoriproject.config;
 
 import io.aoitori043.aoitoriproject.ReflectionUtil;
-import io.aoitori043.aoitoriproject.config.loader.NotInvalidSignConfig;
+import io.aoitori043.aoitoriproject.config.loader.NotInvalidSignConfigLoader;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -31,10 +31,13 @@ public class FileLoader {
         File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {
+
                 if (file.isDirectory()) {
                     processFiles(file, fileProcessor);
                 } else {
-                    fileProcessor.accept(file);
+                    if (file.getName().toLowerCase().endsWith(".yml")) {
+                        fileProcessor.accept(file);
+                    }
                 }
             }
         }
@@ -45,7 +48,7 @@ public class FileLoader {
         if (!configFile.exists()) {
             plugin.saveResource(path, false);
         }
-        return NotInvalidSignConfig.loadConfiguration(configFile);
+        return NotInvalidSignConfigLoader.loadConfiguration(configFile);
     }
 
     public static void extractFolder(JavaPlugin javaPlugin,String path){

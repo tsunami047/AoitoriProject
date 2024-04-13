@@ -3,7 +3,8 @@ package io.aoitori043.aoitoriproject.impl.command;
 import io.aoitori043.aoitoriproject.command.BasicCommand;
 import io.aoitori043.aoitoriproject.command.BasicCommandParameter;
 import io.aoitori043.aoitoriproject.command.SubCommand;
-import io.aoitori043.aoitoriproject.impl.ConfigHandler;
+import io.aoitori043.aoitoriproject.impl.HandlerInjection;
+import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandRace;
 import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandReload;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -26,19 +27,20 @@ public class IBasicCommand extends BasicCommand {
     }
 
     public String getPrefix(){
-        return ConfigHandler.instance.pluginPrefix;
+        return HandlerInjection.instance.pluginPrefix;
     }
 
     @Override
     public Class<? extends SubCommand>[] getSubCommands() {
         return new Class[]{
                 ISubCommandReload.class,
+                ISubCommandRace.class
         };
     }
 
     @Override
     public List<String> getAllAlias() {
-        return Arrays.asList("ap");
+        return Arrays.asList("ap","apj");
     }
 
     @Override

@@ -7,7 +7,7 @@ import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import java.sql.*;
 import java.util.function.Consumer;
 
-import static io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil.createInstance;
+import static io.aoitori043.aoitoriproject.utils.ReflectASMUtil.createInstance;
 
 /**
  * @Author: natsumi

@@ -1,9 +1,13 @@
 package io.aoitori043.aoitoriproject.command;
 
+import lombok.Data;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -12,6 +16,7 @@ import java.util.TreeMap;
  * @CreateTime: 2024-03-23  13:39
  * @Description: ?
  */
+@Data
 public abstract class SubCommand {
 
     public static List<ArgumentHelper> fillParameters(String[] args){
@@ -55,33 +60,82 @@ public abstract class SubCommand {
         }
     }
 
-//    public static class ParameterSpecificationWrapper{
-//        public int index;
-//        public String tip;
-//        public ParameterSpecification.Type type;
-//        public boolean nullable;
-//
-//        public ParameterSpecificationWrapper(int index, String tip, ParameterSpecification.Type type, boolean nullable) {
-//            this.index = index;
-//            this.tip = tip;
-//            this.type = type;
-//            this.nullable = nullable;
-//        }
-//    }
-//
-//    public ParameterSpecificationWrapper data;
+    @Data
+    public static class SubCommandExecutor{
+        public SubCommand instance;
+        public String methodName;
+        public String tabMethodName;
+        public int minLength;
+        public TreeMap<Integer,ParameterSpecification> map;
+        public boolean isOp = false;
+        public String permission = null;
+        public String executionStartMessage = null;
+        public String executionEndMessage = null;
+
+        public SubCommandExecutor(SubCommand instance) {
+            this.instance = instance;
+        }
+
+        public Method getExecuteMethod(){
+            try {
+                Class[] parameterTypes = new Class[]{CommandSender.class, List.class};
+                return instance.getClass().getMethod(methodName, parameterTypes);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public Method getTabExecuteMethod(){
+            try {
+                Class[] parameterTypes = new Class[]{int.class};
+                return instance.getClass().getMethod(tabMethodName, parameterTypes);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public void executeCommand(CommandSender sender,String[] arguments){
+            try {
+                Method executeMethod = getExecuteMethod();
+                executeMethod.invoke(instance,sender, SubCommand.fillParameters(arguments));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void executeNotArgumentMethod(CommandSender sender,String[] arguments) {
+        try {
+            Class[] parameterTypes = new Class[]{CommandSender.class, List.class};
+            Method method = this.getClass().getMethod(this.notArgumentMethodName, parameterTypes);
+            method.invoke(this,sender,SubCommand.fillParameters(arguments));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public HashMap<String,SubCommandExecutor> subCommands = new HashMap<>();
+
+    public BasicCommand basicCommand;
     public int weight;
-    public int minLength;
-    public TreeMap<Integer,ParameterSpecification> map;
+    public String notArgumentMethodName;
+    public boolean isNotArgument = false;
+    public String help;
+    public String commandprefix;
+
     public boolean isOp = false;
     public String permission = null;
     public String executionStartMessage = null;
     public String executionEndMessage = null;
 
+
     public SubCommand() {
     }
 
-    public abstract List<String> getTabCompletion(int index);
+    public void sendMessage(CommandSender sender, String message){
+        basicCommand.sendMessage(sender, message);
+    }
 
-    public abstract void execute(List<ArgumentHelper> arguments);
 }

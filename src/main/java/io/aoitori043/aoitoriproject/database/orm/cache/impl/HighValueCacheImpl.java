@@ -1,6 +1,6 @@
 package io.aoitori043.aoitoriproject.database.orm.cache.impl;
 
-import io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil;
+import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
 import org.jetbrains.annotations.NotNull;

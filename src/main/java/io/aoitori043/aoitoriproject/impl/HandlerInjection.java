@@ -2,20 +2,20 @@ package io.aoitori043.aoitoriproject.impl;
 
 
 import io.aoitori043.aoitoriproject.AoitoriProject;
-import io.aoitori043.aoitoriproject.config.impl.BasicConfigImpl;
-import io.aoitori043.aoitoriproject.database.DatabaseConfig;
+import io.aoitori043.aoitoriproject.config.impl.BasicMapper;
+import io.aoitori043.aoitoriproject.database.DatabaseInjection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
-public class ConfigHandler extends BasicConfigImpl {
+public class HandlerInjection extends BasicMapper {
 
     public static void load(){
-        instance = new ConfigHandler();
-        database = new DatabaseConfig();
+        instance = new HandlerInjection();
+        database = new DatabaseInjection();
     }
 
-    public static ConfigHandler instance;
-    public static DatabaseConfig database;
+    public static HandlerInjection instance;
+    public static DatabaseInjection database;
 
     @Override
     public JavaPlugin getPlugin() {

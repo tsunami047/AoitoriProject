@@ -1,4 +1,4 @@
-package io.aoitori043.aoitoriproject.config.impl;
+package io.aoitori043.aoitoriproject.config.loader;
 
 import io.aoitori043.aoitoriproject.config.*;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -8,7 +8,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.lang.reflect.Field;
 
-import static io.aoitori043.aoitoriproject.config.impl.YamlFieldMapper.getValue;
+import static io.aoitori043.aoitoriproject.config.loader.MapperEvaluation.getValue;
 
 /**
  * @Author: natsumi
@@ -57,7 +57,7 @@ public class YamlMapping {
     }
 
 
-    public static void loadFromConfig(Object object, YamlConfiguration section) {
+    public static void loadFromConfig(Object object, YamlConfiguration yamlConfiguration) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -65,11 +65,11 @@ public class YamlMapping {
                     continue;
                 }
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, section, field);
+                    findConversion(object, yamlConfiguration, field);
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(object, section, field, propertyName,null);
+                        getValue(object, yamlConfiguration, field, propertyName,null);
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }
@@ -78,20 +78,20 @@ public class YamlMapping {
         }else {
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, section, field);
+                    findConversion(object, yamlConfiguration, field);
                 }
             }
         }
     }
 
-    private static void findConversion(Object object, YamlConfiguration section, Field field) {
+    private static void findConversion(Object object, YamlConfiguration yamlConfiguration, Field field) {
         ConfigProperty annotation = field.getAnnotation(ConfigProperty.class);
         String propertyName = annotation.value();
         try {
             if(propertyName.equals("useVariableName")){
                 propertyName = field.getName();
             }
-            getValue(object, section, field, propertyName,null);
+            getValue(object, yamlConfiguration, field, propertyName,null);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }

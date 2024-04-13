@@ -18,24 +18,24 @@ import java.util.logging.Level;
 
 
 /**
- * FileConfig class
+ * FileConfigLoader class
  *
  * @author elixir047
  * @date 2016/10/31
  */
-public class FileConfig extends YamlConfiguration {
+public class FileConfigLoader extends YamlConfiguration {
     private static FileConfiguration config;
     public final DumperOptions yamlOptions;
     private final Representer yamlRepresenter;
     private final Yaml yaml;
 
-    private FileConfig() {
+    private FileConfigLoader() {
         this.yamlOptions = new DumperOptions();
         this.yamlRepresenter = new YamlRepresenter();
         this.yaml = new Yaml(new YamlConstructor(), this.yamlRepresenter, this.yamlOptions);
     }
 
-    public FileConfig(File file) {
+    public FileConfigLoader(File file) {
         this.yamlOptions = new DumperOptions();
         this.yamlRepresenter = new YamlRepresenter();
         this.yaml = new Yaml(new YamlConstructor(), this.yamlRepresenter, this.yamlOptions);
@@ -44,7 +44,7 @@ public class FileConfig extends YamlConfiguration {
 
     public static YamlConfiguration loadConfiguration(File file) {
         Validate.notNull(file, "InjectFile cannot be null");
-        YamlConfiguration config = new FileConfig();
+        YamlConfiguration config = new FileConfigLoader();
         try {
             config.load(file);
         } catch (FileNotFoundException ignored) {

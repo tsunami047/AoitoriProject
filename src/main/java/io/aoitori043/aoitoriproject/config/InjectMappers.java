@@ -19,5 +19,7 @@ public @interface InjectMappers {
     @NotNull
     String dir();
 
+    boolean singe() default false;
+
 
 }

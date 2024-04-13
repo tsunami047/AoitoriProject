@@ -8,7 +8,7 @@ import java.lang.annotation.*;
  * @Description: ?
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Repeatable(value = ParameterSpecifications.class)
 public @interface ParameterSpecification {
 

@@ -9,7 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 
-import static io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil.createInstance;
+import static io.aoitori043.aoitoriproject.utils.ReflectASMUtil.createInstance;
 
 /**
  * @Author: natsumi

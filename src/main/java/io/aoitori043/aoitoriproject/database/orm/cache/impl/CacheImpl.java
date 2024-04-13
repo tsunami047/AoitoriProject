@@ -2,7 +2,7 @@ package io.aoitori043.aoitoriproject.database.orm.cache.impl;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
-import io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil;
+import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
 import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil.createInstance;
+import static io.aoitori043.aoitoriproject.utils.ReflectASMUtil.createInstance;
 
 @AllArgsConstructor
 public abstract class CacheImpl {

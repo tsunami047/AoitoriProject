@@ -3,21 +3,19 @@ package io.aoitori043.aoitoriproject.config.impl;
 import io.aoitori043.aoitoriproject.config.Debug;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import static io.aoitori043.aoitoriproject.config.loader.NotInvalidSignConfig.fillInYamlConfiguration;
-
 /**
  * @Author: natsumi
  * @CreateTime: 2024-03-28  22:00
  * @Description: ?
  */
-public abstract class EmptyConfigImpl extends ConfigMapper{
+public abstract class EmptyMapper extends MapperInjection {
 
     public abstract JavaPlugin getPlugin();
 
-    public EmptyConfigImpl() {
+    public EmptyMapper() {
         try {
-            fillInYamlConfiguration(getPlugin(),this);
-            fillInData();
+            injectYaml(getPlugin(),this);
+            injectMapper();
             Debug annotation = getClass().getAnnotation(Debug.class);
             if (annotation != null) {
                 this.printToConsole();

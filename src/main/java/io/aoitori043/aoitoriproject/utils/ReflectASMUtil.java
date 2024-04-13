@@ -1,4 +1,4 @@
-package io.aoitori043.aoitoriproject.database.orm;
+package io.aoitori043.aoitoriproject.utils;
 
 import com.esotericsoftware.reflectasm.ConstructorAccess;
 import com.esotericsoftware.reflectasm.FieldAccess;

@@ -13,6 +13,7 @@ import io.aoitori043.aoitoriproject.database.orm.sql.SQLInsertImpl;
 import io.aoitori043.aoitoriproject.database.orm.sql.SQLQueryImpl;
 import io.aoitori043.aoitoriproject.database.orm.sql.SQLUpdateImpl;
 import io.aoitori043.aoitoriproject.database.redis.RedisCore;
+import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import lombok.Data;
 import lombok.Getter;
 

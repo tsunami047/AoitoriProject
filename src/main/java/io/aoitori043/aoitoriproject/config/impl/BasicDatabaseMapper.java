@@ -10,7 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
  * @CreateTime: 2024-03-28  21:20
  * @Description: ?
  */
-public abstract class BasicDatabaseImpl extends EmptyConfigImpl {
+public abstract class BasicDatabaseMapper extends EmptyMapper {
 
     @InjectYaml(path = "database")
     public YamlConfiguration databaseConfig;

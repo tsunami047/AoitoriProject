@@ -10,14 +10,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import static io.aoitori043.aoitoriproject.config.impl.ConfigMapping.isStaticField;
+import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
 
 /**
  * @Author: natsumi
  * @CreateTime: 2024-03-28  21:21
  * @Description: ?
  */
-public abstract class AutoConfigPrint {
+public abstract class AutoConfigPrinter {
 
     public void printToConsole() {
         for (Field field : getClass().getFields()) {

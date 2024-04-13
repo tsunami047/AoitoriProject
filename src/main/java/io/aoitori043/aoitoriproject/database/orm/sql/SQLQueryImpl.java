@@ -2,7 +2,7 @@ package io.aoitori043.aoitoriproject.database.orm.sql;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.database.mysql.HikariConnectionPool;
-import io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil;
+import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 
 import java.sql.Connection;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static io.aoitori043.aoitoriproject.database.orm.ReflectASMUtil.createInstance;
+import static io.aoitori043.aoitoriproject.utils.ReflectASMUtil.createInstance;
 
 
 /**
