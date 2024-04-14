@@ -11,9 +11,12 @@ import java.lang.annotation.Target;
  * @Description: ?
  */
 @Retention(RetentionPolicy.RUNTIME)
+//设置运行的时候可见
 @Target(ElementType.METHOD)
+//作用对象是方法
 public @interface Parameter {
 
+    //参数，可以在注解上传回参数
     String argument();
     String help();
     ParameterSpecification.Type type() default ParameterSpecification.Type.Text;

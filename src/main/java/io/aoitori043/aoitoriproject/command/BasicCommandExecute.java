@@ -78,7 +78,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             Class[] parameterTypes = new Class[]{int.class};
             Method method = subCommand.getClass().getMethod(tabMethodName, parameterTypes);
             method.setAccessible(true);
-            Object[] arguments = new Object[]{args.length - 2};
+            Object[] arguments = new Object[]{args.length - 3};
             Object invoke = method.invoke(subCommand, arguments);
             if (invoke == null) {
                 return null;
@@ -122,8 +122,8 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 continue;
             }
             subCommand.commandprefix = subArgument.argument();
-            Method[] methods = subCommand.getClass().getDeclaredMethods();
-            for (Method method : methods) {
+            Method[] methods = subCommand.getClass().getDeclaredMethods(); //获取一个类声明的方法
+            for (Method method : methods) { //遍历
                 method.setAccessible(true);
                 NotArgument notArgument = method.getAnnotation(NotArgument.class);
                 if(notArgument!=null){
@@ -197,7 +197,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 Method executeMethod = subCommandExecutor.getExecuteMethod();
                 ParameterSpecifications parameterSpecificationsAnnotation = executeMethod.getAnnotation(ParameterSpecifications.class);
                 TreeMap<Integer, ParameterSpecification> treeMap = new TreeMap<>(Comparator.naturalOrder());
-                Parameter parameter = subCommand.getClass().getAnnotation(Parameter.class);
+
+
+                Parameter parameter = executeMethod.getAnnotation(Parameter.class);
                 if (parameterSpecificationsAnnotation != null) {
                     ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
                     if (subCommandExecutor.minLength == -1) {
@@ -210,7 +212,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                         }
                     }
                     subCommandExecutor.map = treeMap;
-                    StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + parameter.argument() + " ");
+                    StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " "+subCommand.getCommandprefix()+" " + parameter.argument() + " ");
                     treeMap.forEach((index, parameter1) -> {
                         if (!parameter1.nullable()) {
                             stringBuilder.append(String.format("<%s> ", parameter1.tip()));
@@ -221,7 +223,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                     stringBuilder.append("§7").append(parameter.help());
                     help.add(String.format(stringBuilder.toString()));
                 } else {
-                    help.add(String.format("§f- /" + basicCommand.getAlias() + " " + parameter.argument() + " §7" + parameter.help()));
+                    help.add(String.format("§f- /" + basicCommand.getAlias() + " "+subCommand.getCommandprefix()+" " + parameter.argument() + " §7" + parameter.help()));
                     if (subCommandExecutor.minLength == -1) {
                         subCommandExecutor.minLength = 1;
                     }
@@ -264,7 +266,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             return tabList;
         }
         TreeMap<Integer, ParameterSpecification> map = subCommandExecutor.getMap();
-        ParameterSpecification parameterSpecification = map.get(args.length - 2);
+        ParameterSpecification parameterSpecification = map.get(args.length - 3);
         switch (parameterSpecification.type()) {
             case Player: {
                 List<String> players = new ArrayList<>();
