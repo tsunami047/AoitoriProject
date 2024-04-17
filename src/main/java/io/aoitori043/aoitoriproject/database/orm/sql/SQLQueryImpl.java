@@ -35,20 +35,15 @@ public class SQLQueryImpl {
         List<T> resultList = new ArrayList<>();
         try (Connection connection = HikariConnectionPool.getConnection()) {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(sqlClient.nameStructure.getTableName(clazz)).append(" WHERE ");
-
             // 获取 id 字段的值
             Object idValue = FieldAccess.get(clazz).get(instance, "id");
+            SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(instance.getClass());
+            FieldAccess fieldAccess = entityAttribute.getFieldAccess();
             if (idValue != null) {
                 sql.append("id = ?");
             } else {
                 // 如果 id 不存在，则根据其他字段进行搜索
-                FieldAccess fieldAccess = FieldAccess.get(clazz);
-                String[] fieldNames = fieldAccess.getFieldNames();
-                SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(clazz);
-                for (String fieldName : fieldNames) {
-                    if(entityAttribute.getEmbeddedMapFieldProperties().containsKey(fieldName)){
-                        continue;
-                    }
+                for (String fieldName : entityAttribute.getDeclaredFieldNames()) {
                     Object o = fieldAccess.get(instance, fieldName);
                     if (o != null) {
                         sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ? AND ");
@@ -58,24 +53,19 @@ public class SQLQueryImpl {
                     sql = new StringBuilder(sql.substring(0, sql.length() - 5));
                 }
             }
-            SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(instance.getClass());
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
                 int paramIndex = 1;
                 if (idValue != null) {
                     statement.setObject(paramIndex++, idValue);
                 } else {
-                    FieldAccess fieldAccess = FieldAccess.get(clazz);
-                    String[] fieldNames = fieldAccess.getFieldNames();
-                    for (String fieldName : fieldNames) {
+                    for (String fieldName : entityAttribute.getDeclaredFieldNames()) {
                         Object o = fieldAccess.get(instance, fieldName);
                         if (o != null) {
                             statement.setObject(paramIndex++, o);
                         }
                     }
                 }
-
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    FieldAccess fieldAccess = FieldAccess.get(clazz);
                     while (resultSet.next()) {
                         T resultInstance = (T) ReflectASMUtil.createInstance(clazz);
                         for (String fieldName : entityAttribute.getDeclaredFieldNames()) {

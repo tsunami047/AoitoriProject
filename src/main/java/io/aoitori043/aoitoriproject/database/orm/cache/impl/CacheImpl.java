@@ -29,7 +29,7 @@ public abstract class CacheImpl {
     public abstract <T> boolean update(T updateEntity, T anchorEntity, CacheImpl.UpdateType updateType);
     public abstract <T> boolean delete(T whereEntity);
     public <T> boolean apply(T entity){
-        return false;
+        return true;
     }
     public abstract <T> boolean insert(T entity);
     public abstract <T> List<T> find(T whereEntity);

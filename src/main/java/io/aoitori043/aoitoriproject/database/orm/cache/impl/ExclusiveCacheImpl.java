@@ -140,6 +140,19 @@ public class ExclusiveCacheImpl extends CacheImpl {
         return tEntities;
     }
 
+    @Override
+    public <T> void caffeineAddDiscreteRoot(String discreteRoot, T t) {
+        Object o1 = this.caffeineCache.get(discreteRoot);
+        if (o1 != null) {
+            List list = (List) o1;
+            if (!list.contains(t)) {
+                list.add(t);
+            }
+        } else {
+            this.caffeineCache.put(discreteRoot, new ArrayList<>(Collections.singletonList(t)));
+        }
+    }
+
     //将变更应用到缓存区
     public <T> boolean apply(T updateEntity) {
         try {
@@ -234,7 +247,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
                 String myAggregateRoot = entityAttribute.getAggregateRootById(id);
                 LockUtil.syncLock(myAggregateRoot, () -> {
                     initialEmbeddedObject(entityAttribute, entity, id);
-                    entityAttribute.getFieldAccess().set(entity, "id", id);
+                    entityAttribute.getFieldAccess().set(entity, entityAttribute.getIdFieldName(), id);
                     for (String insertDiscreteRoot : insertDiscreteRoots) {
                         caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
                     }
@@ -271,9 +284,15 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
     }
 
+    //独有数据缓存：
+    //有更新后标记玩家，存入缓存后每隔一段时间就把数据写入到数据库
+    //玩家退出后写入一次数据库，写入完毕后删除掉缓存，删除标记
     public static class ExclusiveCaffeineCacheImpl extends CaffeineCacheImpl {
         public ExclusiveCacheImpl exclusiveCache;
-        public ConcurrentHashMap<String, List<String>> playerAggregateRootMap = new ConcurrentHashMap<>();
+        //用来标记更新
+        public ConcurrentHashMap<String, Set<String>> playerWaitUpdateAggregateMap = new ConcurrentHashMap<>();
+        //用来级联删除缓存
+        public ConcurrentHashMap<String,Map<String,Object>> playerRootMap = new ConcurrentHashMap<>();
 
         public ExclusiveCaffeineCacheImpl(ExclusiveCacheImpl exclusiveCache) {
             super(exclusiveCache.sqlClient);
@@ -283,57 +302,117 @@ public class ExclusiveCacheImpl extends CacheImpl {
 
         public void startCopyLoop() {
             Bukkit.getScheduler().runTaskTimerAsynchronously(AoitoriProject.plugin, () -> {
-                Iterator<Map.Entry<String, List<String>>> iterator = playerAggregateRootMap.entrySet().iterator();
+                Iterator<Map.Entry<String, Set<String>>> iterator = playerWaitUpdateAggregateMap.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    Map.Entry<String, List<String>> next = iterator.next();
+                    Map.Entry<String, Set<String>> next = iterator.next();
                     String playerName = next.getKey();
-                    updatePlayerCache(playerName);
+                    updatePlayerCache(playerName,true);
                     iterator.remove();
                 }
             }, 20 * 60 * 5, 20 * 60 * 5);
         }
 
-        private void updatePlayerCache(String playerName) {
-            List<String> strings = playerAggregateRootMap.get(playerName);
+        private void updatePlayerCache(String playerName,boolean removeCache) {
+            try (Jedis connection = sqlClient.redis.getConnection()) {
+                String serverId = connection.hget(EXCLUSIVE_DATABASE, playerName);
+                if (serverId != null && !serverId.equals(DatabaseProperties.cache.zeromq$serverId)) {
+                    Bukkit.getPlayer(playerName).kickPlayer("你的独有数据被其它服务器持有，请等待释放后重新进入，至多需要五分钟。");
+                    return;
+                }
+                connection.hset(EXCLUSIVE_DATABASE, playerName, DatabaseProperties.cache.zeromq$serverId);
+                connection.expire(playerName, 5*60+10);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            Set<String> strings = playerWaitUpdateAggregateMap.get(playerName);
             if(strings == null){
                 return;
             }
             Iterator<String> iteratorList = strings.iterator();
             while (iteratorList.hasNext()) {
-                String aggregateRoot = iteratorList.next();
-                Object o = super.get(aggregateRoot);
-                if(o == null){
-                    iteratorList.remove();
-                    continue;
-                }
-                SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
-                if (o != CacheImplUtil.emptyObject) {
-                    LockUtil.syncLock(aggregateRoot, () -> {
-                        exclusiveCache.cachingRedis(entityAttribute, aggregateRoot, o);
-                        sqlClient.sqlInsert.directInsertObject(o);
-                        exclusiveCache.updateForeignObject(o);
-                    });
+                try {
+                    String aggregateRoot = iteratorList.next();
+                    Object o = super.get(aggregateRoot);
+                    if (o == null) {
+                        iteratorList.remove();
+                        continue;
+                    }
+                    SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
+                    if (o != CacheImplUtil.emptyObject) {
+                        LockUtil.syncLock(aggregateRoot, () -> {
+                            exclusiveCache.cachingRedis(entityAttribute, aggregateRoot, o);
+                            List<Object> objects = this.sqlClient.sqlQuery.directFindByIds(o);
+                            if (objects.isEmpty()) {
+                                sqlClient.sqlInsert.directInsertObject(o);
+                            } else {
+                                sqlClient.sqlUpdate.updateNotCache(o, o);
+                            }
+                            exclusiveCache.updateForeignObject(o);
+                        });
+                    }
+                    if(removeCache){
+                        iteratorList.remove();
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
+        }
+
+        public void removeCache(String playerName){
+            playerWaitUpdateAggregateMap.remove(playerName);
+            Map<String, Object> stringObjectMap = playerRootMap.get(playerName);
+            for (Map.Entry<String, Object> discreteMap : stringObjectMap.entrySet()) {
+                String key = discreteMap.getKey();
+                if (key.charAt(0) == '$') {
+                    directDel(key);
+                }else if(key.charAt(0) == '%'){
+                    Object value = discreteMap.getValue();
+                    List list = (List) super.get(key);
+                    list.remove(value);
+                    if(list.isEmpty()){
+                        directDel(key);
+                    }
+                }
+            }
+
         }
 
         public synchronized void savePlayerAllData(String playerName) {
             LockUtil.syncLock(playerName, () -> {
-                updatePlayerCache(playerName);
+                updatePlayerCache(playerName,true);
+                removeCache(playerName);
             });
         }
 
         @Override
-        public void put(String key,@NotNull Object o) {
-            SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
-            String playerName = entityAttribute.getPlayerName(o);
-            if (playerName == null) {
-                throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
-            }
-            if (key.charAt(0) == '$') {
-                playerAggregateRootMap.computeIfAbsent(playerName, k -> new ArrayList<>()).add(key);
+        public void put(@NotNull String key,@NotNull Object o) {
+            if(o instanceof List){
+                List list = (List) (List) o;
+                for (Object object : list) {
+                    SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(object.getClass());
+                    String playerName = entityAttribute.getPlayerName(object);
+                    if (playerName == null) {
+                        throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
+                    }
+                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,object);
+                }
+            }else {
+                SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
+                String playerName = entityAttribute.getPlayerName(o);
+                if (playerName == null) {
+                    throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
+                }
+                if (key.charAt(0) == '$') {
+                    playerWaitUpdateAggregateMap.computeIfAbsent(playerName, k -> new LinkedHashSet<>()).add(key);
+                }
+                playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,o);
             }
             super.put(key, o);
+        }
+
+        public void directDel(String key){
+            super.del(key);
         }
 
         @Override
@@ -346,7 +425,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
             String playerName = entityAttribute.getPlayerName(o);
             //级联删除玩家键名映射表
             if (key.charAt(0) == '$') {
-                playerAggregateRootMap.computeIfAbsent(playerName, k -> new ArrayList<>()).remove(key);
+                playerWaitUpdateAggregateMap.computeIfAbsent(playerName, k -> new LinkedHashSet<>()).remove(key);
             }
             super.del(key);
         }
@@ -370,11 +449,12 @@ public class ExclusiveCacheImpl extends CacheImpl {
                 String name = playerPreLoginEvent.getName();
                 try (Jedis connection = sqlClient.redis.getConnection()) {
                     String serverId = connection.hget(EXCLUSIVE_DATABASE, name);
-                    if (serverId != null) {
-                        playerPreLoginEvent.disallow(KICK_OTHER, "你的独有数据被其它服务器持有，请等待释放后重新进入。");
+                    if (serverId != null && !serverId.equals(DatabaseProperties.cache.zeromq$serverId)) {
+                        playerPreLoginEvent.disallow(KICK_OTHER, "你的独有数据被其它服务器持有，请等待释放后重新进入，至多需要五分钟。");
                         return;
                     }
                     connection.hset(EXCLUSIVE_DATABASE, name, DatabaseProperties.cache.zeromq$serverId);
+                    connection.expire(name, 5*60+10);
                 }
                 playerLocks.add(name);
                 //推送锁信息，同时在redis写入锁信息
@@ -392,6 +472,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
                     connection.hdel(EXCLUSIVE_DATABASE, name);
                 }
             }
+            PluginProvider.getJavaPlugin().getLogger().info("保存玩家 "+name+" 数据成功");
         }
     }
 

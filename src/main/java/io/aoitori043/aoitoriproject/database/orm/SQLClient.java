@@ -1,6 +1,7 @@
 package io.aoitori043.aoitoriproject.database.orm;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
+import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
 import io.aoitori043.aoitoriproject.database.orm.cache.impl.*;
 import io.aoitori043.aoitoriproject.database.orm.cache.CaffeineCacheImpl;
@@ -72,13 +73,44 @@ public class SQLClient {
 
         String playerNameFieldName;
         String idFieldName;
-
+        //离散根
         List<String> discreteRootFieldNames = new ArrayList<>();
+        //外联映射
         HashMap<String,ForeignProperty> embeddedMapFieldProperties = new HashMap<>();
+        //外键
         HashMap<Class,String> foreignKeyMap = new HashMap<>();
+        //实体字段
         List<String> declaredFieldNames = new ArrayList<>();
-
+        //可以修改的字段
         List<String> updateFields;
+
+        Class playerNameSuperClass;
+
+        public String getPlayerName(Object entity){
+            if(playerNameSuperClass!=null){
+                EntityAttributes superClassEntityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(playerNameSuperClass);
+                String foreignKey = getForeignKey(playerNameSuperClass);
+                Object o = fieldAccess.get(entity, foreignKey);
+                Object superEntity = ReflectASMUtil.createInstance(playerNameSuperClass);
+                superClassEntityAttribute.getFieldAccess().set(superEntity,superClassEntityAttribute.getIdFieldName(),o);
+                List<Object> query = CanaryClientImpl.sqlClient.query(superEntity);
+                if(query == null || query.isEmpty()){
+                    return null;
+                }
+                return superClassEntityAttribute.getPlayerName(query.get(0));
+            }
+            return fieldAccess.get(entity, playerNameFieldName).toString();
+        }
+
+        public void preloadPlayerName(){
+            for (Class aClass : foreignKeyMap.keySet()) {
+                EntityAttributes entityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(aClass);
+                if (entityAttribute.playerNameFieldName !=null) {
+                    playerNameSuperClass = aClass;
+                    return;
+                }
+            }
+        }
 
         public EmbeddedHashMap<?,?> getForeignMap(Object o,String fieldName){
             Object o1 = fieldAccess.get(o, fieldName);
@@ -195,6 +227,7 @@ public class SQLClient {
                     e.printStackTrace();
                 }
             }
+            preloadPlayerName();
         }
         public static final String DISCRETE_SIGN = "%";
 
@@ -240,10 +273,6 @@ public class SQLClient {
             return null;
         }
 
-        public String getPlayerName(Object entity){
-            return fieldAccess.get(entity, playerNameFieldName).toString();
-        }
-
         public String getAggregateRootById(Object id){
             return CacheImplUtil.getAggregateRootKey(tableName, String.valueOf(id));
         }
@@ -260,6 +289,17 @@ public class SQLClient {
             Object o = fieldAccess.get(entity, idFieldName);
             if(o == null){
                 return null;
+                //查询聚合根
+//                List<Object> query = CanaryClientImpl.sqlClient.query(entity);
+//                if(query == null ||query.isEmpty()){
+//                    //要么插入数据获取聚合根
+//                    return null;
+//                }
+//                Object o1 = fieldAccess.get(query.get(0), idFieldName);
+//                if(o1 == null){
+//                    return null;
+//                }
+//                return CacheImplUtil.getAggregateRootKey(tableName, o1.toString());
             }
             return CacheImplUtil.getAggregateRootKey(tableName, o.toString());
         }
@@ -328,7 +368,7 @@ public class SQLClient {
         entityAttribute.injectEmbeddedHashMap(instance);
     }
 
-    public <T> boolean insert(Class<T> clazz,Consumer<T> insertEntity){
+    public <T> T insert(Class<T> clazz,Consumer<T> insertEntity){
         T instance = (T) ReflectASMUtil.createInstance(clazz);
         injectEmbeddedHashMap(instance);
         insertEntity.accept(instance);
@@ -342,10 +382,11 @@ public class SQLClient {
     }
 
     @Deprecated
-    public <T> boolean insert(T insertEntity){
+    public <T> T insert(T insertEntity){
         EntityAttributes entityAttributes = attributesHashMap.get(insertEntity.getClass());
+        injectEmbeddedHashMap(insertEntity);
         this.nonnull(entityAttributes);
-        return cacheHashMap.get(entityAttributes.cacheType).insert(insertEntity);
+        return cacheHashMap.get(entityAttributes.cacheType).insert(insertEntity)?insertEntity:null;
     }
 
 
@@ -373,19 +414,19 @@ public class SQLClient {
         return cacheHashMap.get(entityAttributes.cacheType).delete(insertEntity);
     }
 
-    public <T> boolean apply(Class<T> clazz,Consumer<T> insertEntity){
+    public <T> T apply(Class<T> clazz,Consumer<T> insertEntity){
         T instance = (T) ReflectASMUtil.createInstance(clazz);
         insertEntity.accept(instance);
         return this.apply(instance);
     }
 
     //不存在就插入，存在就更新
-    public <T> boolean apply(T entity){
+    public <T> T apply(T entity){
         EntityAttributes entityAttributes = attributesHashMap.get(entity.getClass());
         this.nonnull(entityAttributes);
         CacheImpl cache = cacheHashMap.get(entityAttributes.cacheType);
         if(cache.hasApplyOverride()){
-            return cache.apply(entity);
+            return cache.apply(entity)?entity:null;
         }else {
             List<T> tEntities = cache.find(entity);
             if (tEntities == null || tEntities.isEmpty()) {
@@ -394,19 +435,19 @@ public class SQLClient {
             } else {
                 cache.apply(entity);
             }
-            return true;
+            return entity;
         }
     }
 
-    public <T> boolean update(Class<T> clazz,T updateEntity,Consumer<T> insertEntity, CacheImpl.UpdateType updateType){
+    public <T> T update(Class<T> clazz,T updateEntity,Consumer<T> insertEntity, CacheImpl.UpdateType updateType){
         T instance = (T) ReflectASMUtil.createInstance(clazz);
         insertEntity.accept(instance);
         return this.update(updateEntity,instance,updateType);
     }
 
-    public <T> boolean update(T updateEntity, T anchorEntity, CacheImpl.UpdateType updateType){
+    public <T> T update(T updateEntity, T anchorEntity, CacheImpl.UpdateType updateType){
         EntityAttributes entityAttributes = attributesHashMap.get(updateEntity.getClass());
         this.nonnull(entityAttributes);
-        return cacheHashMap.get(entityAttributes.cacheType).update(updateEntity,anchorEntity,updateType);
+        return cacheHashMap.get(entityAttributes.cacheType).update(updateEntity,anchorEntity,updateType)?updateEntity:null;
     }
 }

@@ -10,12 +10,9 @@ import java.util.*;
 
 public class RedisCacheImpl {
 
-    public static RedisCore cacheRedisPool;
+    public RedisCore cacheRedisPool;
 
     public Jedis getJedisConnection(){
-        if(cacheRedisPool == null){
-            cacheRedisPool = RedisCore.init(PluginProvider.getJavaPlugin(),DatabaseProperties.cache.redis$databaseIndex);
-        }
         return cacheRedisPool.getConnection();
     }
 
@@ -27,6 +24,7 @@ public class RedisCacheImpl {
 
     public RedisCacheImpl(Duration duration) {
         expireSecond = duration.getSeconds();
+        cacheRedisPool = RedisCore.init(PluginProvider.getJavaPlugin(),DatabaseProperties.cache.redis$databaseIndex);
     }
 
 

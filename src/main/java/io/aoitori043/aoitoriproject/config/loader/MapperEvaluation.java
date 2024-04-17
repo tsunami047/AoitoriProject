@@ -58,6 +58,11 @@ public class MapperEvaluation {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }else {
+            if (field.getType() == List.class) {
+                field.set(fieldSetObj, new ArrayList<>());
+                return;
+            }
         }
         if (mappingInject(fieldSetObj, section, field, propertyName)) {
             return;
@@ -72,7 +77,8 @@ public class MapperEvaluation {
             }else{
                 throw new IllegalArgumentException("泛型参数缺少");
             }
-            if(typeArguments[1] instanceof List){
+            field.set(fieldSetObj, map);
+            if(typeArguments[1] == List.class){
                 ConfigurationSection listSection = section.getConfigurationSection(field.getName());
                 if(listSection !=null){
                     Set<String> keys = listSection.getKeys(false);
@@ -80,7 +86,6 @@ public class MapperEvaluation {
                         List<String> stringList = listSection.getStringList(key);
                         map.put(key,stringList);
                     }
-                    field.set(fieldSetObj, map);
                 }
             }else if(typeArguments[1] == String.class){
                 ConfigurationSection listSection = section.getConfigurationSection(field.getName());
@@ -89,7 +94,6 @@ public class MapperEvaluation {
                     for (String key : keys) {
                         map.put(key,listSection.getString(key));
                     }
-                    field.set(fieldSetObj, map);
                 }
             }
         }
@@ -196,15 +200,15 @@ public class MapperEvaluation {
             if (getFoldMapping == null) {
                 return false;
             }
-            ConfigurationSection referToSection = section.getConfigurationSection(propertyName);
+            ConfigurationSection foldSection = section.getConfigurationSection(propertyName);
             Object instance = createInstance((Class<?>)field.getType());
-            if (referToSection == null) {
+            field.set(object, instance);
+            if (foldSection == null) {
                 return true;
             }
             ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
             injectDefaultValue(instance, propertyName, object);
             MapperInjection.runAnnotatedMethods(instance);
-            field.set(object, instance);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -226,19 +230,19 @@ public class MapperEvaluation {
             }else{
                 throw new IllegalArgumentException("泛型参数缺少");
             }
-            ConfigurationSection referToSection = section.getConfigurationSection(propertyName);
-            if (referToSection == null) return true;
-            Set<String> keys = referToSection.getKeys(false);
             Map<String, Object> map = (Map) createInstance(field.getType());
+            field.set(object, map);
+            ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
+            if (mapperSection == null) return true;
+            Set<String> keys = mapperSection.getKeys(false);
             for (String key : keys) {
-                ConfigurationSection configurationSection = referToSection.getConfigurationSection(key);
+                ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
                 Object instance = createInstance((Class<?>)typeArguments[1]);
                 ConfigMapping.loadFromConfig(instance, null, configurationSection);
                 injectDefaultValue(instance, key, object);
                 MapperInjection.runAnnotatedMethods(instance);
                 map.put(key, instance);
             }
-            field.set(object, map);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
