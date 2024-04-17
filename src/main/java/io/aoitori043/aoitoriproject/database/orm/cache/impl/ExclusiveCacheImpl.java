@@ -294,7 +294,11 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
 
         private void updatePlayerCache(String playerName) {
-            Iterator<String> iteratorList = playerAggregateRootMap.get(playerName).iterator();
+            List<String> strings = playerAggregateRootMap.get(playerName);
+            if(strings == null){
+                return;
+            }
+            Iterator<String> iteratorList = strings.iterator();
             while (iteratorList.hasNext()) {
                 String aggregateRoot = iteratorList.next();
                 Object o = super.get(aggregateRoot);
@@ -320,7 +324,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
 
         @Override
-        public void put(String key, Object o) {
+        public void put(String key,@NotNull Object o) {
             SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
             String playerName = entityAttribute.getPlayerName(o);
             if (playerName == null) {
@@ -333,7 +337,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
 
         @Override
-        public void del(String key) {
+        public void del(@NotNull String key) {
             Object o = super.get(key);
             if (o == null) {
                 return;

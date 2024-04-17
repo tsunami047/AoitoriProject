@@ -215,9 +215,11 @@ public abstract class CacheImpl {
             foreignEntityAttribute.getFieldAccess().set(foreignInstance,foreignKey, databaseId);
             List<T> query = sqlClient.query(foreignInstance);
             EmbeddedHashMap<Object,Object> tempMap = new EmbeddedHashMap<>(instance);
-            for (T tForeignEntity : query) {
-                Object mappingId = foreignEntityAttribute.getFieldAccess().get(tForeignEntity, foreignFieldName);
-                tempMap.directPut(mappingId,tForeignEntity);
+            if(query!=null){
+                for (T tForeignEntity : query) {
+                    Object mappingId = foreignEntityAttribute.getFieldAccess().get(tForeignEntity, foreignFieldName);
+                    tempMap.directPut(mappingId,tForeignEntity);
+                }
             }
             entityAttribute.getFieldAccess().set(instance,fieldName,tempMap);
         }

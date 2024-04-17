@@ -2,8 +2,11 @@ package io.aoitori043.aoitoriproject.database.orm.cache;
 
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
+import io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @Author: natsumi
@@ -40,6 +43,13 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
 
     @Override
     public V put(K k, V v){
+        if (super.containsKey(k)) {
+            V v1 = superMapCache.get(k);
+            CanaryClientImpl.sqlClient.update(v,v1, CacheImpl.UpdateType.NOT_COPY_NULL);
+            List<V> query = CanaryClientImpl.sqlClient.query(v1);
+            directPut(k,query.get(0));
+            return query.get(0);
+        }
         if(superEntityAggregateRoot == -1){
             superMapCache.put(k,v);
             super.put(k,v);
@@ -52,6 +62,24 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
         //执行对应的方法
         return v;
     }
+
+    @Override
+    public void clear(){
+        Iterator<Entry<K, V>> iterator = super.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<K, V> next = iterator.next();
+            V v = next.getValue();
+            if(v == null){
+                continue;
+            }
+            K k = next.getKey();
+            superMapCache.remove(k);
+            CanaryClientImpl.sqlClient.delete(v);
+            iterator.remove();
+        }
+    }
+
+
 
     @Override
     public V remove(Object k){

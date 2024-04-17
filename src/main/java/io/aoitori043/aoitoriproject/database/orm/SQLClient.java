@@ -188,7 +188,13 @@ public class SQLClient {
                     discreteRootFieldNames.add(field.getName());
                 }
             }
-
+            if(cacheType == PLAYER_EXCLUSIVE_DATA && playerNameFieldName == null){
+                try {
+                    throw new Exception("使用PLAYER_EXCLUSIVE_DATA存储类型，必须为你的玩家名字段加上注解！");
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
         }
         public static final String DISCRETE_SIGN = "%";
 

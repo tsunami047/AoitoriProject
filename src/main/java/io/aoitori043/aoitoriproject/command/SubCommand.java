@@ -19,9 +19,9 @@ import java.util.TreeMap;
 @Data
 public abstract class SubCommand {
 
-    public static List<ArgumentHelper> fillParameters(String[] args){
+    public List<ArgumentHelper> fillParameters(String[] args){
         List<ArgumentHelper> list = new ArrayList<>();
-        for (int i = 0; i < args.length; i++) {
+        for (int i = isNotArgument?1:2; i < args.length; i++) {
             ArgumentHelper argumentHelper = new ArgumentHelper(i, args[i]);
             list.add(argumentHelper);
         }
@@ -99,7 +99,7 @@ public abstract class SubCommand {
         public void executeCommand(CommandSender sender,String[] arguments){
             try {
                 Method executeMethod = getExecuteMethod();
-                executeMethod.invoke(instance,sender, SubCommand.fillParameters(arguments));
+                executeMethod.invoke(instance,sender, instance.fillParameters(arguments));
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -110,7 +110,7 @@ public abstract class SubCommand {
         try {
             Class[] parameterTypes = new Class[]{CommandSender.class, List.class};
             Method method = this.getClass().getMethod(this.notArgumentMethodName, parameterTypes);
-            method.invoke(this,sender,SubCommand.fillParameters(arguments));
+            method.invoke(this,sender,this.fillParameters(arguments));
         }catch (Exception e){
             e.printStackTrace();
         }
