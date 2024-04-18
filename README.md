@@ -12,4 +12,4 @@
 
 鸣谢
 --------
-@ArgonarioD 指导了我持久化组件的开发
+[@ArgonarioD](https://github.com/ArgonarioD) 指导了我持久化组件的开发
