@@ -22,7 +22,7 @@ public class SQLInsertImpl {
         this.sqlClient = sqlClient;
     }
 
-    public <T> int directInsertObject(T object) {
+    public <T> long directInsertObject(T object) {
         try (Connection connection = HikariConnectionPool.getConnection()) {
             Class<?> clazz = object.getClass();
             StringBuilder sql = new StringBuilder("INSERT INTO ").append(sqlClient.nameStructure.getTableName(clazz)).append(" (");
@@ -53,13 +53,12 @@ public class SQLInsertImpl {
                     }
                     Object o = fieldAccess.get(object, fieldName);
                     statement.setObject(paramIndex++, o);
-
                 }
                 int rowsInserted = statement.executeUpdate();
                 if (rowsInserted > 0) {
                     ResultSet generatedKeys = statement.getGeneratedKeys();
                     if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1);
+                        return generatedKeys.getLong(1);
                     }
                 }
                 return -1;

@@ -146,12 +146,12 @@ public class SQLClient {
             Class valueType;
         }
 
-        public void setForeignRootFieldValue(Object o,Class superEntityClass,Integer id){
+        public void setForeignRootFieldValue(Object o,Class superEntityClass,Long id){
             String foreignKey = this.getForeignKeyMap().get(superEntityClass);
             fieldAccess.set(o,foreignKey,id);
         }
 
-        public void setId(Object o,Integer id){
+        public void setId(Object o,Long id){
             fieldAccess.set(o,idFieldName,id);
         }
 
@@ -220,14 +220,14 @@ public class SQLClient {
                     discreteRootFieldNames.add(field.getName());
                 }
             }
-            if(cacheType == PLAYER_EXCLUSIVE_DATA && playerNameFieldName == null){
+            preloadPlayerName();
+            if(cacheType == PLAYER_EXCLUSIVE_DATA && (playerNameFieldName == null && playerNameSuperClass == null)){
                 try {
                     throw new Exception("使用PLAYER_EXCLUSIVE_DATA存储类型，必须为你的玩家名字段加上注解！");
                 }catch (Exception e){
                     e.printStackTrace();
                 }
             }
-            preloadPlayerName();
         }
         public static final String DISCRETE_SIGN = "%";
 
@@ -237,7 +237,7 @@ public class SQLClient {
 
         public Object getQueryEntity(String aggregateRoot){
             Object instance = ReflectASMUtil.createInstance(clazz);
-            fieldAccess.set(instance,idFieldName,Integer.parseInt(aggregateRoot.split(":")[1]));
+            fieldAccess.set(instance,idFieldName,Long.parseLong(aggregateRoot.split(":")[1]));
             return instance;
         }
 
@@ -277,12 +277,12 @@ public class SQLClient {
             return CacheImplUtil.getAggregateRootKey(tableName, String.valueOf(id));
         }
 
-        public int getDatabaseId(Object entity){
+        public long getDatabaseId(Object entity){
             Object o = fieldAccess.get(entity, idFieldName);
             if(o == null){
                 return -1;
             }
-            return Integer.valueOf(String.valueOf(o));
+            return Long.valueOf(String.valueOf(o));
         }
 
         public String getAggregateRoot(Object entity){

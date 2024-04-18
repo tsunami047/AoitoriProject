@@ -36,7 +36,7 @@ public abstract class CacheImpl {
 
     public abstract boolean hasApplyOverride();
 
-    public <T> void initialEmbeddedObject(SQLClient.EntityAttributes entityAttribute,T entity,int id){
+    public <T> void initialEmbeddedObject(SQLClient.EntityAttributes entityAttribute,T entity,long id){
         for (String fieldName : entityAttribute.getEmbeddedMapFieldProperties().keySet()) {
             EmbeddedHashMap<?, ?> foreignMap = entityAttribute.getForeignMap(entity, fieldName);
             foreignMap.completeSuperClassInsert(id);
@@ -200,7 +200,7 @@ public abstract class CacheImpl {
     public <T> void injectForeignEntities(T instance) {
         SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(instance.getClass());
         HashMap<String, SQLClient.EntityAttributes.ForeignProperty> foreignFieldNames = entityAttribute.getEmbeddedMapFieldProperties();
-        int databaseId = entityAttribute.getDatabaseId(instance);
+        long databaseId = entityAttribute.getDatabaseId(instance);
         if(foreignFieldNames.isEmpty()){
             return;
         }

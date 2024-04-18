@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.database.orm.cache;
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ import java.util.List;
 public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
 
     public Object superEntity;
-    public int superEntityAggregateRoot;
+    public long superEntityAggregateRoot;
     public HashMap<K,V> superMapCache = new HashMap();
 
     public EmbeddedHashMap(Object o) {
@@ -25,11 +26,11 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
         superEntityAggregateRoot = entityAttribute.getDatabaseId(o);
     }
 
-    public void directPut(K key, V value) {
+    public void directPut(K key,@NotNull V value) {
         super.put(key, value);
     }
 
-    public void completeSuperClassInsert(int superId){
+    public void completeSuperClassInsert(long superId){
         this.superEntityAggregateRoot = superId;
         if (superMapCache.isEmpty()) return;
         for (Entry<K, V> kvEntry : superMapCache.entrySet()) {
@@ -41,10 +42,16 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
         superMapCache.clear();
     }
 
+    public void putPresent(K oldKey,K key, V value) {
+        super.remove(oldKey);
+        super.put(key, value);
+        CanaryClientImpl.sqlClient.update(value,value, CacheImpl.UpdateType.NOT_COPY_NULL);
+    }
+
     @Override
-    public V put(K k, V v){
+    public V put(K k,@NotNull V v){
         if (super.containsKey(k)) {
-            V v1 = superMapCache.get(k);
+            V v1 = super.get(k);
             CanaryClientImpl.sqlClient.update(v,v1, CacheImpl.UpdateType.NOT_COPY_NULL);
             List<V> query = CanaryClientImpl.sqlClient.query(v1);
             directPut(k,query.get(0));

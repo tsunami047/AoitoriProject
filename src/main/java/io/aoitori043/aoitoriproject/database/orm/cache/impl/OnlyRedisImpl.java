@@ -97,7 +97,7 @@ public class OnlyRedisImpl extends CacheImpl {
             if (aggregateRoot == null) {
                 String redisIdKey = entityAttribute.getRedisIdKey();
                 try(Jedis jedisConnection = this.myRedisCore.getJedisConnection()){
-                    int id = (int)jedisConnection.incr(redisIdKey);
+                    long id = jedisConnection.incr(redisIdKey);
                     String myAggregateRoot = entityAttribute.getAggregateRootById(id);
                     List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                     LockUtil.syncLock(myAggregateRoot, () -> {
@@ -113,7 +113,7 @@ public class OnlyRedisImpl extends CacheImpl {
             } else {
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                 LockUtil.syncLock(aggregateRoot, () -> {
-                    int id = entityAttribute.getDatabaseId(entity);
+                    long id = entityAttribute.getDatabaseId(entity);
                     initialEmbeddedObject(entityAttribute, entity, id);
                     HashMap<String, String> serializedObject = serializeObject(entity);
                     myRedisCore.putMap(aggregateRoot, serializedObject);

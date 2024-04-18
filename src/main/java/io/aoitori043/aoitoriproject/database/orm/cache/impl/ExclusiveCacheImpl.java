@@ -7,6 +7,7 @@ import io.aoitori043.aoitoriproject.database.DatabaseProperties;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.CaffeineCacheImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,11 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import static io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
 import static org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER;
 import static org.bukkit.event.player.PlayerPreLoginEvent.Result.ALLOWED;
-
+@Getter
 public class ExclusiveCacheImpl extends CacheImpl {
 
     public static final String EXCLUSIVE_DATABASE = "exclusive_map";
-    private final ExclusiveCaffeineCacheImpl caffeineCache;
+    public final ExclusiveCaffeineCacheImpl caffeineCache;
 
     public ExclusiveCacheImpl(SQLClient sqlClient) {
         super(sqlClient);
@@ -52,12 +53,13 @@ public class ExclusiveCacheImpl extends CacheImpl {
 
     @Override
     public void cachingCaffeine(SQLClient.EntityAttributes entityAttribute, String aggregateRoot, Object entity) {
-        this.injectForeignEntities(entity);
         List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
         for (String insertDiscreteRoot : insertDiscreteRoots) {
             caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
         }
         this.caffeineCache.put(aggregateRoot, entity);
+        this.injectForeignEntities(entity);
+        //关联实体对查询外玩家名会导致递归循环
     }
 
     public <T> List<T> find(T whereEntity) {
@@ -247,7 +249,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
             String aggregateRoot = entityAttribute.getAggregateRoot(entity);
             if (aggregateRoot == null) {
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
-                int id = sqlClient.sqlInsert.directInsertObject(entity);
+                long id = sqlClient.sqlInsert.directInsertObject(entity);
                 String myAggregateRoot = entityAttribute.getAggregateRootById(id);
                 LockUtil.syncLock(myAggregateRoot, () -> {
                     initialEmbeddedObject(entityAttribute, entity, id);
@@ -305,7 +307,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
 
         public void startCopyLoop() {
-            Bukkit.getScheduler().runTaskTimerAsynchronously(AoitoriProject.plugin, () -> {
+            Bukkit.getScheduler().runTaskTimer(AoitoriProject.plugin, () -> {
                 Iterator<Map.Entry<String, Set<String>>> iterator = playerWaitUpdateAggregateMap.entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<String, Set<String>> next = iterator.next();
@@ -329,38 +331,39 @@ public class ExclusiveCacheImpl extends CacheImpl {
                 e.printStackTrace();
             }
             Set<String> strings = playerWaitUpdateAggregateMap.get(playerName);
-            if(strings == null){
+            if(strings == null || strings.isEmpty()){
                 return;
             }
-            Iterator<String> iteratorList = strings.iterator();
-            while (iteratorList.hasNext()) {
-                try {
-                    String aggregateRoot = iteratorList.next();
-                    Object o = super.get(aggregateRoot);
-                    if (o == null) {
-                        iteratorList.remove();
-                        continue;
+            strings = new LinkedHashSet<>(strings);
+            Set<String> finalStrings = strings;
+            Bukkit.getScheduler().runTaskAsynchronously(AoitoriProject.plugin, () -> {
+                Iterator<String> iteratorList = finalStrings.iterator();
+                while (iteratorList.hasNext()) {
+                    try {
+                        String aggregateRoot = iteratorList.next();
+                        Object o = super.get(aggregateRoot);
+                        if (o == null) {
+                            iteratorList.remove();
+                            continue;
+                        }
+                        if (o != CacheImplUtil.emptyObject) {
+                            SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
+                            LockUtil.syncLock(aggregateRoot, () -> {
+                                exclusiveCache.cachingRedis(entityAttribute, aggregateRoot, o);
+                                List<Object> objects = this.sqlClient.sqlQuery.directFindByIds(o);
+                                if (objects.isEmpty()) {
+                                    sqlClient.sqlInsert.directInsertObject(o);
+                                } else {
+                                    sqlClient.sqlUpdate.updateNotCache(o, o);
+                                }
+                                exclusiveCache.updateForeignObject(o);
+                            });
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
-                    if (o != CacheImplUtil.emptyObject) {
-                        LockUtil.syncLock(aggregateRoot, () -> {
-                            exclusiveCache.cachingRedis(entityAttribute, aggregateRoot, o);
-                            List<Object> objects = this.sqlClient.sqlQuery.directFindByIds(o);
-                            if (objects.isEmpty()) {
-                                sqlClient.sqlInsert.directInsertObject(o);
-                            } else {
-                                sqlClient.sqlUpdate.updateNotCache(o, o);
-                            }
-                            exclusiveCache.updateForeignObject(o);
-                        });
-                    }
-                    if(removeCache){
-                        iteratorList.remove();
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
                 }
-            }
+            });
         }
 
         public void removeCache(String playerName){
@@ -399,7 +402,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
                     if (playerName == null) {
                         throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
                     }
-                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,object);
+                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,o);
                 }
             }else {
                 SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
@@ -423,13 +426,22 @@ public class ExclusiveCacheImpl extends CacheImpl {
         public void del(@NotNull String key) {
             Object o = super.get(key);
             if (o == null) {
+                super.del(key);
                 return;
             }
-            SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
-            String playerName = entityAttribute.getPlayerName(o);
-            //级联删除玩家键名映射表
-            if (key.charAt(0) == '$') {
+            //级联删除玩家键名映射表，可能会导致内存泄漏
+            if(o instanceof List){
+                List list = (List) (List) o;
+                for (Object object : list) {
+                    SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(object.getClass());
+                    String playerName = entityAttribute.getPlayerName(object);
+                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).remove(key);
+                }
+            }else{
+                SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
+                String playerName = entityAttribute.getPlayerName(o);
                 playerWaitUpdateAggregateMap.computeIfAbsent(playerName, k -> new LinkedHashSet<>()).remove(key);
+                playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).remove(key);
             }
             super.del(key);
         }

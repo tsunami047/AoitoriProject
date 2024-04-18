@@ -41,7 +41,7 @@ public class OnlyMySQLImpl extends CacheImpl {
 
     @Override
     public <T> boolean insert(T entity) {
-        int id = sqlClient.sqlInsert.directInsertObject(entity);
+        long id = sqlClient.sqlInsert.directInsertObject(entity);
         SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(entity.getClass());
         initialEmbeddedObject(entityAttribute, entity, id);
         return true;

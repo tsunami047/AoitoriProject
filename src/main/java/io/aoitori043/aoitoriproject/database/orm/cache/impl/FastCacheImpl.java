@@ -108,9 +108,9 @@ public class FastCacheImpl extends CacheImpl{
             if (aggregateRoot == null) {
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                 String redisIdKey = entityAttribute.getRedisIdKey();
-                int incr;
+                long incr;
                 try(Jedis jedisConnection = sqlClient.redisCache.getJedisConnection()){
-                    incr = (int)jedisConnection.incr(redisIdKey);
+                    incr = jedisConnection.incr(redisIdKey);
                 }
                 String myAggregateRoot = entityAttribute.getAggregateRootById(incr);
                 LockUtil.syncLock(myAggregateRoot, () -> {

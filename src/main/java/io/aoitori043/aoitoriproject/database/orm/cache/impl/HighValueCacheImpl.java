@@ -94,7 +94,7 @@ public class HighValueCacheImpl extends CacheImpl {
             SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(entity.getClass());
             String aggregateRoot = entityAttribute.getAggregateRoot(entity);
             if (aggregateRoot == null) {
-                int id = sqlClient.sqlInsert.directInsertObject(entity);
+                long id = sqlClient.sqlInsert.directInsertObject(entity);
                 String myAggregateRoot = entityAttribute.getAggregateRootById(id);
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                 entityAttribute.setId(entity, id);
@@ -116,7 +116,7 @@ public class HighValueCacheImpl extends CacheImpl {
                     }
                 });
                 LockUtil.asyncLock(aggregateRoot, () -> {
-                    int id = sqlClient.sqlInsert.directInsertObject(entity);
+                    long id = sqlClient.sqlInsert.directInsertObject(entity);
                     initialEmbeddedObject(entityAttribute, entity, id);
                 });
             }
