@@ -158,13 +158,17 @@ public class ExclusiveCacheImpl extends CacheImpl {
         try {
             SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(updateEntity.getClass());
             String aggregateRoot = entityAttribute.getAggregateRoot(updateEntity);
-            LockUtil.syncLock(aggregateRoot, () -> {
-                List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(updateEntity);
-                for (String insertDiscreteRoot : insertDiscreteRoots) {
-                    caffeineAddDiscreteRoot(insertDiscreteRoot, updateEntity);
-                }
-                this.caffeineCache.put(aggregateRoot, updateEntity);
-            });
+            if(aggregateRoot != null) {
+                LockUtil.syncLock(aggregateRoot, () -> {
+                    List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(updateEntity);
+                    for (String insertDiscreteRoot : insertDiscreteRoots) {
+                        caffeineAddDiscreteRoot(insertDiscreteRoot, updateEntity);
+                    }
+                    this.caffeineCache.put(aggregateRoot, updateEntity);
+                });
+            }else{
+                this.insert(updateEntity);
+            }
             return true;
         } catch (Exception e) {
             e.printStackTrace();
