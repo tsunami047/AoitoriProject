@@ -58,7 +58,6 @@ public class SQLUpdateImpl {
                     sql.setLength(sql.length() - 5);
                 }
             }
-
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
                 int paramIndex = 1;
                 for (String fieldName : entityAttribute.getUpdateFields()) {

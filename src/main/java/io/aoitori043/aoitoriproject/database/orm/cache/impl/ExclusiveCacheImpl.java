@@ -162,11 +162,9 @@ public class ExclusiveCacheImpl extends CacheImpl {
             String aggregateRoot = entityAttribute.getAggregateRoot(updateEntity);
             if(aggregateRoot != null) {
                 LockUtil.syncLock(aggregateRoot, () -> {
-                    List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(updateEntity);
-                    for (String insertDiscreteRoot : insertDiscreteRoots) {
-                        caffeineAddDiscreteRoot(insertDiscreteRoot, updateEntity);
-                    }
-                    this.caffeineCache.put(aggregateRoot, updateEntity);
+                    //聚合根对象被替换了，离散根不止为何实体是不同的。
+                    String playerName = entityAttribute.getPlayerName(updateEntity);
+                    this.caffeineCache.signWaitUpdateData(playerName,aggregateRoot);
                 });
             }else{
                 this.insert(updateEntity);
@@ -296,7 +294,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
     public static class ExclusiveCaffeineCacheImpl extends CaffeineCacheImpl {
         public ExclusiveCacheImpl exclusiveCache;
         //用来标记更新
-        public ConcurrentHashMap<String, Set<String>> playerWaitUpdateAggregateMap = new ConcurrentHashMap<>();
+        public ConcurrentHashMap<String,Set<String>> playerWaitUpdateAggregateMap = new ConcurrentHashMap<>();
         //用来级联删除缓存
         public ConcurrentHashMap<String,Map<String,Object>> playerRootMap = new ConcurrentHashMap<>();
 
@@ -304,6 +302,10 @@ public class ExclusiveCacheImpl extends CacheImpl {
             super(exclusiveCache.sqlClient);
             this.exclusiveCache = exclusiveCache;
             this.startCopyLoop();
+        }
+
+        public void signWaitUpdateData(String playerName,String aggregateRoot){
+            playerWaitUpdateAggregateMap.computeIfAbsent(playerName, k -> new LinkedHashSet<>()).add(aggregateRoot);
         }
 
         public void startCopyLoop() {
@@ -367,21 +369,41 @@ public class ExclusiveCacheImpl extends CacheImpl {
         }
 
         public void removeCache(String playerName){
-            playerWaitUpdateAggregateMap.remove(playerName);
-            Map<String, Object> stringObjectMap = playerRootMap.get(playerName);
-            for (Map.Entry<String, Object> discreteMap : stringObjectMap.entrySet()) {
-                String key = discreteMap.getKey();
-                if (key.charAt(0) == '$') {
-                    directDel(key);
-                }else if(key.charAt(0) == '%'){
-                    Object value = discreteMap.getValue();
-                    List list = (List) super.get(key);
-                    list.remove(value);
-                    if(list.isEmpty()){
-                        directDel(key);
+            HashMap<String,Object> hashMap = new HashMap<>();
+            for (Map.Entry<String, Object> entry : super.getCache().asMap().entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof List) {
+                    List<?> objects = (List<?>) value;
+                    Iterator<?> iterator = objects.iterator();
+                    List<Object> objects1 = new ArrayList<>();
+                    while (iterator.hasNext()) {
+                        Object next = iterator.next();
+                        SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(next.getClass());
+                        if (entityAttribute.getPlayerName(next).equals(playerName)) {
+                            objects1.add(next);
+                            hashMap.put(entry.getKey(),objects1);
+                        }
+                    }
+                }else{
+                    SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(value.getClass());
+                    if (entityAttribute.getPlayerName(value).equals(playerName)) {
+                        super.del(entry.getKey());
                     }
                 }
             }
+            for (Map.Entry<String, Object> entry : hashMap.entrySet()) {
+                String key = entry.getKey();
+                List queryPlayerIndex = (List) entry.getValue();
+                List cacheData = (List) super.getCache().getIfPresent(key);
+                for (Object playerIndex : queryPlayerIndex) {
+                    cacheData.remove(playerIndex);
+                }
+                if (cacheData.isEmpty()) {
+                    super.getCache().invalidate(key);
+                }
+            }
+            playerWaitUpdateAggregateMap.remove(playerName);
+            playerRootMap.remove(playerName);
 
         }
 
@@ -402,16 +424,13 @@ public class ExclusiveCacheImpl extends CacheImpl {
                     if (playerName == null) {
                         throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
                     }
-                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,o);
+                    playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,object);
                 }
             }else {
                 SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(o.getClass());
                 String playerName = entityAttribute.getPlayerName(o);
                 if (playerName == null) {
                     throw new RuntimeException("使用 PLAYER_EXCLUSIVE_DATA 实体类型数据时，插入时必须保证有玩家名");
-                }
-                if (key.charAt(0) == '$') {
-                    playerWaitUpdateAggregateMap.computeIfAbsent(playerName, k -> new LinkedHashSet<>()).add(key);
                 }
                 playerRootMap.computeIfAbsent(playerName, k -> new HashMap<>()).put(key,o);
             }

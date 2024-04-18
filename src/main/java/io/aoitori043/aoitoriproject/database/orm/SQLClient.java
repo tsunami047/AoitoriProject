@@ -433,7 +433,7 @@ public class SQLClient {
                 //不存在，插入
                 cache.insert(entity);
             } else {
-                cache.apply(entity);
+                cache.update(entity,entity, CacheImpl.UpdateType.COPY_NULL);
             }
             return entity;
         }

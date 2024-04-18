@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.database.orm.cache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
+import lombok.Getter;
 
 import java.time.Duration;
 
@@ -11,6 +12,7 @@ import java.time.Duration;
  * @CreateTime: 2024-03-29  19:43
  * @Description: ?
  */
+@Getter
 public class CaffeineCacheImpl {
 
     public Cache<String, Object> cache;

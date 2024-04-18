@@ -134,7 +134,7 @@ public abstract class CacheImpl {
                 continue;
             }
             if (value == null) {
-                tempMap.put(fieldName, "null");
+//                tempMap.put(fieldName, "null");
                 continue;
             }
             if (field.isAnnotationPresent(ManyToMany.class) ||
