@@ -1,4 +1,6 @@
-![图片](https://github.com/tsunami047/AoitoriProject/assets/134914438/8045d350-31be-4c83-bbf3-9042cfb90852)
+<div align=center>
+	<img src="https://github.com/tsunami047/AoitoriProject/assets/134914438/8045d350-31be-4c83-bbf3-9042cfb90852"/>
+</div>
 
 青鸟Project
 =======
