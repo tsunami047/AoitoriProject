@@ -202,21 +202,16 @@ public class HighValueCacheImpl extends CacheImpl {
                 return entities;
             }
         } else {
-//            List<T> resultList = LockUtil.syncLockSubmit(aggregateRoot, () -> {
             Object entityFromRedis = getEntityFromRedis(entityAttribute, aggregateRoot);
             if (entityFromRedis != null) {
                 return Collections.singletonList((T) entityFromRedis);
             }
-//                return null;
-//            });
-//            if (resultList == null) {
             List<Object> entityFromMySQLByAggregateRoot = getEntityFromMySQLByAggregateRoot(entityAttribute, aggregateRoot);
             if (entityFromMySQLByAggregateRoot != null) {
                 Object entityFromMySQL = entityFromMySQLByAggregateRoot.get(0);
                 LockUtil.asyncLock(aggregateRoot, () -> cachingRedis(entityAttribute, aggregateRoot, entityFromMySQL));
                 return Collections.singletonList((T) entityFromMySQL);
             }
-//            }
             return Collections.emptyList();
         }
     }

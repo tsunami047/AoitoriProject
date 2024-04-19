@@ -396,6 +396,7 @@ public class SQLClient {
         return this.query(instance);
     }
 
+    //从redis查询数据的时候，根据离散根查询到的数据，还需要判断其它变量是否对得上！
     public <T> List<T> query(T insertEntity){
         EntityAttributes entityAttributes = attributesHashMap.get(insertEntity.getClass());
         this.nonnull(entityAttributes);

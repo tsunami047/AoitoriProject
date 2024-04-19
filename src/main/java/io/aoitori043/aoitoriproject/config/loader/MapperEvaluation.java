@@ -74,29 +74,35 @@ public class MapperEvaluation {
             if (type instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) type;
                 typeArguments = parameterizedType.getActualTypeArguments();
-            }else{
+            } else {
                 throw new IllegalArgumentException("泛型参数缺少");
             }
             field.set(fieldSetObj, map);
-            if(typeArguments[1] == List.class){
-                ConfigurationSection listSection = section.getConfigurationSection(field.getName());
-                if(listSection !=null){
-                    Set<String> keys = listSection.getKeys(false);
-                    for (String key : keys) {
-                        List<String> stringList = listSection.getStringList(key);
-                        map.put(key,stringList);
+
+            // 判断第二个泛型参数的类型
+            if (typeArguments.length >= 2) {
+                Type typeArgument = typeArguments[1];
+                if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")){
+                    ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                    if (listSection != null) {
+                        Set<String> keys = listSection.getKeys(false);
+                        for (String key : keys) {
+                            List<String> stringList = listSection.getStringList(key);
+                            map.put(key, stringList);
+                        }
                     }
-                }
-            }else if(typeArguments[1] == String.class){
-                ConfigurationSection listSection = section.getConfigurationSection(field.getName());
-                if(listSection!=null){
-                    Set<String> keys = listSection.getKeys(false);
-                    for (String key : keys) {
-                        map.put(key,listSection.getString(key));
+                } else if (typeArgument.getTypeName().equals("java.lang.String")) {
+                    ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                    if (listSection != null) {
+                        Set<String> keys = listSection.getKeys(false);
+                        for (String key : keys) {
+                            map.put(key, listSection.getString(key));
+                        }
                     }
                 }
             }
         }
+
 
 
     }
