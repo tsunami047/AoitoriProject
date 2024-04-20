@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
 import static org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER;
 import static org.bukkit.event.player.PlayerPreLoginEvent.Result.ALLOWED;
+
+//离散根聚合根指向一个玩家名，玩家名中再存hash，再通过离散根聚合根指向实体
 @Getter
 public class ExclusiveCacheImpl extends CacheImpl {
 
