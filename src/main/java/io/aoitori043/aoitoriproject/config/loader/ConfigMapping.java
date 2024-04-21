@@ -60,10 +60,39 @@ public class ConfigMapping {
         return className.contains("$");
     }
 
-    public static void loadFromConfig(Object object,String parentName,ConfigurationSection section) {
-        if (section == null) {
-            return;
+    public static void loadFromConfig(Object object,String parentName) {
+        Class<?> clazz = object.getClass();
+        if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
+            for (Field field : object.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(NonConfigProperty.class)) {
+                    continue;
+                }
+                if (field.isAnnotationPresent(ConfigProperty.class)) {
+                    findConversion(object, null, field,parentName);
+                }else{
+                    String propertyName = field.getName();
+                    try {
+                        getValue(object, null, field, propertyName,parentName);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }else {
+            for (Field field : object.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(ConfigProperty.class)) {
+                    findConversion(object, null, field,parentName);
+                }
+            }
         }
+        try {
+            performNullCheck(object);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadFromConfig(Object object,String parentName,ConfigurationSection section) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             for (Field field : object.getClass().getDeclaredFields()) {

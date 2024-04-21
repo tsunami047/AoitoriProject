@@ -57,7 +57,7 @@ public class YamlMapping {
     }
 
 
-    public static void loadFromConfig(Object object, YamlConfiguration yamlConfiguration) {
+    public static void loadFromConfig(Object object, YamlConfiguration yamlConfiguration,String parentName) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -69,7 +69,7 @@ public class YamlMapping {
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(object, yamlConfiguration, field, propertyName,null);
+                        getValue(object, yamlConfiguration, field, propertyName,parentName);
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     }

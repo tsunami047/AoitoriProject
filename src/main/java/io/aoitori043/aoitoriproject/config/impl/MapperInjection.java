@@ -77,7 +77,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                             if(fieldAnnotation.singe()){
                                 try {
                                     Object instance = createInstance((Class<?>)typeArguments[1]);
-                                    YamlMapping.loadFromConfig(instance,yaml);
+                                    YamlMapping.loadFromConfig(instance,yaml,yamlName);
                                     map.put(yamlName, instance);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -102,7 +102,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                     YamlConfiguration yaml = FileLoader.releaseAndLoadFile(getPlugin(),annotation.path() + ".yml");
                     try {
                         Object instance = createInstance((Class<?>)field.getType());
-                        YamlMapping.loadFromConfig(instance, yaml);
+                        YamlMapping.loadFromConfig(instance, yaml,annotation.path());
                         field.set(isStaticField(field) ? null : this, instance);
                     } catch (Exception e) {
                         e.printStackTrace();

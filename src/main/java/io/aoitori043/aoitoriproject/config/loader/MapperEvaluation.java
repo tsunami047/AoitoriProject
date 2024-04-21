@@ -32,7 +32,7 @@ public class MapperEvaluation {
             return;
         }
         propertyName = propertyName.replace("$", ".");
-        if (section.get(propertyName) != null) {
+        if (section!=null && section.get(propertyName) != null) {
             if (field.getType() == String.class) {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
@@ -83,20 +83,24 @@ public class MapperEvaluation {
             if (typeArguments.length >= 2) {
                 Type typeArgument = typeArguments[1];
                 if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")){
-                    ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                    if (listSection != null) {
-                        Set<String> keys = listSection.getKeys(false);
-                        for (String key : keys) {
-                            List<String> stringList = listSection.getStringList(key);
-                            map.put(key, stringList);
+                    if(section!=null){
+                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                        if (listSection != null) {
+                            Set<String> keys = listSection.getKeys(false);
+                            for (String key : keys) {
+                                List<String> stringList = listSection.getStringList(key);
+                                map.put(key, stringList);
+                            }
                         }
                     }
                 } else if (typeArgument.getTypeName().equals("java.lang.String")) {
-                    ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                    if (listSection != null) {
-                        Set<String> keys = listSection.getKeys(false);
-                        for (String key : keys) {
-                            map.put(key, listSection.getString(key));
+                    if(section!=null){
+                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                        if (listSection != null) {
+                            Set<String> keys = listSection.getKeys(false);
+                            for (String key : keys) {
+                                map.put(key, listSection.getString(key));
+                            }
                         }
                     }
                 }
@@ -173,8 +177,10 @@ public class MapperEvaluation {
             field.set(object, map);
             if (getFlatMapping.stringKeys().length != 0) {
                 for (String key : getFlatMapping.stringKeys()) {
-                    ConfigurationSection subSection = section.getConfigurationSection(key.replace("$", "."));
-                    if (subSection == null) return true;
+                    ConfigurationSection subSection = null;
+                    if(section != null){
+                        subSection = section.getConfigurationSection(key.replace("$", "."));
+                    }
                     Object instance = createInstance((Class<?>)typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, key, object);
@@ -185,8 +191,10 @@ public class MapperEvaluation {
                 Enum[] enumConstants = ((Class<? extends Enum>)typeArguments[0]).getEnumConstants();
                 for (Enum enumConstant : enumConstants) {
                     String name = enumConstant.name();
-                    ConfigurationSection subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
-                    if (subSection == null) return true;
+                    ConfigurationSection subSection = null;
+                    if(section!=null){
+                        subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
+                    }
                     Object instance = createInstance((Class<?>)typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, enumConstant, object);
@@ -206,13 +214,17 @@ public class MapperEvaluation {
             if (getFoldMapping == null) {
                 return false;
             }
-            ConfigurationSection foldSection = section.getConfigurationSection(propertyName);
+            ConfigurationSection foldSection = null;
+            if(section != null){
+                foldSection = section.getConfigurationSection(propertyName);
+            }
             Object instance = createInstance((Class<?>)field.getType());
             field.set(object, instance);
             if (foldSection == null) {
-                return true;
+                ConfigMapping.loadFromConfig(instance, null, null);
+            }else {
+                ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
             }
-            ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
             injectDefaultValue(instance, propertyName, object);
             MapperInjection.runAnnotatedMethods(instance);
             return true;
@@ -238,16 +250,18 @@ public class MapperEvaluation {
             }
             Map<String, Object> map = (Map) createInstance(field.getType());
             field.set(object, map);
-            ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
-            if (mapperSection == null) return true;
-            Set<String> keys = mapperSection.getKeys(false);
-            for (String key : keys) {
-                ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
-                Object instance = createInstance((Class<?>)typeArguments[1]);
-                ConfigMapping.loadFromConfig(instance, null, configurationSection);
-                injectDefaultValue(instance, key, object);
-                MapperInjection.runAnnotatedMethods(instance);
-                map.put(key, instance);
+            if(section!=null){
+                ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
+                if (mapperSection == null) return true;
+                Set<String> keys = mapperSection.getKeys(false);
+                for (String key : keys) {
+                    ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
+                    Object instance = createInstance((Class<?>)typeArguments[1]);
+                    ConfigMapping.loadFromConfig(instance, null, configurationSection);
+                    injectDefaultValue(instance, key, object);
+                    MapperInjection.runAnnotatedMethods(instance);
+                    map.put(key, instance);
+                }
             }
             return true;
         } catch (Exception e) {
