@@ -78,6 +78,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                 try {
                                     Object instance = createInstance((Class<?>)typeArguments[1]);
                                     YamlMapping.loadFromConfig(instance,yaml,yamlName);
+                                    runAnnotatedMethods(instance);
                                     map.put(yamlName, instance);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -88,6 +89,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                         Object instance = createInstance((Class<?>) typeArguments[1]);
                                         ConfigurationSection section = yaml.getConfigurationSection(key);
                                         ConfigMapping.loadFromConfig(instance, key, section);
+                                        runAnnotatedMethods(instance);
                                         map.put(key, instance);
                                     }catch (Exception e){
                                         e.printStackTrace();
