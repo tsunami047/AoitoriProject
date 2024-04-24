@@ -32,7 +32,7 @@ public class MapperEvaluation {
             return;
         }
         propertyName = propertyName.replace("$", ".");
-        if (section!=null && section.get(propertyName) != null) {
+        if (section != null && section.get(propertyName) != null) {
             if (field.getType() == String.class) {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
@@ -58,7 +58,7 @@ public class MapperEvaluation {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else {
+        } else {
             if (field.getType() == List.class) {
                 field.set(fieldSetObj, new ArrayList<>());
                 return;
@@ -82,8 +82,8 @@ public class MapperEvaluation {
             // 判断第二个泛型参数的类型
             if (typeArguments.length >= 2) {
                 Type typeArgument = typeArguments[1];
-                if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")){
-                    if(section!=null){
+                if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
+                    if (section != null) {
                         ConfigurationSection listSection = section.getConfigurationSection(propertyName);
                         if (listSection != null) {
                             Set<String> keys = listSection.getKeys(false);
@@ -94,7 +94,7 @@ public class MapperEvaluation {
                         }
                     }
                 } else if (typeArgument.getTypeName().equals("java.lang.String")) {
-                    if(section!=null){
+                    if (section != null) {
                         ConfigurationSection listSection = section.getConfigurationSection(propertyName);
                         if (listSection != null) {
                             Set<String> keys = listSection.getKeys(false);
@@ -103,10 +103,41 @@ public class MapperEvaluation {
                             }
                         }
                     }
+                } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.util.List<java.lang.String>>")) {
+                    if (section != null) {
+                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                        if (listSection != null) {
+                            Set<String> keys = listSection.getKeys(false);
+                            for (String key : keys) {
+                                ConfigurationSection mapSection = listSection.getConfigurationSection(key);
+                                Set<String> keys1 = mapSection.getKeys(false);
+                                LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                                for (String s : keys1) {
+                                    map1.put(s, mapSection.getStringList(s));
+                                }
+                                map.put(key, map1);
+                            }
+                        }
+                    }
+                } else if (typeArgument.getTypeName().equals("java.util.Map<java.lang.String, java.util.List<java.lang.String>>")) {
+                    if (section != null) {
+                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                        if (listSection != null) {
+                            Set<String> keys = listSection.getKeys(false);
+                            for (String key : keys) {
+                                ConfigurationSection mapSection = listSection.getConfigurationSection(key);
+                                Set<String> keys1 = mapSection.getKeys(false);
+                                LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                                for (String s : keys1) {
+                                    map1.put(s, mapSection.getStringList(s));
+                                }
+                                map.put(key, map1);
+                            }
+                        }
+                    }
                 }
             }
         }
-
 
 
     }
@@ -114,8 +145,8 @@ public class MapperEvaluation {
 
     public static boolean mappingInject(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
         return injectMapping(object, section, field, propertyName) |
-        injectFoldMapping (object, section, field, propertyName) |
-        injectFlatMapping(object, section, field);
+                injectFoldMapping(object, section, field, propertyName) |
+                injectFlatMapping(object, section, field);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -169,7 +200,7 @@ public class MapperEvaluation {
             if (type instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) type;
                 typeArguments = parameterizedType.getActualTypeArguments();
-            }else{
+            } else {
                 throw new IllegalArgumentException("泛型参数缺少");
             }
             //(Class<?>)
@@ -178,24 +209,24 @@ public class MapperEvaluation {
             if (getFlatMapping.stringKeys().length != 0) {
                 for (String key : getFlatMapping.stringKeys()) {
                     ConfigurationSection subSection = null;
-                    if(section != null){
+                    if (section != null) {
                         subSection = section.getConfigurationSection(key.replace("$", "."));
                     }
-                    Object instance = createInstance((Class<?>)typeArguments[1]);
+                    Object instance = createInstance((Class<?>) typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, key, object);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
             } else {
-                Enum[] enumConstants = ((Class<? extends Enum>)typeArguments[0]).getEnumConstants();
+                Enum[] enumConstants = ((Class<? extends Enum>) typeArguments[0]).getEnumConstants();
                 for (Enum enumConstant : enumConstants) {
                     String name = enumConstant.name();
                     ConfigurationSection subSection = null;
-                    if(section!=null){
+                    if (section != null) {
                         subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
                     }
-                    Object instance = createInstance((Class<?>)typeArguments[1]);
+                    Object instance = createInstance((Class<?>) typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, enumConstant, object);
                     MapperInjection.runAnnotatedMethods(instance);
@@ -215,14 +246,14 @@ public class MapperEvaluation {
                 return false;
             }
             ConfigurationSection foldSection = null;
-            if(section != null){
+            if (section != null) {
                 foldSection = section.getConfigurationSection(propertyName);
             }
-            Object instance = createInstance((Class<?>)field.getType());
+            Object instance = createInstance((Class<?>) field.getType());
             field.set(object, instance);
             if (foldSection == null) {
                 ConfigMapping.loadFromConfig(instance, null, null);
-            }else {
+            } else {
                 ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
             }
             injectDefaultValue(instance, propertyName, object);
@@ -245,18 +276,18 @@ public class MapperEvaluation {
             if (type instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) type;
                 typeArguments = parameterizedType.getActualTypeArguments();
-            }else{
+            } else {
                 throw new IllegalArgumentException("泛型参数缺少");
             }
             Map<String, Object> map = (Map) createInstance(field.getType());
             field.set(object, map);
-            if(section!=null){
+            if (section != null) {
                 ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
                 if (mapperSection == null) return true;
                 Set<String> keys = mapperSection.getKeys(false);
                 for (String key : keys) {
                     ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
-                    Object instance = createInstance((Class<?>)typeArguments[1]);
+                    Object instance = createInstance((Class<?>) typeArguments[1]);
                     ConfigMapping.loadFromConfig(instance, null, configurationSection);
                     injectDefaultValue(instance, key, object);
                     MapperInjection.runAnnotatedMethods(instance);
