@@ -287,6 +287,8 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         return Collections.emptyList();
     }
 
+
+
     @Override
     public boolean onCommand(CommandSender sender, Command myCommand, String lable, String[] args) {
         if (args.length == 0) {
@@ -296,13 +298,13 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         String argsHead = args[0].toLowerCase();
         SubCommand subCommand = subCommands.get(argsHead);
         if (subCommand == null) {
-            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + args[0] + " §c<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c<-");
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
         if(args.length == 1){
             if (!subCommand.isNotArgument) {
-                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + args[0] + " §c<-");
+                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___<-");
                 myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
                 return true;
             }else{
@@ -320,12 +322,13 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         }
         SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.get(args[1]);
         if(subCommandExecutor == null){
-            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + args[1] + " §c<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c<-");
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
         if (args.length < subCommandExecutor.minLength) {
-            myBasicCommand.sendMessageWithPrefix(sender, "必须指令参数缺少，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
         if (subCommandExecutor.executionStartMessage != null) {
