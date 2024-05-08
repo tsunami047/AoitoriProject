@@ -215,8 +215,8 @@ public class MapperEvaluation {
                         subSection = section.getConfigurationSection(key.replace("$", "."));
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
-                    ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, key, object);
+                    ConfigMapping.loadFromConfig(instance, null, subSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
@@ -229,8 +229,8 @@ public class MapperEvaluation {
                         subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
-                    ConfigMapping.loadFromConfig(instance, null, subSection);
                     injectDefaultValue(instance, enumConstant, object);
+                    ConfigMapping.loadFromConfig(instance, null, subSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(enumConstant, instance);
                 }
@@ -252,13 +252,13 @@ public class MapperEvaluation {
                 foldSection = section.getConfigurationSection(propertyName);
             }
             Object instance = createInstance((Class<?>) field.getType());
+            injectDefaultValue(instance, propertyName, object);
             field.set(object, instance);
             if (foldSection == null) {
                 ConfigMapping.loadFromConfig(instance, null, null);
             } else {
                 ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
             }
-            injectDefaultValue(instance, propertyName, object);
             MapperInjection.runAnnotatedMethods(instance);
             return true;
         } catch (Exception e) {
@@ -290,8 +290,8 @@ public class MapperEvaluation {
                 for (String key : keys) {
                     ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
                     Object instance = createInstance((Class<?>) typeArguments[1]);
-                    ConfigMapping.loadFromConfig(instance, null, configurationSection);
                     injectDefaultValue(instance, key, object);
+                    ConfigMapping.loadFromConfig(instance, null, configurationSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
