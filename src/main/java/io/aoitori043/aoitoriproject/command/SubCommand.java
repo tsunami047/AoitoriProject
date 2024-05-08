@@ -125,10 +125,14 @@ public abstract class SubCommand {
     public String help;
     public String commandprefix;
 
+    public Method method;
+
     public boolean isOp = false;
     public String permission = null;
     public String executionStartMessage = null;
     public String executionEndMessage = null;
+
+    public int minLength = -1;
 
 
     public SubCommand() {

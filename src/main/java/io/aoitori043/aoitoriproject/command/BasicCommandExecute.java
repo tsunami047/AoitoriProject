@@ -126,7 +126,25 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             for (Method method : methods) { //遍历
                 method.setAccessible(true);
                 NotArgument notArgument = method.getAnnotation(NotArgument.class);
-                if(notArgument!=null){
+                if (notArgument != null) {
+                    subCommand.setMethod(method);
+                    ParameterSpecifications parameterSpecificationsAnnotation = method.getAnnotation(ParameterSpecifications.class);
+                    if (parameterSpecificationsAnnotation != null) {
+                        ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
+                        if (subCommand.minLength == -1) {
+                            subCommand.minLength = 1;
+                        }
+                        for (ParameterSpecification parameterSpecification : parameterSpecifications) {
+                            if (!parameterSpecification.nullable()) {
+                                subCommand.minLength++;
+                            }
+                        }
+                    } else if (method.getAnnotation(ParameterSpecification.class) != null) {
+                        if (subCommand.minLength == -1) {
+                            subCommand.minLength = 2;
+                        }
+                    }
+
                     subCommand.isNotArgument = true;
                     subCommand.help = notArgument.help();
                     subCommand.notArgumentMethodName = method.getName();
@@ -188,46 +206,100 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         help.add(String.format("§f- /%s §7显示指令帮助", basicCommand.getAlias()));
         for (Map.Entry<String, SubCommand> entry : subCommands.entrySet()) {
             SubCommand subCommand = entry.getValue();
-            if(subCommand.isNotArgument){
-                help.add(String.format("§f- /" + basicCommand.getAlias() + " " + subCommand.commandprefix + " §7" + subCommand.help));
+            if (subCommand.isNotArgument) {
+//                help.add(String.format("§f- /" + basicCommand.getAlias() + " " + subCommand.commandprefix + " §7" + subCommand.help));
+                generateNotArgumentHelp(basicCommand,subCommand);
                 continue;
             }
             for (Map.Entry<String, SubCommand.SubCommandExecutor> executorEntry : subCommand.subCommands.entrySet()) {
                 SubCommand.SubCommandExecutor subCommandExecutor = executorEntry.getValue();
-                Method executeMethod = subCommandExecutor.getExecuteMethod();
-                ParameterSpecifications parameterSpecificationsAnnotation = executeMethod.getAnnotation(ParameterSpecifications.class);
-                TreeMap<Integer, ParameterSpecification> treeMap = new TreeMap<>(Comparator.naturalOrder());
+                generateHelp(basicCommand, subCommandExecutor, subCommand);
+            }
+        }
+    }
 
-
-                Parameter parameter = executeMethod.getAnnotation(Parameter.class);
-                if (parameterSpecificationsAnnotation != null) {
-                    ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
-                    if (subCommandExecutor.minLength == -1) {
-                        subCommandExecutor.minLength = 1;
-                    }
-                    for (ParameterSpecification parameterSpecification : parameterSpecifications) {
-                        treeMap.put(parameterSpecification.index(), parameterSpecification);
-                        if (!parameterSpecification.nullable()) {
-                            subCommandExecutor.minLength++;
-                        }
-                    }
-                    subCommandExecutor.map = treeMap;
-                    StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " "+subCommand.getCommandprefix()+" " + parameter.argument() + " ");
-                    treeMap.forEach((index, parameter1) -> {
-                        if (!parameter1.nullable()) {
-                            stringBuilder.append(String.format("<%s> ", parameter1.tip()));
-                        } else {
-                            stringBuilder.append(String.format("[%s] ", parameter1.tip()));
-                        }
-                    });
-                    stringBuilder.append("§7").append(parameter.help());
-                    help.add(String.format(stringBuilder.toString()));
+    private void generateNotArgumentHelp(BasicCommand basicCommand, SubCommand subCommand) {
+        Method executeMethod = subCommand.getMethod();
+        ParameterSpecifications parameterSpecificationsAnnotation = executeMethod.getAnnotation(ParameterSpecifications.class);
+        TreeMap<Integer, ParameterSpecification> treeMap = new TreeMap<>(Comparator.naturalOrder());
+        if (parameterSpecificationsAnnotation != null) {
+            ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
+            for (ParameterSpecification parameterSpecification : parameterSpecifications) {
+                treeMap.put(parameterSpecification.index(), parameterSpecification);
+            }
+            StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " ");
+            treeMap.forEach((index, parameter1) -> {
+                if (!parameter1.nullable()) {
+                    stringBuilder.append(String.format("<%s> ", parameter1.tip()));
                 } else {
-                    help.add(String.format("§f- /" + basicCommand.getAlias() + " "+subCommand.getCommandprefix()+" " + parameter.argument() + " §7" + parameter.help()));
-                    if (subCommandExecutor.minLength == -1) {
-                        subCommandExecutor.minLength = 1;
-                    }
+                    stringBuilder.append(String.format("[%s] ", parameter1.tip()));
                 }
+            });
+            stringBuilder.append("§7").append(subCommand.help);
+            help.add(String.format(stringBuilder.toString()));
+        } else if (executeMethod.getAnnotation(ParameterSpecification.class) != null) {
+            ParameterSpecification parameterSpecification = executeMethod.getAnnotation(ParameterSpecification.class);
+            treeMap.put(parameterSpecification.index(), parameterSpecification);
+            StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " ");
+            treeMap.forEach((index, parameter1) -> {
+                if (!parameter1.nullable()) {
+                    stringBuilder.append(String.format("<%s> ", parameter1.tip()));
+                } else {
+                    stringBuilder.append(String.format("[%s] ", parameter1.tip()));
+                }
+            });
+            stringBuilder.append("§7").append(subCommand.help);
+            help.add(String.format(stringBuilder.toString()));
+        } else {
+            help.add(String.format("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " "  + "§7" + subCommand.help));
+        }
+    }
+
+    private void generateHelp(BasicCommand basicCommand, SubCommand.SubCommandExecutor subCommandExecutor, SubCommand subCommand) {
+        Method executeMethod = subCommandExecutor.getExecuteMethod();
+        ParameterSpecifications parameterSpecificationsAnnotation = executeMethod.getAnnotation(ParameterSpecifications.class);
+        TreeMap<Integer, ParameterSpecification> treeMap = new TreeMap<>(Comparator.naturalOrder());
+        Parameter parameter = executeMethod.getAnnotation(Parameter.class);
+        if (parameterSpecificationsAnnotation != null) {
+            ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
+            if (subCommandExecutor.minLength == -1) {
+                subCommandExecutor.minLength = 1;
+            }
+            for (ParameterSpecification parameterSpecification : parameterSpecifications) {
+                treeMap.put(parameterSpecification.index(), parameterSpecification);
+                if (!parameterSpecification.nullable()) {
+                    subCommandExecutor.minLength++;
+                }
+            }
+            subCommandExecutor.map = treeMap;
+            StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " " + parameter.argument() + " ");
+            treeMap.forEach((index, parameter1) -> {
+                if (!parameter1.nullable()) {
+                    stringBuilder.append(String.format("<%s> ", parameter1.tip()));
+                } else {
+                    stringBuilder.append(String.format("[%s] ", parameter1.tip()));
+                }
+            });
+            stringBuilder.append("§7").append(parameter.help());
+            help.add(String.format(stringBuilder.toString()));
+        } else if (executeMethod.getAnnotation(ParameterSpecification.class) != null) {
+            ParameterSpecification parameterSpecification = executeMethod.getAnnotation(ParameterSpecification.class);
+            treeMap.put(parameterSpecification.index(), parameterSpecification);
+            subCommandExecutor.map = treeMap;
+            StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " " + parameter.argument() + " ");
+            treeMap.forEach((index, parameter1) -> {
+                if (!parameter1.nullable()) {
+                    stringBuilder.append(String.format("<%s> ", parameter1.tip()));
+                } else {
+                    stringBuilder.append(String.format("[%s] ", parameter1.tip()));
+                }
+            });
+            stringBuilder.append("§7").append(parameter.help());
+            help.add(String.format(stringBuilder.toString()));
+        } else {
+            help.add(String.format("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " " + parameter.argument() + " §7" + parameter.help()));
+            if (subCommandExecutor.minLength == -1) {
+                subCommandExecutor.minLength = 1;
             }
         }
     }
@@ -249,7 +321,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             return Collections.emptyList();
         }
         SubCommand.SubCommandExecutor subCommandExecutor;
-        if(args.length == 2){
+        if (args.length == 2) {
             subCommandExecutor = subCommand.subCommands.get("notArgument");
             if (subCommandExecutor == null) {
                 return Collections.emptyList();
@@ -288,7 +360,6 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
     }
 
 
-
     @Override
     public boolean onCommand(CommandSender sender, Command myCommand, String lable, String[] args) {
         if (args.length == 0) {
@@ -302,26 +373,24 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
-        if(args.length == 1){
-            if (!subCommand.isNotArgument) {
+        if(subCommand.isNotArgument){
+            if(args.length < subCommand.minLength){
                 myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___<-");
                 myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
                 return true;
-            }else{
-                if (subCommand.executionStartMessage != null) {
-                    myBasicCommand.sendMessage(sender, subCommand.executionStartMessage);
-                }
-                long startTime = System.nanoTime();
-                subCommand.executeNotArgumentMethod(sender, args);
-                long endTime = System.nanoTime();
-                if (subCommand.executionEndMessage != null) {
-                    myBasicCommand.sendMessage(sender, subCommand.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
-                }
             }
-            return true;
+            if (subCommand.executionStartMessage != null) {
+                myBasicCommand.sendMessage(sender, subCommand.executionStartMessage);
+            }
+            long startTime = System.nanoTime();
+            subCommand.executeNotArgumentMethod(sender, args);
+            long endTime = System.nanoTime();
+            if (subCommand.executionEndMessage != null) {
+                myBasicCommand.sendMessage(sender, subCommand.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
+            }
         }
         SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.get(args[1]);
-        if(subCommandExecutor == null){
+        if (subCommandExecutor == null) {
             myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c<-");
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
