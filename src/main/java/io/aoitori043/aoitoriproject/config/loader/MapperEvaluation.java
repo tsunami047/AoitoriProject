@@ -11,6 +11,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
+import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 
 /**
  * @Author: natsumi
@@ -56,6 +57,7 @@ public class MapperEvaluation {
                 field.set(object, parentName);
                 return;
             } catch (Exception e) {
+                printlnError(object);
                 e.printStackTrace();
             }
         } else {

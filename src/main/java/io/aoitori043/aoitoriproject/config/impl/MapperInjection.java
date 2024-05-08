@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.createInstance;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
+import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 
 /**
  * @Author: natsumi
@@ -35,6 +36,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                 try {
                     method.invoke(obj);
                 } catch (Exception e) {
+                    printlnError(obj);
                     e.printStackTrace();
                 }
             }
@@ -43,15 +45,17 @@ public abstract class MapperInjection extends AutoConfigPrinter {
 
     public static void injectYaml(JavaPlugin plugin, Object object){
         for (Field field : object.getClass().getFields()) {
+            String path = null;
             try {
                 field.setAccessible(true);
                 if (field.isAnnotationPresent(InjectYaml.class)) {
                     InjectYaml annotation = field.getAnnotation(InjectYaml.class);
-                    String path = annotation.path();
+                     path = annotation.path();
                     YamlConfiguration yamlConfiguration = FileLoader.releaseAndLoadFile(plugin,path + ".yml");
                     field.set(isStaticField(field)?null:object,yamlConfiguration);
                 }
             }catch (Exception e){
+                System.out.println("问题可能出自："+path);
                 e.printStackTrace();
             }
         }
@@ -81,7 +85,10 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                     runAnnotatedMethods(instance);
                                     map.put(yamlName, instance);
                                 } catch (Exception e) {
+                                    System.out.println("-------------------------------------------");
+                                    System.out.println("以下问题出自："+file.getAbsolutePath());
                                     e.printStackTrace();
+                                    System.out.println("--------------------------------------------");
                                 }
                             }else{
                                 for (String key : yaml.getKeys(false)) {
@@ -92,7 +99,10 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                         runAnnotatedMethods(instance);
                                         map.put(key, instance);
                                     }catch (Exception e){
+                                        System.out.println("-------------------------------------------");
+                                        System.out.println("以下问题出自："+file.getAbsolutePath());
                                         e.printStackTrace();
+                                        System.out.println("--------------------------------------------");
                                     }
                                 }
                             }
@@ -107,7 +117,10 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                         YamlMapping.loadFromConfig(instance, yaml,annotation.path());
                         field.set(isStaticField(field) ? null : this, instance);
                     } catch (Exception e) {
+                        System.out.println("-------------------------------------------");
+                        System.out.println("以下问题出自："+annotation.path() + ".yml");
                         e.printStackTrace();
+                        System.out.println("--------------------------------------------");
                     }
                 }
             } catch (Exception e) {

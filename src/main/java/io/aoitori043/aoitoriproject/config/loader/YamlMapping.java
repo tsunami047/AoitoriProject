@@ -56,6 +56,22 @@ public class YamlMapping {
         return className.contains("$");
     }
 
+    public static void printlnError(Object object){
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (field.getName().equals("index")) {
+                try {
+                    String fieldValue = (String) field.get(object);
+                    System.out.println("问题可能出自文件/键："+fieldValue);
+                }catch (Exception e){
+                    System.out.println("缺少index，无法定位错误位置");
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     public static void loadFromConfig(Object object, YamlConfiguration yamlConfiguration,String parentName) {
         Class<?> clazz = object.getClass();
@@ -72,6 +88,7 @@ public class YamlMapping {
                         getValue(object, yamlConfiguration, field, propertyName,parentName);
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
+                        printlnError(object);
                     }
                 }
             }
@@ -94,6 +111,7 @@ public class YamlMapping {
             getValue(object, yamlConfiguration, field, propertyName,null);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
+            printlnError(object);
         }
     }
 

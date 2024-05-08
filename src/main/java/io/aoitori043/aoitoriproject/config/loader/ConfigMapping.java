@@ -13,6 +13,7 @@ import java.lang.reflect.Modifier;
 
 import static io.aoitori043.aoitoriproject.config.InvalidUtil.performNullCheck;
 import static io.aoitori043.aoitoriproject.config.loader.MapperEvaluation.getValue;
+import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 
 /**
  * @Author: natsumi
@@ -46,9 +47,11 @@ public class ConfigMapping {
                         }
                         field.set(object,String.valueOf(executeJavaScriptCode(fieldValue)));
                     } catch (IllegalAccessException e) {
+                        printlnError(object);
                         e.printStackTrace();
                     }
                 }catch (Exception e){
+                    printlnError(object);
                     e.printStackTrace();
                 }
             }
@@ -74,6 +77,7 @@ public class ConfigMapping {
                     try {
                         getValue(object, section, field, propertyName,parentName);
                     } catch (IllegalAccessException e) {
+                        printlnError(object);
                         e.printStackTrace();
                     }
                 }
@@ -88,6 +92,7 @@ public class ConfigMapping {
         try {
             performNullCheck(object);
         }catch (Exception e){
+            printlnError(object);
             e.printStackTrace();
         }
     }
@@ -102,6 +107,7 @@ public class ConfigMapping {
             }
             getValue(object, section, field, propertyName,parentName);
         } catch (IllegalAccessException e) {
+            printlnError(object);
             e.printStackTrace();
         }
     }
