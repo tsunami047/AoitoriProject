@@ -375,7 +375,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         }
         if(subCommand.isNotArgument){
             if(args.length < subCommand.minLength){
-                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___<-");
+                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
                 myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
                 return true;
             }
@@ -388,6 +388,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             if (subCommand.executionEndMessage != null) {
                 myBasicCommand.sendMessage(sender, subCommand.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
             }
+            return true;
         }
         SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.get(args[1]);
         if (subCommandExecutor == null) {
@@ -396,7 +397,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             return true;
         }
         if (args.length < subCommandExecutor.minLength) {
-            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
             myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
