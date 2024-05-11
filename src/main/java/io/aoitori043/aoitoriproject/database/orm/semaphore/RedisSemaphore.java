@@ -1,4 +1,4 @@
-package io.aoitori043.aoitoriproject.database.orm.cache.semaphore;
+package io.aoitori043.aoitoriproject.database.orm.semaphore;
 
 import io.aoitori043.aoitoriproject.database.DatabaseProperties;
 import io.aoitori043.aoitoriproject.database.redis.RedisCore;

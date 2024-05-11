@@ -3,7 +3,7 @@ package io.aoitori043.aoitoriproject.database.orm;
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
-import io.aoitori043.aoitoriproject.database.orm.cache.impl.*;
+import io.aoitori043.aoitoriproject.database.orm.impl.*;
 import io.aoitori043.aoitoriproject.database.orm.cache.CaffeineCacheImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.JVMCacheSync;
 import io.aoitori043.aoitoriproject.database.orm.cache.RedisCacheImpl;

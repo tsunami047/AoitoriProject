@@ -2,7 +2,7 @@ package io.aoitori043.aoitoriproject.database.orm.cache;
 
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
-import io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl;
+import io.aoitori043.aoitoriproject.database.orm.impl.CacheImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

@@ -1,16 +1,16 @@
-package io.aoitori043.aoitoriproject.database.orm.cache.impl;
+package io.aoitori043.aoitoriproject.database.orm.impl;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.RedisCacheImpl;
-import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
+import io.aoitori043.aoitoriproject.database.orm.semaphore.LockUtil;
 import io.aoitori043.aoitoriproject.database.redis.RedisCore;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
 
 import java.util.*;
 
-import static io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
+import static io.aoitori043.aoitoriproject.database.orm.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
 
 public class FastCacheImpl extends CacheImpl{
     public FastCacheImpl(SQLClient sqlClient) {

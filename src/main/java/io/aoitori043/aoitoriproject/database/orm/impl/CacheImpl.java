@@ -1,11 +1,11 @@
-package io.aoitori043.aoitoriproject.database.orm.cache.impl;
+package io.aoitori043.aoitoriproject.database.orm.impl;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
-import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
+import io.aoitori043.aoitoriproject.database.orm.semaphore.LockUtil;
 import io.aoitori043.aoitoriproject.database.orm.sign.ManyToMany;
 import io.aoitori043.aoitoriproject.database.orm.sign.OneToMany;
 import io.aoitori043.aoitoriproject.database.orm.sign.OneToOne;

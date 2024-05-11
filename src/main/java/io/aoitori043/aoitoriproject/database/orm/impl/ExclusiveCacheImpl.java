@@ -1,4 +1,4 @@
-package io.aoitori043.aoitoriproject.database.orm.cache.impl;
+package io.aoitori043.aoitoriproject.database.orm.impl;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.AoitoriProject;
@@ -6,7 +6,7 @@ import io.aoitori043.aoitoriproject.PluginProvider;
 import io.aoitori043.aoitoriproject.database.DatabaseProperties;
 import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import io.aoitori043.aoitoriproject.database.orm.cache.CaffeineCacheImpl;
-import io.aoitori043.aoitoriproject.database.orm.cache.semaphore.LockUtil;
+import io.aoitori043.aoitoriproject.database.orm.semaphore.LockUtil;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -22,7 +22,7 @@ import redis.clients.jedis.Jedis;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
+import static io.aoitori043.aoitoriproject.database.orm.impl.CacheImpl.UpdateType.NOT_COPY_NULL;
 import static org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER;
 import static org.bukkit.event.player.PlayerPreLoginEvent.Result.ALLOWED;
 

@@ -1,6 +1,6 @@
-package io.aoitori043.aoitoriproject.database.orm.cache.semaphore;
+package io.aoitori043.aoitoriproject.database.orm.semaphore;
 
-import io.aoitori043.aoitoriproject.database.orm.cache.impl.CacheImplUtil;
+import io.aoitori043.aoitoriproject.database.orm.impl.CacheImplUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutorService;
