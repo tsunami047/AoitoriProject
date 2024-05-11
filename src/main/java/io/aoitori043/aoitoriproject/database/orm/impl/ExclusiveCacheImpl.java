@@ -26,6 +26,8 @@ import static io.aoitori043.aoitoriproject.database.orm.impl.CacheImpl.UpdateTyp
 import static org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER;
 import static org.bukkit.event.player.PlayerPreLoginEvent.Result.ALLOWED;
 
+
+//不行了的，改了离散根存储形式但是没有改代码 @TODO
 //离散根聚合根指向一个玩家名，玩家名中再存hash，再通过离散根聚合根指向实体
 @Getter
 public class ExclusiveCacheImpl extends CacheImpl {
@@ -57,7 +59,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
     public void cachingCaffeine(SQLClient.EntityAttributes entityAttribute, String aggregateRoot, Object entity) {
         List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
         for (String insertDiscreteRoot : insertDiscreteRoots) {
-            caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+            caffeineAddDiscreteRoot(insertDiscreteRoot, aggregateRoot);
         }
         this.caffeineCache.put(aggregateRoot, entity);
         this.injectForeignEntities(entity);
@@ -145,15 +147,15 @@ public class ExclusiveCacheImpl extends CacheImpl {
     }
 
     @Override
-    public <T> void caffeineAddDiscreteRoot(String discreteRoot, T t) {
+    public <T> void caffeineAddDiscreteRoot(String discreteRoot, String aggregateRoot) {
         Object o1 = this.caffeineCache.get(discreteRoot);
         if (o1 != null) {
             List list = (List) o1;
-            if (!list.contains(t)) {
-                list.add(t);
+            if (!list.contains(aggregateRoot)) {
+                list.add(aggregateRoot);
             }
         } else {
-            this.caffeineCache.put(discreteRoot, new ArrayList<>(Collections.singletonList(t)));
+            this.caffeineCache.put(discreteRoot, new ArrayList<>(Collections.singletonList(aggregateRoot)));
         }
     }
 
@@ -255,7 +257,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
                     initialEmbeddedObject(entityAttribute, entity, id);
                     entityAttribute.getFieldAccess().set(entity, entityAttribute.getIdFieldName(), id);
                     for (String insertDiscreteRoot : insertDiscreteRoots) {
-                        caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+                        caffeineAddDiscreteRoot(insertDiscreteRoot, aggregateRoot);
                     }
                     this.caffeineCache.put(myAggregateRoot, entity);
                 });
@@ -270,7 +272,7 @@ public class ExclusiveCacheImpl extends CacheImpl {
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                 LockUtil.syncLock(aggregateRoot, () -> {
                     for (String insertDiscreteRoot : insertDiscreteRoots) {
-                        caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+                        caffeineAddDiscreteRoot(insertDiscreteRoot, aggregateRoot);
                     }
                     this.caffeineCache.put(aggregateRoot, entity);
                 });

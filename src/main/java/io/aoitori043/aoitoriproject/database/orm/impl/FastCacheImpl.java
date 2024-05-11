@@ -117,7 +117,7 @@ public class FastCacheImpl extends CacheImpl{
                     entityAttribute.getFieldAccess().set(entity, "id", incr);
 
                     for (String insertDiscreteRoot : insertDiscreteRoots) {
-                        caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+                        caffeineAddDiscreteRoot(insertDiscreteRoot, myAggregateRoot);
                     }
                     sqlClient.caffeineCache.put(myAggregateRoot, entity);
                 });
@@ -133,7 +133,7 @@ public class FastCacheImpl extends CacheImpl{
                 List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
                 LockUtil.syncLock(aggregateRoot, () -> {
                     for (String insertDiscreteRoot : insertDiscreteRoots) {
-                        caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+                        caffeineAddDiscreteRoot(insertDiscreteRoot, aggregateRoot);
                     }
                     sqlClient.caffeineCache.put(aggregateRoot, entity);
                 });
@@ -177,10 +177,16 @@ public class FastCacheImpl extends CacheImpl{
         String aggregateRoot = entityAttribute.getAggregateRoot(whereEntity);
         if (aggregateRoot == null) {
             String discreteRoot = entityAttribute.getDiscreteRoot(whereEntity);
-            Object o = this.sqlClient.caffeineCache.get(discreteRoot);
-            if (o != null) {
-                //可以在这里增加锁算法，但是会降低效率
-                return o == CacheImplUtil.emptyObject ? null : (List<T>) o;
+            List<String> queryAggregateRoot = (List<String>) this.sqlClient.caffeineCache.get(discreteRoot);
+            if(queryAggregateRoot!=null && !queryAggregateRoot.isEmpty()){
+                List<T> result = new ArrayList<>();
+                for (int i = 0; i < queryAggregateRoot.size(); i++) {
+                    T entity = (T) this.sqlClient.caffeineCache.get(queryAggregateRoot.get(i));
+                    result.add(entity);
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
             }
             List<String> aggregateRoots = this.sqlClient.redisCache.getList(discreteRoot);
             if (!aggregateRoots.isEmpty()) {

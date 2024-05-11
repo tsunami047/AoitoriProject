@@ -74,22 +74,22 @@ public abstract class CacheImpl {
 //        this.injectForeignEntities(entity);
         List<String> insertDiscreteRoots = entityAttribute.getInsertDiscreteRoots(entity);
         for (String insertDiscreteRoot : insertDiscreteRoots) {
-            caffeineAddDiscreteRoot(insertDiscreteRoot, entity);
+            caffeineAddDiscreteRoot(insertDiscreteRoot, aggregateRoot);
         }
         this.sqlClient.caffeineCache.put(aggregateRoot, entity);
 
     }
 
 
-    public <T> void caffeineAddDiscreteRoot(String discreteRoot, T t) {
+    public <T> void caffeineAddDiscreteRoot(String discreteRoot, String aggregateRoot) {
         Object o1 = this.sqlClient.caffeineCache.get(discreteRoot);
         if (o1 != null) {
             List list = (List) o1;
-            if (!list.contains(t)) {
-                list.add(t);
+            if (!list.contains(aggregateRoot)) {
+                list.add(aggregateRoot);
             }
         } else {
-            this.sqlClient.caffeineCache.put(discreteRoot, new ArrayList<>(Collections.singletonList(t)));
+            this.sqlClient.caffeineCache.put(discreteRoot, new ArrayList<>(Collections.singletonList(aggregateRoot)));
         }
     }
 
@@ -173,6 +173,9 @@ public abstract class CacheImpl {
         return instance;
     }
 
+    /*
+    更新外部实体
+     */
     public void updateForeignObject(Object o){
         SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(o.getClass());
         for (Map.Entry<String, SQLClient.EntityAttributes.ForeignProperty> entry : entityAttribute.getEmbeddedMapFieldProperties().entrySet()) {
