@@ -5,7 +5,6 @@ import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
 import io.aoitori043.aoitoriproject.database.orm.impl.*;
 import io.aoitori043.aoitoriproject.database.orm.cache.CaffeineCacheImpl;
-import io.aoitori043.aoitoriproject.database.orm.cache.JVMCacheSync;
 import io.aoitori043.aoitoriproject.database.orm.cache.RedisCacheImpl;
 import io.aoitori043.aoitoriproject.database.orm.fetch.TableFetch;
 import io.aoitori043.aoitoriproject.database.orm.sign.*;
@@ -46,7 +45,7 @@ public class SQLClient {
     public RedisCacheImpl redisCache = new RedisCacheImpl(Duration.ofHours(3));
     public CaffeineCacheImpl caffeineCache = new CaffeineCacheImpl(512,Duration.ofMinutes(10));
 //    public NonCacheImpl cache = new NonCacheImpl(this);
-    public JVMCacheSync jvmCacheSync;
+//    public JVMCacheSync jvmCacheSync;
     public TableFetch tableFetch = new TableFetch(this);
 
 
@@ -60,7 +59,7 @@ public class SQLClient {
         registerCacheImpl(ONLY_REDIS,new OnlyRedisImpl(this));
         registerCacheImpl(HIGH_VALUE_DATA,new HighValueCacheImpl(this));
         registerCacheImpl(FAST,new FastCacheImpl(this));
-        jvmCacheSync = new JVMCacheSync(this);
+//        jvmCacheSync = new JVMCacheSync(this);
 
     }
 
