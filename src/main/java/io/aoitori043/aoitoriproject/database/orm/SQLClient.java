@@ -83,6 +83,9 @@ public class SQLClient {
         //可以修改的字段
         List<String> updateFields;
 
+        //用于查询的字段
+        String[] queryFields;
+
         Class playerNameSuperClass;
 
         public String getPlayerName(Object entity){
@@ -170,6 +173,9 @@ public class SQLClient {
                 cacheType = cacheAnnotation.cacheType();
             }
             preloadUpdateField(clazz);
+
+
+            List<String> queryFieldsList = new ArrayList<>();
             for (Field field : fieldAccess.getFields()) {
                 if(field.isAnnotationPresent(ForeignAggregateRoot.class)){
                     ForeignAggregateRoot annotation = field.getAnnotation(ForeignAggregateRoot.class);
@@ -204,6 +210,12 @@ public class SQLClient {
                     FieldAccess annotationFieldAccess = FieldAccess.get(annotation.mapEntity());
                     embeddedMapFieldProperties.put(field.getName(),foreignProperty);
                 }
+                if(!field.isAnnotationPresent(AggregateRoot.class) &&
+                        !field.isAnnotationPresent(OneToMany.class) &&
+                        !field.isAnnotationPresent(OneToOne.class) &&
+                        !field.isAnnotationPresent(ManyToMany.class)){
+                    queryFieldsList.add(field.getName());
+                }
                 if(!field.isAnnotationPresent(OneToMany.class) &&
                         !field.isAnnotationPresent(OneToOne.class) &&
                         !field.isAnnotationPresent(ManyToMany.class)){
@@ -215,7 +227,7 @@ public class SQLClient {
                 } else if (field.isAnnotationPresent(PlayerName.class)) {
                     playerNameFieldName = field.getName();
                 }
-                if (field.isAnnotationPresent(Key.class) || field.isAnnotationPresent(ForeignAggregateRoot.class)) {
+                if (field.isAnnotationPresent(Index.class) || field.isAnnotationPresent(Key.class) || field.isAnnotationPresent(ForeignAggregateRoot.class)) {
                     discreteRootFieldNames.add(field.getName());
                 }
             }
@@ -227,6 +239,7 @@ public class SQLClient {
                     e.printStackTrace();
                 }
             }
+            queryFields = queryFieldsList.toArray(new String[queryFieldsList.size()]);
         }
         public static final String DISCRETE_SIGN = "%";
 

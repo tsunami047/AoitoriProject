@@ -27,6 +27,11 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
     }
 
     public void directPut(K key,@NotNull V value) {
+        //TODO 可以清除的判断
+        SQLClient.EntityAttributes entityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(value.getClass());
+        if (entityAttribute.getDatabaseId(value) == -1) {
+            throw new NullPointerException("聚合根不能为空!");
+        }
         super.put(key, value);
     }
 
@@ -85,8 +90,6 @@ public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
             iterator.remove();
         }
     }
-
-
 
     @Override
     public V remove(Object k){

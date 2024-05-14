@@ -47,11 +47,16 @@ public class TableBuilder {
 
             String fieldName = sqlClient.nameStructure.getFieldName(field);
             String fieldType = sqlClient.nameStructure.getFieldSQLType(field);
+
             // 处理主键字段
-            if (field.isAnnotationPresent(Key.class)) {
+            if (field.isAnnotationPresent(AggregateRoot.class) || field.isAnnotationPresent(Key.class)) {
                 primaryKeyFields.add(fieldName);
             }
-            sql.append(fieldName).append(" ").append(fieldType);
+            if (field.isAnnotationPresent(PlayerName.class)) { // 处理自增ID字段
+                sql.append(fieldName).append(" NVARCHAR(255)");
+            }else {
+                sql.append(fieldName).append(" ").append(fieldType);
+            }
             if (field.isAnnotationPresent(AggregateRoot.class)) { // 处理自增ID字段
                 sql.append(" AUTO_INCREMENT");
             }
@@ -98,6 +103,15 @@ public class TableBuilder {
 //
 //            });
         }
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Index.class)) {
+                String fieldName = sqlClient.nameStructure.getFieldName(field);
+                String indexSQL = "INDEX index_" +  fieldName + " (" + fieldName + "),";
+                sql.append(indexSQL);
+            }
+        }
+
+
 
         /*
         CREATE TABLE IF NOT EXISTS ad_dropitems (
@@ -107,6 +121,16 @@ public class TableBuilder {
         rewards VARCHAR(255) NOT NULL,
         PRIMARY KEY (id,index),
         FOREIGN KEY (drops_id) REFERENCES ad_drops(id));
+         */
+        /*
+        CREATE TABLE IF NOT EXISTS tns_player_race_data (
+        id BIGINT AUTO_INCREMENT NOT NULL,
+        player_name VARCHAR(255) NOT NULL,
+        race_name VARCHAR(255) NOT NULL,
+        points INT NOT NULL,
+        cumulate_points INT NOT NULL,
+        PRIMARY KEY (player_name),
+        INDEX index_race_name (race_name)
          */
 
 

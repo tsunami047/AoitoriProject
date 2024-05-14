@@ -13,9 +13,9 @@ import java.time.Duration;
  * @Description: ?
  */
 @Getter
-public class CaffeineCacheImpl {
+public class CaffeineCacheImpl<T> {
 
-    public Cache<String, Object> cache;
+    public Cache<String, T> cache;
     public SQLClient sqlClient;
 
     public CaffeineCacheImpl(SQLClient sqlClient)
@@ -32,11 +32,11 @@ public class CaffeineCacheImpl {
                 .build();
     }
 
-    public void put(String key,Object o){
+    public void put(String key,T o){
         cache.put(key,o);
     }
 
-    public Object get(String key){
+    public T get(String key){
         return cache.getIfPresent(key);
     }
 

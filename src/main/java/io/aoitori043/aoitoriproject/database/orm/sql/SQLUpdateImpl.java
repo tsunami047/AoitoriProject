@@ -7,6 +7,8 @@ import io.aoitori043.aoitoriproject.database.orm.SQLClient;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static io.aoitori043.aoitoriproject.utils.ReflectASMUtil.createInstance;
@@ -24,19 +26,23 @@ public class SQLUpdateImpl {
         this.sqlClient = sqlClient;
     }
 
-    public <T> boolean updateNotCache(T entity, T whereEntity) {
+    public <T> boolean absoluteUpdate(T entity, T whereEntity) {
         try (Connection connection = HikariConnectionPool.getConnection()) {
             Class<?> clazz = entity.getClass();
             StringBuilder sql = new StringBuilder("UPDATE ").append(sqlClient.nameStructure.getTableName(clazz)).append(" SET ");
-            FieldAccess fieldAccess = FieldAccess.get(clazz);
-            String[] fieldNames = fieldAccess.getFieldNames();
             SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(clazz);
-            for (String fieldName : entityAttribute.getUpdateFields()) {
+            FieldAccess fieldAccess = entityAttribute.getFieldAccess();
+
+            List<String> updateNames = new ArrayList<>();
+            for (int i = 0; i < entityAttribute.getUpdateFields().size(); i++) {
+                String fieldName = entityAttribute.getUpdateFields().get(i);
                 Object o = fieldAccess.get(entity, fieldName);
-                if (o != null) {
+                if(o != null){
                     sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
                 }
+                updateNames.add(fieldName);
             }
+
             sql.deleteCharAt(sql.length() - 1); // 移除最后一个逗号
             sql.append(" WHERE ");
 
@@ -44,36 +50,95 @@ public class SQLUpdateImpl {
             if (idValue != null) {
                 sql.append("id = ?");
             } else {
-                // 如果 id 不存在，则根据其他字段进行搜索
-                for (String fieldName : fieldNames) {
-                    if(entityAttribute.getEmbeddedMapFieldProperties().containsKey(fieldName)){
-                        continue;
-                    }
-                    Object o = fieldAccess.get(whereEntity, fieldName);
+                for (String queryField : entityAttribute.getQueryFields()) {
+                    Object o = fieldAccess.get(whereEntity, queryField);
                     if (o != null) {
-                        sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ? AND ");
+                        sql.append(sqlClient.nameStructure.getFieldName(clazz, queryField)).append(" = ? AND ");
                     }
                 }
+                //删除结尾的AND
                 if (sql.toString().endsWith("AND ")) {
                     sql.setLength(sql.length() - 5);
                 }
             }
+            //插入查询参数
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+                //插入需要修改的字段值
                 int paramIndex = 1;
-                for (String fieldName : entityAttribute.getUpdateFields()) {
-                    Object o = fieldAccess.get(entity, fieldName);
-                    if (o != null) {
-                        statement.setObject(paramIndex++, o);
-                    }
+                for (String updateName : updateNames) {
+                    Object o = fieldAccess.get(entity, updateName);
+                    statement.setObject(paramIndex++, o);
                 }
                 if (idValue != null) {
                     statement.setObject(paramIndex++, idValue);
                 } else {
-                    for (String fieldName : fieldNames) {
-                        if(entityAttribute.getEmbeddedMapFieldProperties().containsKey(fieldName)){
-                            continue;
+                    for (String queryField : entityAttribute.getQueryFields()) {
+                        Object o = fieldAccess.get(whereEntity, queryField);
+                        if (o != null) {
+                            statement.setObject(paramIndex++, o);
                         }
-                        Object o = fieldAccess.get(whereEntity, fieldName);
+                    }
+                }
+
+                int rowsUpdated = statement.executeUpdate();
+                return rowsUpdated > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    public <T> boolean updateNotCache(T entity, T whereEntity) {
+        try (Connection connection = HikariConnectionPool.getConnection()) {
+            Class<?> clazz = entity.getClass();
+            StringBuilder sql = new StringBuilder("UPDATE ").append(sqlClient.nameStructure.getTableName(clazz)).append(" SET ");
+            SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(clazz);
+            FieldAccess fieldAccess = entityAttribute.getFieldAccess();
+            String[] fieldNames = fieldAccess.getFieldNames();
+            List<String> updateNames = new ArrayList<>();
+            for (int i = 0; i < entityAttribute.getUpdateFields().size(); i++) {
+                String fieldName = entityAttribute.getUpdateFields().get(i);
+                Object o = fieldAccess.get(entity, fieldName);
+                Object o1 = fieldAccess.get(whereEntity, fieldName);
+                if(o != null && (o != o1)){
+                    sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
+                }
+                updateNames.add(fieldName);
+            }
+
+            sql.deleteCharAt(sql.length() - 1); // 移除最后一个逗号
+            sql.append(" WHERE ");
+
+            Object idValue = fieldAccess.get(whereEntity, "id");
+            if (idValue != null) {
+                sql.append("id = ?");
+            } else {
+                for (String queryField : entityAttribute.getQueryFields()) {
+                    Object o = fieldAccess.get(whereEntity, queryField);
+                    if (o != null) {
+                        sql.append(sqlClient.nameStructure.getFieldName(clazz, queryField)).append(" = ? AND ");
+                    }
+                }
+                //删除结尾的AND
+                if (sql.toString().endsWith("AND ")) {
+                    sql.setLength(sql.length() - 5);
+                }
+            }
+            //插入查询参数
+            try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+                //插入需要修改的字段值
+                int paramIndex = 1;
+                for (String updateName : updateNames) {
+                    Object o = fieldAccess.get(entity, updateName);
+                    statement.setObject(paramIndex++, o);
+                }
+                if (idValue != null) {
+                    statement.setObject(paramIndex++, idValue);
+                } else {
+                    for (String queryField : entityAttribute.getQueryFields()) {
+                        Object o = fieldAccess.get(whereEntity, queryField);
                         if (o != null) {
                             statement.setObject(paramIndex++, o);
                         }

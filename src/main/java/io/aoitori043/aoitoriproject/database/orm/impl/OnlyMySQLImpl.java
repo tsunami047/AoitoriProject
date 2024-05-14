@@ -14,7 +14,7 @@ public class OnlyMySQLImpl extends CacheImpl {
 
     @Override
     public <T> boolean update(T updateEntity, T anchorEntity, CacheImpl.UpdateType updateType) {
-        sqlClient.sqlUpdate.updateNotCache(updateEntity,anchorEntity);
+        sqlClient.sqlUpdate.absoluteUpdate(updateEntity,anchorEntity);
         return true;
     }
 
@@ -44,6 +44,7 @@ public class OnlyMySQLImpl extends CacheImpl {
         long id = sqlClient.sqlInsert.directInsertObject(entity);
         SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(entity.getClass());
         initialEmbeddedObject(entityAttribute, entity, id);
+        entityAttribute.setId(entity,id);
         return true;
     }
 

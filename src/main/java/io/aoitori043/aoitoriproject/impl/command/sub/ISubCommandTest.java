@@ -31,10 +31,11 @@ public class ISubCommandTest extends SubCommand {
     @NotArgument(help = "测试")
     public void execute_test(CommandSender sender,List<ArgumentHelper> arguments) {
         CacheImpl cache = CanaryClientImpl.sqlClient.getCacheHashMap().get(Cache.CacheType.PLAYER_EXCLUSIVE_DATA);
-        com.github.benmanes.caffeine.cache.Cache<String, Object> cache1 = ((ExclusiveCacheImpl) cache).getCaffeineCache().cache;
-        for (Map.Entry<String, Object> stringObjectEntry : cache1.asMap().entrySet()) {
-            System.out.println(stringObjectEntry.getKey() +" "+ stringObjectEntry.getValue());
-        }
+        System.out.println(cache);
+//        com.github.benmanes.caffeine.cache.Cache<String, Object> cache1 = ((ExclusiveCacheImpl) cache).getCaffeineCache().cache;
+//        for (Map.Entry<String, Object> stringObjectEntry : cache1.asMap().entrySet()) {
+//            System.out.println(stringObjectEntry.getKey() +" "+ stringObjectEntry.getValue());
+//        }
     }
 
 }

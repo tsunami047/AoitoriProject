@@ -43,6 +43,9 @@ public abstract class CacheImpl {
         }
     }
 
+    /*
+    级联删除关联外键记录
+     */
     public <T> void cascadingDelete(SQLClient.EntityAttributes entityAttribute,T entity){
         HashMap<String, SQLClient.EntityAttributes.ForeignProperty> embeddedMapFieldProperties = entityAttribute.getEmbeddedMapFieldProperties();
         for (Map.Entry<String, SQLClient.EntityAttributes.ForeignProperty> entry : embeddedMapFieldProperties.entrySet()) {
