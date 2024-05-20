@@ -103,15 +103,25 @@ public class YamlMapping {
 
     private static void findConversion(Object object, YamlConfiguration yamlConfiguration, Field field) {
         ConfigProperty annotation = field.getAnnotation(ConfigProperty.class);
-        String propertyName = annotation.value();
+        String[] values = annotation.values();
         try {
-            if(propertyName.equals("useVariableName")){
+            String propertyName = null;
+            if(values[0].equals("useVariableName")){
                 propertyName = field.getName();
+            }else{
+                for (String value : values) {
+                    if (yamlConfiguration.get(value) != null) {
+                        propertyName = value;
+                    }
+                }
+                if(propertyName == null){
+                    propertyName = field.getName();
+                }
             }
             getValue(object, yamlConfiguration, field, propertyName,null);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
             printlnError(object);
+            e.printStackTrace();
         }
     }
 

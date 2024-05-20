@@ -7,6 +7,8 @@ import io.aoitori043.aoitoriproject.impl.HandlerInjection;
 import io.aoitori043.aoitoriproject.impl.command.IBasicCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Properties;
+
 public final class AoitoriProject extends JavaPlugin {
 
     public static AoitoriProject plugin;

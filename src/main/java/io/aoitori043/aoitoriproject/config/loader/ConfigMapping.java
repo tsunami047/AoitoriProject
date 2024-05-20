@@ -100,10 +100,20 @@ public class ConfigMapping {
     private static void findConversion(Object object, ConfigurationSection section, Field field,String parentName) {
         field.setAccessible(true);
         ConfigProperty annotation = field.getAnnotation(ConfigProperty.class);
-        String propertyName = annotation.value();
+        String[] values = annotation.values();
         try {
-            if(propertyName.equals("useVariableName")){
+            String propertyName = null;
+            if(values[0].equals("useVariableName")){
                 propertyName = field.getName();
+            }else{
+                for (String value : values) {
+                    if (section.get(value) != null) {
+                        propertyName = value;
+                    }
+                }
+                if(propertyName == null){
+                    propertyName = field.getName();
+                }
             }
             getValue(object, section, field, propertyName,parentName);
         } catch (IllegalAccessException e) {

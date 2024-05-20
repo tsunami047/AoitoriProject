@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.database.orm.impl;
 import com.esotericsoftware.reflectasm.FieldAccess;
 import io.aoitori043.aoitoriproject.database.orm.sign.AggregateRoot;
 import io.aoitori043.aoitoriproject.database.orm.sign.Key;
+import io.aoitori043.aoitoriproject.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -101,16 +102,6 @@ public class CacheImplUtil {
         T run();
     }
 
-    public static class Pair<K,V> {
-        public K v1;
-        public V v2;
-
-        public Pair(K name, V o) {
-            this.v1=name;
-            this.v2=o;
-
-        }
-    }
 
     public static HashMap<Class,String> aggregateRoot = new HashMap<>();
     public static HashMap<Class,List<String>> keysMap = new HashMap<>();
@@ -140,20 +131,6 @@ public class CacheImplUtil {
         return null;
     }
 
-    public static Pair<String,String> getAggregateRootData(Object o){
-        FieldAccess fieldAccess = FieldAccess.get(o.getClass());
-        for (Field field : fieldAccess.getFields()) {
-            if(!field.isAnnotationPresent(AggregateRoot.class)){
-                continue;
-            }
-            Object o1 = fieldAccess.get(o, field.getName());
-            if(o1 == null){
-                return new Pair<>(field.getName(), null);
-            }
-            return new Pair<>(field.getName(), o1.toString());
-        }
-        return null;
-    }
 
     public static List<String> getClassKeys(Class clazz) {
         List<String> kvList = keysMap.get(clazz);
@@ -173,44 +150,28 @@ public class CacheImplUtil {
         return list;
     }
 
-    private static String discreteRootFormat(String tableName, String value) {
-        return DISCRETE_SIGN + tableName + ":" + value;
+    private static String discreteRootFormat(String tableName, String rootIndex,String value) {
+        return DISCRETE_SIGN + tableName + ":" +rootIndex+"_"+ value;
     }
 
 
     //获得键的所有组合方式，用于入缓
-    public static List<String> generateCombinations(String tableName,List<String> stringList) {
+    public static List<String> generateCombinations(String tableName,List<Pair<Integer,String>> map) {
         List<String> combinations = new ArrayList<>();
-        for (int i = 0; i < stringList.size(); i++) {
+        for (int i = 0; i < map.size(); i++) {
             StringBuilder sb = new StringBuilder();
+            StringBuilder index = new StringBuilder();
             for (int j = 0; j <= i; j++) {
-                sb.append(stringList.get(j));
+                Pair<Integer, String> pair = map.get(j);
+                sb.append(pair.getValue());
+                index.append(pair.getKey());
                 if (j < i) {
                     sb.append("-");
                 }
             }
-            combinations.add(discreteRootFormat(tableName,sb.toString()));
+            combinations.add(discreteRootFormat(tableName,index.toString(),sb.toString()));
         }
         return combinations;
-    }
-
-    public static List<String> getDiscreteRoots(String tableName,Object instance, List<String> list){
-        List<String> valueList = new ArrayList<>();
-        FieldAccess fieldAccess = FieldAccess.get(instance.getClass());
-        for (String fieldName : list) {
-            Object o = fieldAccess.get(instance, fieldName);
-            if(o == null){
-                continue;
-            }
-            valueList.add(o.toString());
-        }
-        return generateCombinations(tableName,valueList);
-    }
-
-
-    //键均有值情况，键可能会没有值
-    public static List<String> getDiscreteRoots(String tableName,Object instance){
-        return getDiscreteRoots(tableName,instance,getClassKeys(instance.getClass()));
     }
 
     public static class EmptyObject {

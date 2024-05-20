@@ -13,15 +13,14 @@ import io.aoitori043.aoitoriproject.database.orm.sql.SQLInsertImpl;
 import io.aoitori043.aoitoriproject.database.orm.sql.SQLQueryImpl;
 import io.aoitori043.aoitoriproject.database.orm.sql.SQLUpdateImpl;
 import io.aoitori043.aoitoriproject.database.redis.RedisCore;
+import io.aoitori043.aoitoriproject.utils.Pair;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import lombok.Data;
 import lombok.Getter;
 
 import java.lang.reflect.Field;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static io.aoitori043.aoitoriproject.database.orm.sign.Cache.CacheType.*;
@@ -73,7 +72,7 @@ public class SQLClient {
         String playerNameFieldName;
         String idFieldName;
         //离散根
-        List<String> discreteRootFieldNames = new ArrayList<>();
+        LinkedHashMap<Integer,String> discreteRootFieldNames = new LinkedHashMap<>();
         //外联映射
         HashMap<String,ForeignProperty> embeddedMapFieldProperties = new HashMap<>();
         //外键
@@ -89,17 +88,28 @@ public class SQLClient {
         Class playerNameSuperClass;
 
         public String getPlayerName(Object entity){
+//            if(playerNameSuperClass!=null){
+//                EntityAttributes superClassEntityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(playerNameSuperClass);
+//                String foreignKey = getForeignKey(playerNameSuperClass);
+//                Object o = fieldAccess.get(entity, foreignKey);
+//                Object superEntity = ReflectASMUtil.createInstance(playerNameSuperClass);
+//                superClassEntityAttribute.getFieldAccess().set(superEntity,superClassEntityAttribute.getIdFieldName(),o);
+//                List<Object> query = CanaryClientImpl.sqlClient.query(superEntity);
+//                if(query == null || query.isEmpty()){
+//                    return null;
+//                }
+//                return superClassEntityAttribute.getPlayerName(query.get(0));
+//            }
             if(playerNameSuperClass!=null){
                 EntityAttributes superClassEntityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(playerNameSuperClass);
                 String foreignKey = getForeignKey(playerNameSuperClass);
-                Object o = fieldAccess.get(entity, foreignKey);
-                Object superEntity = ReflectASMUtil.createInstance(playerNameSuperClass);
-                superClassEntityAttribute.getFieldAccess().set(superEntity,superClassEntityAttribute.getIdFieldName(),o);
-                List<Object> query = CanaryClientImpl.sqlClient.query(superEntity);
-                if(query == null || query.isEmpty()){
+                String aggregateRootById = superClassEntityAttribute.getAggregateRootById(fieldAccess.get(entity, foreignKey));
+                ExclusiveCacheImpl cache = (ExclusiveCacheImpl) CanaryClientImpl.sqlClient.getCacheHashMap().get(PLAYER_EXCLUSIVE_DATA);
+                ExclusiveCacheImpl.CacheWrapper cacheWrapper = cache.aggregateRootCacheImpl.get(aggregateRootById);
+                if(cacheWrapper == null){
                     return null;
                 }
-                return superClassEntityAttribute.getPlayerName(query.get(0));
+                return cacheWrapper.getPlayerName();
             }
             return fieldAccess.get(entity, playerNameFieldName).toString();
         }
@@ -176,7 +186,9 @@ public class SQLClient {
 
 
             List<String> queryFieldsList = new ArrayList<>();
-            for (Field field : fieldAccess.getFields()) {
+            Field[] fields = fieldAccess.getFields();
+            for (int i = 0; i < fields.length; i++) {
+                Field field = fields[i];
                 if(field.isAnnotationPresent(ForeignAggregateRoot.class)){
                     ForeignAggregateRoot annotation = field.getAnnotation(ForeignAggregateRoot.class);
                     Class aClass = annotation.mapEntity();
@@ -228,7 +240,7 @@ public class SQLClient {
                     playerNameFieldName = field.getName();
                 }
                 if (field.isAnnotationPresent(Index.class) || field.isAnnotationPresent(Key.class) || field.isAnnotationPresent(ForeignAggregateRoot.class)) {
-                    discreteRootFieldNames.add(field.getName());
+                    discreteRootFieldNames.put(i,field.getName());
                 }
             }
             preloadPlayerName();
@@ -254,33 +266,38 @@ public class SQLClient {
         }
 
         public List<String> getInsertDiscreteRoots(Object entity){
-            List<String> valueList = new ArrayList<>();
+            List<Pair<Integer,String>> discreteRoots = new ArrayList<>();
             FieldAccess fieldAccess = FieldAccess.get(clazz);
-            for (String fieldName : discreteRootFieldNames) {
+            for (Map.Entry<Integer, String> entry : discreteRootFieldNames.entrySet()) {
+                String fieldName = entry.getValue();
                 Object o = fieldAccess.get(entity, fieldName);
                 if(o == null){
                     continue;
                 }
-                valueList.add(o.toString());
+                discreteRoots.add(new Pair(entry.getKey(),o.toString()));
             }
-            return CacheImplUtil.generateCombinations(tableName,valueList);
+            return CacheImplUtil.generateCombinations(tableName,discreteRoots);
         }
 
         public String getDiscreteRoot(Object entity){
-            StringBuilder stringBuilder = new StringBuilder(DISCRETE_SIGN + tableName + ":");
+            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder index = new StringBuilder();
             int num = 0;
             if (discreteRootFieldNames != null) {
-                for (String fieldName : discreteRootFieldNames) {
+                for (Map.Entry<Integer, String> entry : discreteRootFieldNames.entrySet()) {
+                    String fieldName = entry.getValue();
                     Object value = fieldAccess.get(entity, fieldName);
                     if (value != null) {
                         if (num != 0) {
                             stringBuilder.append("-");
                         }
+                        index.append(entry.getKey());
                         stringBuilder.append(value);
                         num++;
                     }
+
                 }
-                return stringBuilder.toString();
+                return DISCRETE_SIGN + tableName + ":"+ index +"_"+ stringBuilder;
             }
             return null;
         }

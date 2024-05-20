@@ -61,6 +61,8 @@ public class SQLUpdateImpl {
                     sql.setLength(sql.length() - 5);
                 }
             }
+            String sqlString = sql.toString();
+            SQLService.sql(sqlString);
             //插入查询参数
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
                 //插入需要修改的字段值

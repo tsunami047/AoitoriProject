@@ -44,6 +44,9 @@ public class SQLInsertImpl {
             //INSERT INTO ad_drops (id,player_name,drop_id,insert_times) VALUES (?,?,?,?)
             sql.deleteCharAt(sql.length() - 1);
             sql.append(")");
+
+            String sqlString = sql.toString();
+            SQLService.sql(sqlString);
             try (PreparedStatement statement = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS)) {
                 int paramIndex = 1;
 //                statement.setObject(paramIndex++, null);

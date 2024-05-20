@@ -13,6 +13,17 @@ import java.lang.annotation.Target;
  * @Description:
  * 平面映射，可以指定枚举常量为Key进行映射，避免拼写错误
  * 枚举常量要求全大写，如果要分隔不同词语使用下划线，在映射时，下划线会被略去
+ * 需要预先指定，如果是枚举类，则不需要
+ *
+ * 对一个MAP进行映射，形如：
+ * A1:
+ *   XXX
+ * A2:
+ *   XXX
+ * A3:
+ *   XXX
+ *
+ *
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

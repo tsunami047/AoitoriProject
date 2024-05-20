@@ -8,17 +8,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: natsumi
  * @CreateTime: 2024-04-10  23:21
  * @Description: ?
  */
-public class EmbeddedHashMap<K,V> extends HashMap<K,V> {
+public class EmbeddedHashMap<K,V> extends ConcurrentHashMap<K,V> {
 
     public Object superEntity;
     public long superEntityAggregateRoot;
-    public HashMap<K,V> superMapCache = new HashMap();
+    public ConcurrentHashMap<K,V> superMapCache = new ConcurrentHashMap();
 
     public EmbeddedHashMap(Object o) {
         this.superEntity = o;

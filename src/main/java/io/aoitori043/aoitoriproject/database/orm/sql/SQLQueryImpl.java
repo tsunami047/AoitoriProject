@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -36,6 +37,9 @@ public class SQLQueryImpl {
         try (Connection connection = HikariConnectionPool.getConnection()) {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(sqlClient.nameStructure.getTableName(clazz)).append(" WHERE ");
             // 获取 id 字段的值
+
+            LinkedHashMap<String,Object> anchor = new LinkedHashMap<>();
+
             Object idValue = FieldAccess.get(clazz).get(instance, "id");
             SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(instance.getClass());
             FieldAccess fieldAccess = entityAttribute.getFieldAccess();
@@ -53,6 +57,8 @@ public class SQLQueryImpl {
                     sql = new StringBuilder(sql.substring(0, sql.length() - 5));
                 }
             }
+            String sqlString = sql.toString();
+            SQLService.sql(sqlString);
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
                 int paramIndex = 1;
                 if (idValue != null) {

@@ -2,6 +2,7 @@ package io.aoitori043.aoitoriproject.database.orm;
 
 import io.aoitori043.aoitoriproject.database.mysql.HikariConnectionPool;
 import io.aoitori043.aoitoriproject.database.orm.sign.*;
+import io.aoitori043.aoitoriproject.database.orm.sql.SQLService;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -49,7 +50,7 @@ public class TableBuilder {
             String fieldType = sqlClient.nameStructure.getFieldSQLType(field);
 
             // 处理主键字段
-            if (field.isAnnotationPresent(AggregateRoot.class) || field.isAnnotationPresent(Key.class)) {
+            if (field.isAnnotationPresent(Key.class)) {
                 primaryKeyFields.add(fieldName);
             }
             if (field.isAnnotationPresent(PlayerName.class)) { // 处理自增ID字段
@@ -58,7 +59,7 @@ public class TableBuilder {
                 sql.append(fieldName).append(" ").append(fieldType);
             }
             if (field.isAnnotationPresent(AggregateRoot.class)) { // 处理自增ID字段
-                sql.append(" AUTO_INCREMENT");
+                sql.append(" AUTO_INCREMENT UNIQUE");
             }
             if(field.isAnnotationPresent(ForeignAggregateRoot.class)){
                 foreignKeyMap.put(fieldName, field.getAnnotation(ForeignAggregateRoot.class).mapEntity());
@@ -137,6 +138,7 @@ public class TableBuilder {
         sql.deleteCharAt(sql.length() - 1);
         sql.append(");");
 
+        SQLService.sql(sql.toString());
         try (Connection connection = HikariConnectionPool.getConnection();
              Statement statement = connection.createStatement()) {
             int i = statement.executeUpdate(sql.toString());

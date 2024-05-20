@@ -44,7 +44,8 @@ public class SQLDeleteImpl {
                     sql.setLength(sql.length() - 5);
                 }
             }
-
+            String sqlString = sql.toString();
+            SQLService.sql(sqlString);
             try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
                 int paramIndex = 1;
                 if (idValue != null) {

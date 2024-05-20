@@ -12,6 +12,7 @@ import java.util.*;
 
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
+import static io.aoitori043.aoitoriproject.utils.ReflectionUtil.getPrivateAndSuperField;
 
 /**
  * @Author: natsumi
@@ -34,6 +35,27 @@ public class MapperEvaluation {
         }
         propertyName = propertyName.replace("$", ".");
         if (section != null && section.get(propertyName) != null) {
+            if(field.getType().isEnum()){
+                Enum[] enumConstants = (Enum[]) field.getType().getEnumConstants();
+                String value = section.getString(propertyName);
+                for (Enum enumConstant : enumConstants) {
+                    if(value.equals(enumConstant.name().replace("_","")) || value.equals(enumConstant.name())){
+                        field.set(fieldSetObj, enumConstant);
+                        return;
+                    }
+                }
+                for (Enum enumConstant : enumConstants) {
+                    try {
+                        String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
+                        if (mappingName!=null && mappingName.equals(value)) {
+                            field.set(fieldSetObj, enumConstant);
+                            return;
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }else
             if (field.getType() == String.class) {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
@@ -223,7 +245,12 @@ public class MapperEvaluation {
             } else {
                 Enum[] enumConstants = ((Class<? extends Enum>) typeArguments[0]).getEnumConstants();
                 for (Enum enumConstant : enumConstants) {
-                    String name = enumConstant.name();
+                    String name;
+                    if(getPrivateAndSuperField(enumConstant, "mappingName") == null){
+                        name = enumConstant.name();
+                    }else{
+                        name = (String) getPrivateAndSuperField(enumConstant, "mappingName");
+                    }
                     ConfigurationSection subSection = null;
                     if (section != null) {
                         subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
