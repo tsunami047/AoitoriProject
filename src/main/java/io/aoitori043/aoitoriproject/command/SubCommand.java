@@ -121,6 +121,7 @@ public abstract class SubCommand {
     public BasicCommand basicCommand;
     public int weight;
     public String notArgumentMethodName;
+    public TreeMap<Integer,ParameterSpecification> map;
     public boolean isNotArgument = false;
     public String help;
     public String commandprefix;

@@ -103,17 +103,21 @@ public class ConfigMapping {
         String[] values = annotation.values();
         try {
             String propertyName = null;
-            if(values[0].equals("useVariableName")){
-                propertyName = field.getName();
-            }else{
-                for (String value : values) {
-                    if (section.get(value) != null) {
-                        propertyName = value;
+            if(section != null){
+                if(values[0].equals("useVariableName")){
+                    propertyName = field.getName();
+                }else{
+                    for (String value : values) {
+                        if (section.get(value) != null) {
+                            propertyName = value;
+                        }
+                    }
+                    if(propertyName == null){
+                        propertyName = field.getName();
                     }
                 }
-                if(propertyName == null){
-                    propertyName = field.getName();
-                }
+            }else{
+                propertyName = field.getName();
             }
             getValue(object, section, field, propertyName,parentName);
         } catch (IllegalAccessException e) {

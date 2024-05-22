@@ -31,6 +31,7 @@ public @interface GetFlatMapping {
 //    @NotNull
 //    Class<?> mapper();
     String[] stringKeys() default {};
+    boolean nested() default false;
 //    @NotNull
 //    Class<? extends Enum> enumKeys();
 }

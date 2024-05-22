@@ -15,6 +15,9 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.aoitori043.aoitoriproject.AoitoriProject.onlinePlayerNames;
+import static io.aoitori043.aoitoriproject.database.orm.impl.CacheImplUtil.map;
+
 /**
  * @Author: natsumi
  * @CreateTime: 2024-03-23  13:31
@@ -227,6 +230,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             for (ParameterSpecification parameterSpecification : parameterSpecifications) {
                 treeMap.put(parameterSpecification.index(), parameterSpecification);
             }
+            subCommand.setMap(treeMap);
             StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " ");
             treeMap.forEach((index, parameter1) -> {
                 if (!parameter1.nullable()) {
@@ -240,6 +244,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         } else if (executeMethod.getAnnotation(ParameterSpecification.class) != null) {
             ParameterSpecification parameterSpecification = executeMethod.getAnnotation(ParameterSpecification.class);
             treeMap.put(parameterSpecification.index(), parameterSpecification);
+            subCommand.setMap(treeMap);
             StringBuilder stringBuilder = new StringBuilder("§f- /" + basicCommand.getAlias() + " " + subCommand.getCommandprefix() + " ");
             treeMap.forEach((index, parameter1) -> {
                 if (!parameter1.nullable()) {
@@ -359,6 +364,58 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         return Collections.emptyList();
     }
 
+    public static boolean isInteger(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        int i = 0;
+        int length = str.length();
+        if (str.charAt(0) == '-') {
+            if (length == 1) {
+                return false;
+            }
+            i = 1;
+        }
+        for (; i < length; i++) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static String mergeAndHighlight(String[] strings, int indexToHighlight) {
+        if (strings == null || strings.length == 0) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < strings.length; i++) {
+            if (i == indexToHighlight) {
+                result.append("§c").append(strings[i]).append("§f");
+            } else {
+                result.append(strings[i]);
+            }
+            if (i < strings.length - 1) {
+                result.append(" ");
+            }
+        }
+        return result.toString();
+    }
+
+    private static final String DOUBLE_PATTERN = "[-+]?\\d*\\.?\\d+([eE][-+]?\\d+)?";
+
+    public static boolean isDouble(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        return str.matches(DOUBLE_PATTERN);
+    }
+
+
+
+
+
 
     @Override
     public boolean onCommand(CommandSender sender, Command myCommand, String lable, String[] args) {
@@ -369,7 +426,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         String argsHead = args[0].toLowerCase();
         SubCommand subCommand = subCommands.get(argsHead);
         if (subCommand == null) {
-            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, 0) + " §c<-");
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
@@ -378,6 +435,37 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
                 myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
                 return true;
+            }
+            if(subCommand.map != null) {
+                for (Map.Entry<Integer, ParameterSpecification> entry : subCommand.map.entrySet()) {
+                    String arg = args[entry.getKey() + 1];
+                    switch (entry.getValue().type()) {
+                        case Int: {
+                            if (!isInteger(arg)) {
+                                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 1));
+                                myBasicCommand.sendMessageWithPrefix(sender, "参数不正确，必须为整数： " + arg);
+                                return true;
+                            }
+                            break;
+                        }
+                        case Double: {
+                            if (!isDouble(arg)) {
+                                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 1));
+                                myBasicCommand.sendMessageWithPrefix(sender, "参数不正确，必须为浮点数： " + arg);
+                                return true;
+                            }
+                            break;
+                        }
+                        case Player: {
+                            if (!onlinePlayerNames.contains(arg)) {
+                                myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 1));
+                                myBasicCommand.sendMessageWithPrefix(sender, "玩家不在线/不存在： " + arg);
+                                return true;
+                            }
+                            break;
+                        }
+                    }
+                }
             }
             if (subCommand.executionStartMessage != null) {
                 myBasicCommand.sendMessage(sender, subCommand.executionStartMessage);
@@ -390,17 +478,58 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             }
             return true;
         }
-        SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.get(args[1]);
-        if (subCommandExecutor == null) {
-            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c<-");
-            myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
-            return true;
-        }
-        if (args.length < subCommandExecutor.minLength) {
+        if(args.length == 1){
             myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
             myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
             return true;
         }
+        SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.get(args[1]);
+        if (subCommandExecutor == null) {
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, 1) + " §c<-");
+            myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
+            return true;
+        }
+        if (args.length < subCommandExecutor.minLength+2) {
+            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
+            myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
+            return true;
+        }
+        if(subCommandExecutor.map != null) {
+            for (Map.Entry<Integer, ParameterSpecification> entry : subCommandExecutor.map.entrySet()) {
+                ParameterSpecification value = entry.getValue();
+                if (value.nullable() && args.length - 1 < entry.getKey() + 2) {
+                    continue;
+                }
+                String arg = args[entry.getKey() + 2];
+                switch (value.type()) {
+                    case Int: {
+                        if (!isInteger(arg)) {
+                            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 2));
+                            myBasicCommand.sendMessageWithPrefix(sender, "参数不正确，必须为整数： " + arg);
+                            return true;
+                        }
+                        break;
+                    }
+                    case Double: {
+                        if (!isDouble(arg)) {
+                            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 2));
+                            myBasicCommand.sendMessageWithPrefix(sender, "参数不正确，必须为浮点数： " + arg);
+                            return true;
+                        }
+                        break;
+                    }
+                    case Player: {
+                        if (!onlinePlayerNames.contains(arg)) {
+                            myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, entry.getKey() + 2));
+                            myBasicCommand.sendMessageWithPrefix(sender, "玩家不在线/不存在： " + arg);
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         if (subCommandExecutor.executionStartMessage != null) {
             myBasicCommand.sendMessage(sender, subCommandExecutor.executionStartMessage);
         }

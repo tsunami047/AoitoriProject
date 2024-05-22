@@ -26,6 +26,24 @@ public class MapperEvaluation {
         return constructor.newInstance();
     }
 
+    public static HashMap<Enum<?>,String> getEnumMappingName(Class clazz){
+        HashMap<Enum<?>,String> map = new HashMap<>();
+        Enum[] enumConstants = (Enum[]) clazz.getEnumConstants();
+        for (Enum enumConstant : enumConstants) {
+            try {
+                String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
+                if (mappingName!=null) {
+                    map.put(enumConstant, mappingName);
+                }else{
+                    map.put(enumConstant, enumConstant.name());
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return map;
+    }
+
     public static void getValue(Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
         field.setAccessible(true);
         Object fieldSetObj = isStaticField(field) ? null : object;
@@ -92,85 +110,207 @@ public class MapperEvaluation {
             return;
         }
         if (Map.class.isAssignableFrom(field.getType())) {
-            AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
-            Type type = field.getGenericType();
-            Type[] typeArguments;
-            if (type instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) type;
-                typeArguments = parameterizedType.getActualTypeArguments();
-            } else {
-                throw new IllegalArgumentException("泛型参数缺少");
-            }
-            field.set(fieldSetObj, map);
+            executeMapTypeMapping(fieldSetObj,section, propertyName, field);
+        }
 
-            // 判断第二个泛型参数的类型
-            if (typeArguments.length >= 2) {
-                Type typeArgument = typeArguments[1];
-                if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
-                    if (section != null) {
-                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                        if (listSection != null) {
-                            Set<String> keys = listSection.getKeys(false);
-                            for (String key : keys) {
-                                List<String> stringList = listSection.getStringList(key);
-                                map.put(key, stringList);
+
+    }
+
+    private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance,ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
+        AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
+        Type type = field.getGenericType();
+        Type[] typeArguments;
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            typeArguments = parameterizedType.getActualTypeArguments();
+        } else {
+            throw new IllegalArgumentException("泛型参数缺少");
+        }
+        field.set(instance, map);
+
+        // 判断第二个泛型参数的类型
+        if (typeArguments.length >= 2) {
+            if(typeArguments[0].getClass().isEnum()){
+                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName(typeArguments[0].getClass());
+                injectMapping(section, propertyName, typeArguments, map,enumMappingName);
+            }else{
+                injectMapping(section, propertyName, typeArguments, map);
+            }
+        }
+        return map;
+    }
+
+    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map,HashMap<Enum<?>, String> enumMappingName) {
+        Type typeArgument = typeArguments[1];
+        if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    for (Map.Entry<Enum<?>, String> entry : enumMappingName.entrySet()) {
+                        Enum<?> key = entry.getKey();
+                        String configKey = entry.getValue();
+                        List<String> stringList = listSection.getStringList(configKey);
+                        map.put(key, stringList);
+                    }
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.lang.String")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    for (Map.Entry<Enum<?>, String> entry : enumMappingName.entrySet()) {
+                        Enum<?> key = entry.getKey();
+                        String configKey = entry.getValue();
+                        map.put(key, listSection.getString(configKey));
+                    }
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.util.List<java.lang.String>>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    for (Map.Entry<Enum<?>, String> entry : enumMappingName.entrySet()) {
+                        Enum<?> key = entry.getKey();
+                        String configKey = entry.getValue();
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
+                        if(mapSection!=null) {
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getStringList(s));
                             }
+                            map.put(key, map1);
                         }
                     }
-                } else if (typeArgument.getTypeName().equals("java.lang.String")) {
-                    if (section != null) {
-                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                        if (listSection != null) {
-                            Set<String> keys = listSection.getKeys(false);
-                            for (String key : keys) {
-                                map.put(key, listSection.getString(key));
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.util.Map<java.lang.String, java.util.List<java.lang.String>>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    for (Map.Entry<Enum<?>, String> entry : enumMappingName.entrySet()) {
+                        Enum<?> key = entry.getKey();
+                        String configKey = entry.getValue();
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
+                        if(mapSection!=null) {
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getStringList(s));
                             }
+                            map.put(key, map1);
                         }
                     }
-                } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.util.List<java.lang.String>>")) {
-                    if (section != null) {
-                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                        if (listSection != null) {
-                            Set<String> keys = listSection.getKeys(false);
-                            for (String key : keys) {
-                                ConfigurationSection mapSection = listSection.getConfigurationSection(key);
-                                Set<String> keys1 = mapSection.getKeys(false);
-                                LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
-                                for (String s : keys1) {
-                                    map1.put(s, mapSection.getStringList(s));
-                                }
-                                map.put(key, map1);
+                }
+            }
+        }else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    for (Map.Entry<Enum<?>, String> entry : enumMappingName.entrySet()) {
+                        Enum<?> key = entry.getKey();
+                        String configKey = entry.getValue();
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
+                        if(mapSection!=null) {
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, String> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getString(s));
                             }
-                        }
-                    }
-                } else if (typeArgument.getTypeName().equals("java.util.Map<java.lang.String, java.util.List<java.lang.String>>")) {
-                    if (section != null) {
-                        ConfigurationSection listSection = section.getConfigurationSection(propertyName);
-                        if (listSection != null) {
-                            Set<String> keys = listSection.getKeys(false);
-                            for (String key : keys) {
-                                ConfigurationSection mapSection = listSection.getConfigurationSection(key);
-                                Set<String> keys1 = mapSection.getKeys(false);
-                                LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
-                                for (String s : keys1) {
-                                    map1.put(s, mapSection.getStringList(s));
-                                }
-                                map.put(key, map1);
-                            }
+                            map.put(key, map1);
                         }
                     }
                 }
             }
         }
+    }
 
 
+    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map) {
+        Type typeArgument = typeArguments[1];
+        if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        List<String> stringList = listSection.getStringList(key);
+                        map.put(key, stringList);
+                    }
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.lang.String")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        map.put(key, listSection.getString(key));
+                    }
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.util.List<java.lang.String>>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(key);
+                        if(mapSection!=null) {
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getStringList(s));
+                            }
+                            map.put(key, map1);
+                        }
+                    }
+                }
+            }
+        } else if (typeArgument.getTypeName().equals("java.util.Map<java.lang.String, java.util.List<java.lang.String>>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(key);
+                        if(mapSection!=null) {
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getStringList(s));
+                            }
+                            map.put(key, map1);
+                        }
+                    }
+                }
+            }
+        }else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
+            if (section != null) {
+                ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+                if (listSection != null) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        ConfigurationSection mapSection = listSection.getConfigurationSection(key);
+                        if(mapSection!=null){
+                            Set<String> keys1 = mapSection.getKeys(false);
+                            LinkedHashMap<String, String> map1 = new LinkedHashMap<>();
+                            for (String s : keys1) {
+                                map1.put(s, mapSection.getString(s));
+                            }
+                            map.put(key, map1);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
     public static boolean mappingInject(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
         return injectMapping(object, section, field, propertyName) |
                 injectFoldMapping(object, section, field, propertyName) |
-                injectFlatMapping(object, section, field);
+                injectFlatMapping(object, section, field,propertyName);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -211,7 +351,7 @@ public class MapperEvaluation {
     }
 
 
-    private static boolean injectFlatMapping(Object object, ConfigurationSection section, Field field) {
+    private static boolean injectFlatMapping(Object object, ConfigurationSection section,Field field,String propertyName) {
         try {
             GetFlatMapping getFlatMapping = field.getAnnotation(GetFlatMapping.class);
             Class<?> clazz = field.getType();
@@ -234,7 +374,11 @@ public class MapperEvaluation {
                 for (String key : getFlatMapping.stringKeys()) {
                     ConfigurationSection subSection = null;
                     if (section != null) {
-                        subSection = section.getConfigurationSection(key.replace("$", "."));
+                        if(getFlatMapping.nested()){
+                            subSection = section.getConfigurationSection(propertyName+"."+key.replace("$", "."));
+                        }else{
+                            subSection = section.getConfigurationSection(key.replace("$", "."));
+                        }
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, key, object);
@@ -253,7 +397,11 @@ public class MapperEvaluation {
                     }
                     ConfigurationSection subSection = null;
                     if (section != null) {
-                        subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
+                        if(getFlatMapping.nested()) {
+                            subSection = (ConfigurationSection) getElementIgnoreCase(section, propertyName+"."+name.replace("_", ""));
+                        }else{
+                            subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
+                        }
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, enumConstant, object);

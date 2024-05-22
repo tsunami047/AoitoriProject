@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.Duration;
@@ -255,10 +256,9 @@ public class ExclusiveCacheImpl extends CacheImpl {
     }
 
     public class PlayerJoinQuitListener implements Listener {
-        @EventHandler
-        public void whenPlayerJoinServer(AsyncPlayerPreLoginEvent e) {
-            String name = e.getName();
-            playerNameCache.put(name, new HashSet<>());
+        @EventHandler(ignoreCancelled = true,priority = EventPriority.LOWEST)
+        public void whenPlayerJoinServer(PlayerJoinEvent e) {
+            playerNameCache.put(e.getPlayer().getName(), new HashSet<>());
         }
 
         @EventHandler(ignoreCancelled = true,priority = EventPriority.MONITOR)

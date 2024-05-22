@@ -106,17 +106,21 @@ public class YamlMapping {
         String[] values = annotation.values();
         try {
             String propertyName = null;
-            if(values[0].equals("useVariableName")){
-                propertyName = field.getName();
-            }else{
-                for (String value : values) {
-                    if (yamlConfiguration.get(value) != null) {
-                        propertyName = value;
+            if(yamlConfiguration!=null){
+                if(values[0].equals("useVariableName")){
+                    propertyName = field.getName();
+                }else{
+                    for (String value : values) {
+                        if (yamlConfiguration.get(value) != null) {
+                            propertyName = value;
+                        }
+                    }
+                    if(propertyName == null){
+                        propertyName = field.getName();
                     }
                 }
-                if(propertyName == null){
-                    propertyName = field.getName();
-                }
+            }else{
+                propertyName = field.getName();
             }
             getValue(object, yamlConfiguration, field, propertyName,null);
         } catch (IllegalAccessException e) {
