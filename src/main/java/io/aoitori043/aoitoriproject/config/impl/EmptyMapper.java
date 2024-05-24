@@ -1,6 +1,8 @@
 package io.aoitori043.aoitoriproject.config.impl;
 
 import io.aoitori043.aoitoriproject.config.Debug;
+import io.aoitori043.aoitoriproject.config.loader.YamlMapping;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -15,6 +17,8 @@ public abstract class EmptyMapper extends MapperInjection {
     public EmptyMapper() {
         try {
             injectYaml(getPlugin(),this);
+            YamlMapping.loadFromConfig(this,getYaml(),"topConfig");
+            runAnnotatedMethods(this);
             injectMapper();
             Debug annotation = getClass().getAnnotation(Debug.class);
             if (annotation != null) {
@@ -24,6 +28,10 @@ public abstract class EmptyMapper extends MapperInjection {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public YamlConfiguration getYaml(){
+        return null;
     }
 
     public void loadConfig() {

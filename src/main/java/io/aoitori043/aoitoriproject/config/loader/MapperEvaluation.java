@@ -5,7 +5,9 @@ import io.aoitori043.aoitoriproject.config.GetFoldMapping;
 import io.aoitori043.aoitoriproject.config.GetMapping;
 import io.aoitori043.aoitoriproject.config.impl.MapperInjection;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
+import lombok.ToString;
 import org.bukkit.configuration.ConfigurationSection;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -26,18 +28,18 @@ public class MapperEvaluation {
         return constructor.newInstance();
     }
 
-    public static HashMap<Enum<?>,String> getEnumMappingName(Class clazz){
-        HashMap<Enum<?>,String> map = new HashMap<>();
+    public static HashMap<Enum<?>, String> getEnumMappingName(Class clazz) {
+        HashMap<Enum<?>, String> map = new HashMap<>();
         Enum[] enumConstants = (Enum[]) clazz.getEnumConstants();
         for (Enum enumConstant : enumConstants) {
             try {
                 String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
-                if (mappingName!=null) {
+                if (mappingName != null) {
                     map.put(enumConstant, mappingName);
-                }else{
+                } else {
                     map.put(enumConstant, enumConstant.name());
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -53,11 +55,11 @@ public class MapperEvaluation {
         }
         propertyName = propertyName.replace("$", ".");
         if (section != null && section.get(propertyName) != null) {
-            if(field.getType().isEnum()){
+            if (field.getType().isEnum()) {
                 Enum[] enumConstants = (Enum[]) field.getType().getEnumConstants();
                 String value = section.getString(propertyName);
                 for (Enum enumConstant : enumConstants) {
-                    if(value.equals(enumConstant.name().replace("_","")) || value.equals(enumConstant.name())){
+                    if (value.equals(enumConstant.name().replace("_", "")) || value.equals(enumConstant.name())) {
                         field.set(fieldSetObj, enumConstant);
                         return;
                     }
@@ -65,16 +67,15 @@ public class MapperEvaluation {
                 for (Enum enumConstant : enumConstants) {
                     try {
                         String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
-                        if (mappingName!=null && mappingName.equals(value)) {
+                        if (mappingName != null && mappingName.equals(value)) {
                             field.set(fieldSetObj, enumConstant);
                             return;
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-            }else
-            if (field.getType() == String.class) {
+            } else if (field.getType() == String.class) {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
                 }
@@ -94,7 +95,7 @@ public class MapperEvaluation {
         } else if (parentName != null && field.getName().equals("index") && object != null) {
             try {
                 field.setAccessible(true);
-                field.set(object, parentName);
+                field.set(fieldSetObj, parentName);
                 return;
             } catch (Exception e) {
                 printlnError(object);
@@ -110,13 +111,19 @@ public class MapperEvaluation {
             return;
         }
         if (Map.class.isAssignableFrom(field.getType())) {
-            executeMapTypeMapping(fieldSetObj,section, propertyName, field);
+            executeMapTypeMapping(fieldSetObj, section, propertyName, field);
         }
 
 
     }
 
-    private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance,ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
+    LinkedHashMap<Quality,LinkedHashMap<String,String>> initialAttributes;
+
+    public static void main(String[] args) {
+
+    }
+
+    private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
         AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
         Type type = field.getGenericType();
         Type[] typeArguments;
@@ -130,17 +137,143 @@ public class MapperEvaluation {
 
         // 判断第二个泛型参数的类型
         if (typeArguments.length >= 2) {
-            if(typeArguments[0].getClass().isEnum()){
-                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName(typeArguments[0].getClass());
-                injectMapping(section, propertyName, typeArguments, map,enumMappingName);
-            }else{
+            if (((Class)typeArguments[0]).isEnum()) {
+                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName((Class) typeArguments[0]);
+                injectMapping(section, propertyName, typeArguments, map, enumMappingName);
+            } else {
                 injectMapping(section, propertyName, typeArguments, map);
             }
         }
         return map;
     }
 
-    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map,HashMap<Enum<?>, String> enumMappingName) {
+//    private static AbstractMap<Object, Object> executeMapTypeMapping_dg(Object instance, ConfigurationSection section, String propertyName, Type type,AbstractMap<Object, Object> map) {
+//        if (type instanceof ParameterizedType) {
+//            ParameterizedType parameterizedType = (ParameterizedType) type;
+//            Type[] typeArguments = parameterizedType.getActualTypeArguments();
+//            //public static HashMap<String, HashMap<String, List<String>>> gemLevelQualityMapping = new HashMap<>();
+//            //public static LinkedHashMap<Integer,EquipmentMapper.Quality>
+//            if(List.class.isAssignableFrom(((ParameterizedTypeImpl) typeArguments[1]).getRawType())){
+//
+//            }
+//        }else{
+//            if (type == String.class) {
+//                Type typeArgument = typeArguments[1];
+//                System.out.println(((ParameterizedTypeImpl) typeArgument).getOwnerType());
+//                System.out.println(Map.class.isAssignableFrom(((ParameterizedTypeImpl) typeArgument).getRawType()));
+//
+//            } else if (type == Integer.class) {
+//
+//            } else if (type == Double.class) {
+//
+//            } else if (type == Float.class) {
+//
+//            } else if (((Class)type).isEnum()) {
+//                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName(typeArguments[0].getClass());
+//            }
+//        }
+//
+//        AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
+//        Type type = field.getGenericType();
+//        Type[] typeArguments;
+//        if (type instanceof ParameterizedType) {
+//            ParameterizedType parameterizedType = (ParameterizedType) type;
+//            typeArguments = parameterizedType.getActualTypeArguments();
+//        } else {
+//            throw new IllegalArgumentException("泛型参数缺少");
+//        }
+//        field.set(instance, map);
+//
+//        // 判断第二个泛型参数的类型
+//        if (typeArguments.length >= 2) {
+//            if (typeArguments[0].getClass().isEnum()) {
+//                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName(typeArguments[0].getClass());
+//                injectMapping(section, propertyName, typeArguments, map, enumMappingName);
+//            } else {
+//                injectMapping(section, propertyName, typeArguments, map);
+//            }
+//        }
+//        return map;
+//    }
+
+
+    private static void extractToMap(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map) {
+        Type typeArgument = typeArguments[1];
+        if (typeArgument instanceof ParameterizedTypeImpl) {
+            ConfigurationSection listSection = section.getConfigurationSection(propertyName);
+            if (listSection != null) {
+                Class<?> rawType = ((ParameterizedTypeImpl) typeArgument).getRawType();
+                if (Map.class.isAssignableFrom(rawType)) {
+                    AbstractMap<Object, Object> tempMap = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(rawType);
+                    for (String key : listSection.getKeys(false)) {
+                        ConfigurationSection subSection = listSection.getConfigurationSection(key);
+                        extractToMap(subSection, key, typeArguments, tempMap);
+                    }
+                } else if (List.class.isAssignableFrom(rawType)) {
+                    Set<String> keys = listSection.getKeys(false);
+                    for (String key : keys) {
+                        List<String> stringList = listSection.getStringList(key);
+                        map.put(key, stringList);
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    List
+    String
+    枚举
+    这种直接开始获取
+
+    如果是map，就再嵌套一次
+     */
+    public static void mai1n(String[] args) throws Exception {
+        Class<Test> testClass = Test.class;
+        Field field = testClass.getDeclaredField("gemLevelQualityMapping");
+        System.out.println(field);
+        AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
+        Type type = field.getGenericType();
+        Type[] typeArguments;
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            typeArguments = parameterizedType.getActualTypeArguments();
+        } else {
+            throw new IllegalArgumentException("泛型参数缺少");
+        }
+        if (typeArguments[0] instanceof ParameterizedTypeImpl) {
+            ParameterizedType parameterizedType = (ParameterizedTypeImpl) typeArguments[0];
+            typeArguments = parameterizedType.getActualTypeArguments();
+            throw new IllegalArgumentException("map-key 不能含有泛型");
+        } else {
+            Class mapKeyType = (Class) typeArguments[0];
+            if (mapKeyType == String.class) {
+                Type typeArgument = typeArguments[1];
+                System.out.println(((ParameterizedTypeImpl) typeArgument).getOwnerType());
+                System.out.println(Map.class.isAssignableFrom(((ParameterizedTypeImpl) typeArgument).getRawType()));
+//                while (typeArguments.length >= 2 && typeArgument instanceof ParameterizedTypeImpl) {
+//                    System.out.println(typeArgument);
+//                    ParameterizedType parameterizedType = (ParameterizedTypeImpl) typeArgument;
+//                    typeArguments = parameterizedType.getActualTypeArguments();
+//                    Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+//                    System.out.println(actualTypeArguments[0] + " 0");
+//                    System.out.println(actualTypeArguments[1] + " 1");
+//                }
+
+            } else if (mapKeyType == Integer.class) {
+
+            } else if (mapKeyType == Double.class) {
+
+            } else if (mapKeyType == Float.class) {
+
+            } else if (mapKeyType.isEnum()) {
+                HashMap<Enum<?>, String> enumMappingName = getEnumMappingName(typeArguments[0].getClass());
+            }
+        }
+
+    }
+
+    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map, HashMap<Enum<?>, String> enumMappingName) {
         Type typeArgument = typeArguments[1];
         if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
             if (section != null) {
@@ -173,7 +306,7 @@ public class MapperEvaluation {
                         Enum<?> key = entry.getKey();
                         String configKey = entry.getValue();
                         ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
-                        if(mapSection!=null) {
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -192,7 +325,7 @@ public class MapperEvaluation {
                         Enum<?> key = entry.getKey();
                         String configKey = entry.getValue();
                         ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
-                        if(mapSection!=null) {
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -203,7 +336,7 @@ public class MapperEvaluation {
                     }
                 }
             }
-        }else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
+        } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
             if (section != null) {
                 ConfigurationSection listSection = section.getConfigurationSection(propertyName);
                 if (listSection != null) {
@@ -211,7 +344,7 @@ public class MapperEvaluation {
                         Enum<?> key = entry.getKey();
                         String configKey = entry.getValue();
                         ConfigurationSection mapSection = listSection.getConfigurationSection(configKey);
-                        if(mapSection!=null) {
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, String> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -224,7 +357,6 @@ public class MapperEvaluation {
             }
         }
     }
-
 
     private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map) {
         Type typeArgument = typeArguments[1];
@@ -256,7 +388,7 @@ public class MapperEvaluation {
                     Set<String> keys = listSection.getKeys(false);
                     for (String key : keys) {
                         ConfigurationSection mapSection = listSection.getConfigurationSection(key);
-                        if(mapSection!=null) {
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -274,7 +406,7 @@ public class MapperEvaluation {
                     Set<String> keys = listSection.getKeys(false);
                     for (String key : keys) {
                         ConfigurationSection mapSection = listSection.getConfigurationSection(key);
-                        if(mapSection!=null) {
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, List<String>> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -285,14 +417,14 @@ public class MapperEvaluation {
                     }
                 }
             }
-        }else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
+        } else if (typeArgument.getTypeName().equals("java.util.LinkedHashMap<java.lang.String, java.lang.String>")) {
             if (section != null) {
                 ConfigurationSection listSection = section.getConfigurationSection(propertyName);
                 if (listSection != null) {
                     Set<String> keys = listSection.getKeys(false);
                     for (String key : keys) {
                         ConfigurationSection mapSection = listSection.getConfigurationSection(key);
-                        if(mapSection!=null){
+                        if (mapSection != null) {
                             Set<String> keys1 = mapSection.getKeys(false);
                             LinkedHashMap<String, String> map1 = new LinkedHashMap<>();
                             for (String s : keys1) {
@@ -306,11 +438,8 @@ public class MapperEvaluation {
         }
     }
 
-
     public static boolean mappingInject(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
-        return injectMapping(object, section, field, propertyName) |
-                injectFoldMapping(object, section, field, propertyName) |
-                injectFlatMapping(object, section, field,propertyName);
+        return injectMapping(object, section, field, propertyName) | injectFoldMapping(object, section, field, propertyName) | injectFlatMapping(object, section, field, propertyName);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -321,7 +450,6 @@ public class MapperEvaluation {
         }
         return object;
     }
-
 
     public static void injectDefaultValue(Object instance, Object indexData, Object parentData) {
         for (Field declaredField : instance.getClass().getDeclaredFields()) {
@@ -350,8 +478,7 @@ public class MapperEvaluation {
         return null;
     }
 
-
-    private static boolean injectFlatMapping(Object object, ConfigurationSection section,Field field,String propertyName) {
+    private static boolean injectFlatMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetFlatMapping getFlatMapping = field.getAnnotation(GetFlatMapping.class);
             Class<?> clazz = field.getType();
@@ -374,9 +501,9 @@ public class MapperEvaluation {
                 for (String key : getFlatMapping.stringKeys()) {
                     ConfigurationSection subSection = null;
                     if (section != null) {
-                        if(getFlatMapping.nested()){
-                            subSection = section.getConfigurationSection(propertyName+"."+key.replace("$", "."));
-                        }else{
+                        if (getFlatMapping.nested()) {
+                            subSection = section.getConfigurationSection(propertyName + "." + key.replace("$", "."));
+                        } else {
                             subSection = section.getConfigurationSection(key.replace("$", "."));
                         }
                     }
@@ -390,16 +517,16 @@ public class MapperEvaluation {
                 Enum[] enumConstants = ((Class<? extends Enum>) typeArguments[0]).getEnumConstants();
                 for (Enum enumConstant : enumConstants) {
                     String name;
-                    if(getPrivateAndSuperField(enumConstant, "mappingName") == null){
+                    if (getPrivateAndSuperField(enumConstant, "mappingName") == null) {
                         name = enumConstant.name();
-                    }else{
+                    } else {
                         name = (String) getPrivateAndSuperField(enumConstant, "mappingName");
                     }
                     ConfigurationSection subSection = null;
                     if (section != null) {
-                        if(getFlatMapping.nested()) {
-                            subSection = (ConfigurationSection) getElementIgnoreCase(section, propertyName+"."+name.replace("_", ""));
-                        }else{
+                        if (getFlatMapping.nested()) {
+                            subSection = (ConfigurationSection) getElementIgnoreCase(section, propertyName + "." + name.replace("_", ""));
+                        } else {
                             subSection = (ConfigurationSection) getElementIgnoreCase(section, name.replace("_", ""));
                         }
                     }
@@ -476,6 +603,28 @@ public class MapperEvaluation {
             e.printStackTrace();
         }
         return true;
+    }
+
+
+    @ToString
+    public enum Quality {
+        COMMON("普通"), RARE("稀有"), EPIC("精致"), PERFECT("完美"), LEGENDARY("传说");
+
+
+        public String mappingName;
+
+        Quality(String mappingName) {
+            this.mappingName = mappingName;
+        }
+    }
+
+    public static class Test {
+        public static HashMap<String, HashMap<String, List<String>>> gemLevelQualityMapping = new HashMap<>();
+    }
+
+    public static class MapAttribute {
+        Class key;
+
     }
 
 }

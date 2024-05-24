@@ -23,6 +23,10 @@ public abstract class BasicMapper extends EmptyMapper {
         pluginPrefix = basicConfig.getString("message.prefix").replaceAll("&", "§");
     }
 
+    public YamlConfiguration getYaml() {
+        return basicConfig;
+    }
+
 
 
 

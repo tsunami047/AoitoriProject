@@ -438,6 +438,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             }
             if(subCommand.map != null) {
                 for (Map.Entry<Integer, ParameterSpecification> entry : subCommand.map.entrySet()) {
+                    if (entry.getValue().nullable() && entry.getKey()+1 > args.length-1) {
+                        continue;
+                    }
                     String arg = args[entry.getKey() + 1];
                     switch (entry.getValue().type()) {
                         case Int: {
