@@ -8,6 +8,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.lang.reflect.Field;
 
+import static io.aoitori043.aoitoriproject.config.impl.MapperInjection.runAnnotatedMethodByField;
 import static io.aoitori043.aoitoriproject.config.loader.MapperEvaluation.getValue;
 
 /**
@@ -86,6 +87,7 @@ public class YamlMapping {
                     String propertyName = field.getName();
                     try {
                         getValue(object, yamlConfiguration, field, propertyName,parentName);
+                        runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                         printlnError(object);
@@ -123,6 +125,7 @@ public class YamlMapping {
                 propertyName = field.getName();
             }
             getValue(object, yamlConfiguration, field, propertyName,null);
+            runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);
             e.printStackTrace();

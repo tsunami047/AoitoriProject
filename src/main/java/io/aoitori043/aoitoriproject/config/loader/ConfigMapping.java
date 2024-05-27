@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 
 import static io.aoitori043.aoitoriproject.config.InvalidUtil.performNullCheck;
+import static io.aoitori043.aoitoriproject.config.impl.MapperInjection.runAnnotatedMethodByField;
 import static io.aoitori043.aoitoriproject.config.loader.MapperEvaluation.getValue;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 
@@ -76,6 +77,7 @@ public class ConfigMapping {
                     String propertyName = field.getName();
                     try {
                         getValue(object, section, field, propertyName,parentName);
+                        runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         printlnError(object);
                         e.printStackTrace();
@@ -120,6 +122,7 @@ public class ConfigMapping {
                 propertyName = field.getName();
             }
             getValue(object, section, field, propertyName,parentName);
+            runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);
             e.printStackTrace();

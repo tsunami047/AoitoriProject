@@ -13,9 +13,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Run {
-
-    Stage when() default Stage.COPIED;
-    enum Stage {
-        COPIED
-    }
+    String after() default "%%%default";
 }

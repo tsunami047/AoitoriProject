@@ -48,19 +48,8 @@ public class NotInvalidSignConfigLoader extends YamlConfiguration {
 
     @Override
     public void loadFromString(String contents) throws InvalidConfigurationException {
-            super.loadFromString(contents.replaceAll("&", "§"));
+            super.loadFromString(contents.replace("&", "§"));
     }
 
-    public static NotInvalidSignConfigLoader getEmptyFile() throws InvalidConfigurationException {
-        NotInvalidSignConfigLoader notInvalidSignConfig = new NotInvalidSignConfigLoader();
 
-        notInvalidSignConfig.loadFromString("");
-        return notInvalidSignConfig;
-    }
-
-    public static NotInvalidSignConfigLoader getNewMMEmptyFile() throws InvalidConfigurationException {
-        NotInvalidSignConfigLoader notInvalidSignConfig = new NotInvalidSignConfigLoader();
-        notInvalidSignConfig.loadFromString("");
-        return notInvalidSignConfig;
-    }
 }
