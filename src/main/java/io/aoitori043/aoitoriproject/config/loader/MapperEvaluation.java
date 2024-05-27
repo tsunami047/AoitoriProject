@@ -58,22 +58,27 @@ public class MapperEvaluation {
             if (field.getType().isEnum()) {
                 Enum[] enumConstants = (Enum[]) field.getType().getEnumConstants();
                 String value = section.getString(propertyName);
+                boolean hasMatch = false;
                 for (Enum enumConstant : enumConstants) {
                     if (value.equals(enumConstant.name().replace("_", "")) || value.equals(enumConstant.name())) {
                         field.set(fieldSetObj, enumConstant);
-                        return;
+                        hasMatch = true;
+                        break;
                     }
                 }
-                for (Enum enumConstant : enumConstants) {
-                    try {
-                        String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
-                        if (mappingName != null && mappingName.equals(value)) {
-                            field.set(fieldSetObj, enumConstant);
-                            return;
+                if(!hasMatch){
+                    for (Enum enumConstant : enumConstants) {
+                        try {
+                            String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
+                            if (mappingName != null && mappingName.equals(value)) {
+                                field.set(fieldSetObj, enumConstant);
+                                return;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+                    System.out.println(parentName+" "+ propertyName+ " 不能是 "+value);
                 }
             } else if (field.getType() == String.class) {
                 if (!section.getString(propertyName).equals("null")) {
