@@ -49,6 +49,10 @@ public class MapperEvaluation {
     public static void getValue(Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
         field.setAccessible(true);
         Object fieldSetObj = isStaticField(field) ? null : object;
+        if(field.getName().equals("yaml")){
+            field.set(fieldSetObj, section);
+            return;
+        }
         if (isStaticField(field) && field.getName().equals("config")) {
             field.set(null, object);
             return;

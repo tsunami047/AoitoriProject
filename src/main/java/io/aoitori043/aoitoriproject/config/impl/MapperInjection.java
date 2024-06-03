@@ -139,6 +139,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                         Object instance = createInstance((Class<?>)field.getType());
                         YamlMapping.loadFromConfig(instance, yaml,annotation.path());
                         field.set(isStaticField(field) ? null : this, instance);
+                        runAnnotatedMethods(instance);
                     } catch (Exception e) {
                         System.out.println("-------------------------------------------");
                         System.out.println("以下问题出自："+annotation.path() + ".yml");
