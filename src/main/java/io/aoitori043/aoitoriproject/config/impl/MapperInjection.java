@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.Map;
 
+import static io.aoitori043.aoitoriproject.config.InvalidUtil.performNullCheck;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.createInstance;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
@@ -106,6 +107,12 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                     Object instance = createInstance((Class<?>)typeArguments[1]);
                                     YamlMapping.loadFromConfig(instance,yaml,yamlName);
                                     runAnnotatedMethods(instance);
+                                    try {
+                                        performNullCheck(instance);
+                                    }catch (Exception e){
+                                        printlnError(instance);
+                                        e.printStackTrace();
+                                    }
                                     map.put(yamlName, instance);
                                 } catch (Exception e) {
                                     System.out.println("-------------------------------------------");
@@ -120,6 +127,12 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                         ConfigurationSection section = yaml.getConfigurationSection(key);
                                         ConfigMapping.loadFromConfig(instance, key, section);
                                         runAnnotatedMethods(instance);
+                                        try {
+                                            performNullCheck(instance);
+                                        }catch (Exception e){
+                                            printlnError(instance);
+                                            e.printStackTrace();
+                                        }
                                         map.put(key, instance);
                                     }catch (Exception e){
                                         System.out.println("-------------------------------------------");
@@ -140,6 +153,12 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                         YamlMapping.loadFromConfig(instance, yaml,annotation.path());
                         field.set(isStaticField(field) ? null : this, instance);
                         runAnnotatedMethods(instance);
+                        try {
+                            performNullCheck(instance);
+                        }catch (Exception e){
+                            printlnError(instance);
+                            e.printStackTrace();
+                        }
                     } catch (Exception e) {
                         System.out.println("-------------------------------------------");
                         System.out.println("以下问题出自："+annotation.path() + ".yml");

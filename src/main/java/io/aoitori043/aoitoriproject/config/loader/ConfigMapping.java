@@ -91,12 +91,6 @@ public class ConfigMapping {
                 }
             }
         }
-        try {
-            performNullCheck(object);
-        }catch (Exception e){
-            printlnError(object);
-            e.printStackTrace();
-        }
     }
 
     private static void findConversion(Object object, ConfigurationSection section, Field field,String parentName) {

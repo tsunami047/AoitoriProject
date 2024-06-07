@@ -76,19 +76,19 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         return df.format(seconds);
     }
 
-    public static List<String> getTabList(String[] args, SubCommand subCommand, String tabMethodName) {
+    public static List<String> getTabList(int index, SubCommand subCommand, String tabMethodName,String arg) {
         try {
-            Class[] parameterTypes = new Class[]{int.class};
+            Class[] parameterTypes = new Class[]{int.class,String.class};
             Method method = subCommand.getClass().getMethod(tabMethodName, parameterTypes);
             method.setAccessible(true);
-            Object[] arguments = new Object[]{args.length - 3};
+            Object[] arguments = new Object[]{index,arg};
             Object invoke = method.invoke(subCommand, arguments);
             if (invoke == null) {
                 return null;
             }
             return (List<String>) invoke;
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return null;
         }
     }
@@ -143,7 +143,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                             }
                         }
                     } else if (method.getAnnotation(ParameterSpecification.class) != null) {
-                        if (subCommand.minLength == -1) {
+                        if (method.getAnnotation(ParameterSpecification.class).nullable()) {
+                            subCommand.minLength = 1;
+                        }else{
                             subCommand.minLength = 2;
                         }
                     }
@@ -155,6 +157,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                     if (executePermission != null) {
                         subCommand.isOp = executePermission.isOp();
                         subCommand.permission = executePermission.permission();
+                    }else{
+                        subCommand.isOp = true;
+                        subCommand.permission = "nope.";
                     }
                     ExecutionStartMessage executionStartMessage = method.getAnnotation(ExecutionStartMessage.class);
                     if (executionStartMessage != null) {
@@ -168,8 +173,12 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 }
                 TabCompletion tabCompletion = method.getAnnotation(TabCompletion.class);
                 if (tabCompletion != null) {
-                    SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.computeIfAbsent(tabCompletion.argument(), k -> new SubCommand.SubCommandExecutor(subCommand));
-                    subCommandExecutor.tabMethodName = method.getName();
+                    if(subCommand.isNotArgument){
+                        subCommand.tabMethodName = method.getName();
+                    }else {
+                        SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.computeIfAbsent(tabCompletion.argument(), k -> new SubCommand.SubCommandExecutor(subCommand));
+                        subCommandExecutor.tabMethodName = method.getName();
+                    }
                     continue;
                 }
                 Parameter parameter = method.getAnnotation(Parameter.class);
@@ -179,6 +188,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                     if (executePermission != null) {
                         subCommandExecutor.isOp = executePermission.isOp();
                         subCommandExecutor.permission = executePermission.permission();
+                    }else{
+                        subCommandExecutor.isOp = true;
+                        subCommandExecutor.permission = "nope.";
                     }
                     ExecutionStartMessage executionStartMessage = method.getAnnotation(ExecutionStartMessage.class);
                     if (executionStartMessage != null) {
@@ -325,6 +337,15 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         if (subCommand == null || subCommand.subCommands == null) {
             return Collections.emptyList();
         }
+        if(subCommand.isNotArgument){
+            String tabMethodName = subCommand.tabMethodName;
+            List<String> tabList = getTabList(args.length - 2, subCommand, tabMethodName,args[args.length-1]);
+            if (tabList != null) {
+                return tabList;
+            }else{
+                return Collections.emptyList();
+            }
+        }
         SubCommand.SubCommandExecutor subCommandExecutor;
         if (args.length == 2) {
             subCommandExecutor = subCommand.subCommands.get("notArgument");
@@ -338,7 +359,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             return Collections.emptyList();
         }
         String tabMethodName = subCommandExecutor.getTabMethodName();
-        List<String> tabList = getTabList(args, subCommand, tabMethodName);
+        List<String> tabList = getTabList(args.length - 3, subCommand, tabMethodName,args[args.length-1]);
         if (tabList != null) {
             return tabList;
         }
@@ -431,6 +452,22 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             return true;
         }
         if(subCommand.isNotArgument){
+            if(subCommand.isOp){
+                if(sender instanceof Player){
+                    if (!((Player) sender).isOp()) {
+                        if(subCommand.permission.equals("nope.") || !sender.hasPermission(subCommand.permission)){
+                            myBasicCommand.sendMessageWithPrefix(sender, "§c你没有权限执行这条指令。");
+                            return true;
+                        }
+                    }
+                }else if(!(sender instanceof ConsoleCommandSender)){
+                    myBasicCommand.sendMessageWithPrefix(sender, "无法判断该命令执行者是否拥有权限执行此指令。");
+                    return true;
+                }
+            }else if(!subCommand.permission.equals("nope.") && !sender.hasPermission(subCommand.permission)){
+                myBasicCommand.sendMessageWithPrefix(sender, "§c你没有权限执行这条指令。");
+                return true;
+            }
             if(args.length < subCommand.minLength){
                 myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + String.join(" ", args) + " §c___ <-");
                 myBasicCommand.sendMessageWithPrefix(sender, "缺少参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
@@ -490,6 +527,22 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         if (subCommandExecutor == null) {
             myBasicCommand.sendMessageWithPrefix(sender, "§f/" + lable + " " + mergeAndHighlight(args, 1) + " §c<-");
             myBasicCommand.sendMessageWithPrefix(sender, "没有匹配参数，输入 /" + myBasicCommand.getAlias() + " 可以获取指令帮助。");
+            return true;
+        }
+        if(subCommandExecutor.isOp){
+            if(sender instanceof Player){
+                if (!((Player) sender).isOp()) {
+                    if(subCommandExecutor.permission.equals("nope.") || !sender.hasPermission(subCommandExecutor.permission)){
+                        myBasicCommand.sendMessageWithPrefix(sender, "§c你没有权限执行这条指令。");
+                        return true;
+                    }
+                }
+            }else if(!(sender instanceof ConsoleCommandSender)){
+                myBasicCommand.sendMessageWithPrefix(sender, "无法判断该命令执行者是否拥有权限执行此指令。");
+                return true;
+            }
+        }else if(!subCommandExecutor.permission.equals("nope.") && !sender.hasPermission(subCommandExecutor.permission)){
+            myBasicCommand.sendMessageWithPrefix(sender, "§c你没有权限执行这条指令。");
             return true;
         }
         if (args.length < subCommandExecutor.minLength+2) {

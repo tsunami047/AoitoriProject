@@ -125,7 +125,7 @@ public abstract class SubCommand {
     public boolean isNotArgument = false;
     public String help;
     public String commandprefix;
-
+    public String tabMethodName;
     public Method method;
 
     public boolean isOp = false;
