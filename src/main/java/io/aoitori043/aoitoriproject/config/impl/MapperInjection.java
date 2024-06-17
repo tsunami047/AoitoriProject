@@ -87,6 +87,19 @@ public abstract class MapperInjection extends AutoConfigPrinter {
 
     public abstract JavaPlugin getPlugin();
 
+    public static void injectFilePath(Object object, String path){
+        for (Field field : object.getClass().getDeclaredFields()) {
+            try {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(FilePath.class)) {
+                    field.set(object, path);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void injectMapper() {
         Class<? extends MapperInjection> aClass = this.getClass();
         for (Field field : aClass.getFields()) {
@@ -105,6 +118,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                             if(fieldAnnotation.singe()){
                                 try {
                                     Object instance = createInstance((Class<?>)typeArguments[1]);
+                                    injectFilePath(instance,file.getPath());
                                     YamlMapping.loadFromConfig(instance,yaml,yamlName);
                                     runAnnotatedMethods(instance);
                                     try {
@@ -124,6 +138,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                 for (String key : yaml.getKeys(false)) {
                                     try {
                                         Object instance = createInstance((Class<?>) typeArguments[1]);
+                                        injectFilePath(instance,file.getPath()+"_"+key);
                                         ConfigurationSection section = yaml.getConfigurationSection(key);
                                         ConfigMapping.loadFromConfig(instance, key, section);
                                         runAnnotatedMethods(instance);
@@ -152,6 +167,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                         Object instance = createInstance((Class<?>)field.getType());
                         YamlMapping.loadFromConfig(instance, yaml,annotation.path());
                         field.set(isStaticField(field) ? null : this, instance);
+                        injectFilePath(isStaticField(field),annotation.path());
                         runAnnotatedMethods(instance);
                         try {
                             performNullCheck(instance);

@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.time.temporal.ChronoUnit.HOURS;
 
+//玩家退出服务器给几秒钟进行保存数据，在此之前不能进入新的服务器
 @ToString
 public class ExclusiveCacheImpl extends CacheImpl {
 
