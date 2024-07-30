@@ -3,7 +3,7 @@ package io.aoitori043.aoitoriproject.impl.command;
 import io.aoitori043.aoitoriproject.command.BasicCommand;
 import io.aoitori043.aoitoriproject.command.BasicCommandParameter;
 import io.aoitori043.aoitoriproject.command.SubCommand;
-import io.aoitori043.aoitoriproject.impl.HandlerInjection;
+import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandTest;
 import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandReload;
 import org.bukkit.command.CommandSender;
@@ -27,7 +27,7 @@ public class IBasicCommand extends BasicCommand {
     }
 
     public String getPrefix(){
-        return HandlerInjection.instance.pluginPrefix;
+        return ConfigHandler.instance.pluginPrefix;
     }
 
     @Override

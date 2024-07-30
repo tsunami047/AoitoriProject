@@ -20,6 +20,7 @@ public @interface InjectMappers {
     String dir();
 
     boolean singe() default false;
+    boolean dependent() default false;
 
 
 }

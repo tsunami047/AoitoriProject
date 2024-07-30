@@ -7,14 +7,14 @@ import io.aoitori043.aoitoriproject.database.DatabaseInjection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
-public class HandlerInjection extends BasicMapper {
+public class ConfigHandler extends BasicMapper {
 
     public static void load(){
-        instance = new HandlerInjection();
+        instance = new ConfigHandler();
         database = new DatabaseInjection();
     }
 
-    public static HandlerInjection instance;
+    public static ConfigHandler instance;
     public static DatabaseInjection database;
 
     @Override

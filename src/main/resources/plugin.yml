@@ -2,3 +2,5 @@ name: AoitoriProject
 version: '${project.version}'
 main: io.aoitori043.aoitoriproject.AoitoriProject
 authors: [Aoitori043]
+depend:
+  - PlaceholderAPI

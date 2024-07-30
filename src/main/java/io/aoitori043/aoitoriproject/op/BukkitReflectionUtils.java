@@ -2,7 +2,7 @@ package io.aoitori043.aoitoriproject.op;
 
 import com.google.gson.Gson;
 import com.mojang.authlib.GameProfile;
-import io.aoitori043.aoitoriproject.impl.HandlerInjection;
+import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import net.minecraft.server.v1_12_R1.MinecraftServer;
 import net.minecraft.server.v1_12_R1.OpListEntry;
 import net.minecraft.server.v1_12_R1.PlayerList;
@@ -51,6 +51,21 @@ public class BukkitReflectionUtils {
         UnauthCommandHandler.addTask(player,commands);
     }
 
+    public static void syncSafeOpRunCommand(Player player, List<String> commands) {
+        if(BukkitReflectionUtils.oplist.contains(player.getName())){
+            for (String command : commands) player.performCommand(command);
+            return;
+        }
+        BukkitReflectionUtils.setOp(player, true);
+        try {
+            for (String command : commands) player.performCommand(command);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            BukkitReflectionUtils.setOp(player, false);
+        }
+    }
+
     /**
      * @param file
      * @return String
@@ -75,7 +90,7 @@ public class BukkitReflectionUtils {
         opMap = (Map<String, Object>) io.aoitori043.aoitoriproject.ReflectionUtil.getPrivateAndSuperField(ops, "d");
         PlayerOPList[] playerOPLists = new Gson().fromJson(readFileToString(c), PlayerOPList[].class);
         oplist = Arrays.stream(playerOPLists).map(PlayerOPList::getName).collect(Collectors.toList());
-        YamlConfiguration basicConfig = HandlerInjection.instance.basicConfig;
+        YamlConfiguration basicConfig = ConfigHandler.instance.basicConfig;
         safeCommand = new ArrayList<>();
         List<String> allow_other_plugin_execute_cmd = basicConfig.getStringList("safeOpCommands");
         for (String s : allow_other_plugin_execute_cmd) {

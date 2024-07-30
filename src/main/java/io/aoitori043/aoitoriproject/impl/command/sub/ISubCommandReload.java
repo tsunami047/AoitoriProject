@@ -3,7 +3,7 @@ package io.aoitori043.aoitoriproject.impl.command.sub;
 
 
 import io.aoitori043.aoitoriproject.command.*;
-import io.aoitori043.aoitoriproject.impl.HandlerInjection;
+import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class ISubCommandReload extends SubCommand {
     @ExecutionStartMessage(message = "开始重载...")
     @ExecutionEndMessage(message = "重载完成，耗时 %time%s")
     public void execute(CommandSender sender,List<ArgumentHelper> arguments) {
-        HandlerInjection.load();
+        ConfigHandler.load();
         afterLoadConfig();
     }
 

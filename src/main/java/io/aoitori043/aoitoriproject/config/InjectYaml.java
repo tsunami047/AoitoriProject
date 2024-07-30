@@ -17,4 +17,5 @@ import java.lang.annotation.Target;
 public @interface InjectYaml {
     @NotNull
     String path();
+    boolean multiple() default false;
 }

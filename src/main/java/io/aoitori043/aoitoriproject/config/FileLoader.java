@@ -27,7 +27,7 @@ public class FileLoader {
         processFiles(file,fileProcessor);
     }
 
-    static void processFiles(File dir, Consumer<File> fileProcessor) {
+    public static void processFiles(File dir, Consumer<File> fileProcessor) {
         File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {

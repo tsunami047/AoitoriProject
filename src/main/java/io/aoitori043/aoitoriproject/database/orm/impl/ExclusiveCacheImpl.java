@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.Duration;
@@ -22,8 +23,7 @@ import static java.time.temporal.ChronoUnit.HOURS;
 //玩家退出服务器给几秒钟进行保存数据，在此之前不能进入新的服务器
 @ToString
 public class ExclusiveCacheImpl extends CacheImpl {
-
-
+    public static ConcurrentHashMap<String,Long> lockTime = new ConcurrentHashMap<>();
     public final ConcurrentHashMap<String, Set<CacheWrapper>> playerNameCache = new ConcurrentHashMap<>();
     public final CaffeineCacheImpl<CacheWrapper> aggregateRootCacheImpl = new CaffeineCacheImpl<CacheWrapper>(1000, Duration.of(5, HOURS));
     public final CaffeineCacheImpl<Set<String>> discreteRootCacheImpl = new CaffeineCacheImpl<Set<String>>(10000, Duration.of(5, HOURS));
@@ -61,21 +61,28 @@ public class ExclusiveCacheImpl extends CacheImpl {
     }
 
     private <T> void deleteCache(T tEntity, SQLClient.EntityAttributes entityAttribute) {
-        if (deleteCacheIfAggregateRoot(tEntity, entityAttribute)) return;
-        //无聚合根，则查询后删除
-        List<T> tEntities = sqlClient.sqlQuery.directFindByIds(tEntity);
-        for (T loopTEntity : tEntities) {
-            deleteCacheIfAggregateRoot(loopTEntity, entityAttribute);
+        try {
+            if (deleteCacheIfAggregateRoot(tEntity, entityAttribute)) return;
+            //无聚合根，则查询后删除
+            List<T> tEntities = sqlClient.sqlQuery.directFindByIds(tEntity);
+            for (T loopTEntity : tEntities) {
+                deleteCacheIfAggregateRoot(loopTEntity, entityAttribute);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
     private <T> boolean deleteCacheIfAggregateRoot(T tEntity, SQLClient.EntityAttributes entityAttribute) {
         String aggregateRoot = entityAttribute.getAggregateRoot(tEntity);
         if (aggregateRoot != null) {
-            CacheWrapper cacheWrapper = aggregateRootCacheImpl.get(aggregateRoot);
-            deleteCacheByWrapper(cacheWrapper);
-            Set<CacheWrapper> cacheWrappers = playerNameCache.get(cacheWrapper.getPlayerName());
-            cacheWrappers.remove(cacheWrapper);
+             CacheWrapper cacheWrapper = aggregateRootCacheImpl.get(aggregateRoot);
+             if (cacheWrapper == null) {
+                 return true;
+             }
+             deleteCacheByWrapper(cacheWrapper);
+             Set<CacheWrapper> cacheWrappers = playerNameCache.get(cacheWrapper.getPlayerName());
+             cacheWrappers.remove(cacheWrapper);
             return true;
         }
         return false;
@@ -257,13 +264,16 @@ public class ExclusiveCacheImpl extends CacheImpl {
     }
 
     public class PlayerJoinQuitListener implements Listener {
-        @EventHandler(ignoreCancelled = true,priority = EventPriority.LOWEST)
-        public void whenPlayerJoinServer(PlayerJoinEvent e) {
-            playerNameCache.put(e.getPlayer().getName(), new HashSet<>());
+        @EventHandler(priority = EventPriority.MONITOR)
+        public void whenPlayerLoginServer(PlayerLoginEvent e) {
+            if (e.getResult() == PlayerLoginEvent.Result.ALLOWED) {
+                playerNameCache.put(e.getPlayer().getName(), new HashSet<>());
+            }
         }
 
-        @EventHandler(ignoreCancelled = true,priority = EventPriority.MONITOR)
+        @EventHandler(priority = EventPriority.MONITOR)
         public void whenPlayerQuitServer(PlayerQuitEvent e) {
+            //玩家退出服务器，在redis上锁，加上锁日期，倒计时结束后清除缓存，玩家进入别的服务器，提示不能进入，等待，进入这个服务器，可以进入，先清除缓存
             String name = e.getPlayer().getName();
             Set<CacheWrapper> cacheWrappers = playerNameCache.get(name);
             Iterator<CacheWrapper> iterator = cacheWrappers.iterator();
@@ -275,5 +285,6 @@ public class ExclusiveCacheImpl extends CacheImpl {
             playerNameCache.remove(name);
         }
     }
+
 
 }

@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.config.loader;
 import io.aoitori043.aoitoriproject.config.GetFlatMapping;
 import io.aoitori043.aoitoriproject.config.GetFoldMapping;
 import io.aoitori043.aoitoriproject.config.GetMapping;
+import io.aoitori043.aoitoriproject.config.InjectYaml;
 import io.aoitori043.aoitoriproject.config.impl.MapperInjection;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import lombok.ToString;
@@ -12,6 +13,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isInnerClass;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 import static io.aoitori043.aoitoriproject.utils.ReflectionUtil.getPrivateAndSuperField;
@@ -47,6 +49,9 @@ public class MapperEvaluation {
     }
 
     public static void getValue(Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
+        if(field.isAnnotationPresent(InjectYaml.class)){
+            return;
+        }
         field.setAccessible(true);
         Object fieldSetObj = isStaticField(field) ? null : object;
         if(field.getName().equals("yaml")){
@@ -88,7 +93,7 @@ public class MapperEvaluation {
                 if (!section.getString(propertyName).equals("null")) {
                     field.set(fieldSetObj, section.getString(propertyName));
                 }
-            } else if (field.getType() == int.class || field.getType() == Integer.class) {
+            } else if (field.getType() == int.class || field.getType() == Integer.class ) {
                 field.set(fieldSetObj, section.getInt(propertyName));
                 return;
             } else if (field.getType() == double.class || field.getType() == float.class || field.getType() == Double.class || field.getType() == Float.class) {
@@ -126,13 +131,11 @@ public class MapperEvaluation {
 
     }
 
-    LinkedHashMap<Quality,LinkedHashMap<String,String>> initialAttributes;
-
-    public static void main(String[] args) {
-
-    }
 
     private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
+        if(field.get(instance)!=null){
+            return null;
+        }
         AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
         Type type = field.getGenericType();
         Type[] typeArguments;
@@ -555,7 +558,11 @@ public class MapperEvaluation {
     private static boolean injectFoldMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetFoldMapping getFoldMapping = field.getAnnotation(GetFoldMapping.class);
-            if (getFoldMapping == null) {
+            if (!isInnerClass(field.getType()) && getFoldMapping == null) {
+                return false;
+            }
+            Object o = field.get(object);
+            if(o!=null){
                 return false;
             }
             ConfigurationSection foldSection = null;

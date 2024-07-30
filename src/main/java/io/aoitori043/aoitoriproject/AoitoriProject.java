@@ -3,10 +3,11 @@ package io.aoitori043.aoitoriproject;
 import com.tuershen.nbtlibraryfix.NBTLibraryMain;
 import io.aoitori043.aoitoriproject.command.BasicCommandExecute;
 import io.aoitori043.aoitoriproject.database.DatabaseCenter;
-import io.aoitori043.aoitoriproject.impl.HandlerInjection;
+import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.IBasicCommand;
+import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
+import io.aoitori043.aoitoriproject.script.PlaceholderHook;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -15,7 +16,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashSet;
-import java.util.Properties;
 
 public final class AoitoriProject extends JavaPlugin implements Listener {
 
@@ -24,11 +24,17 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         plugin = this;
+        new PlaceholderHook(this).register();
         NBTLibraryMain.loadNBTLibrary(this);
         Bukkit.getPluginManager().registerEvents(this,this);
         BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
-        HandlerInjection.load();
+        ConfigHandler.load();
         afterLoadConfig();
+        try {
+            BukkitReflectionUtils.init(this);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         DatabaseCenter.init();
     }
 
