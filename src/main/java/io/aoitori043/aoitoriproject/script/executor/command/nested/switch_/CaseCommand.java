@@ -36,6 +36,7 @@ public class CaseCommand extends NestedCommand {
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
         if(result!=null){
             performReturnContent.setResult(result.interpret(playerDataAccessor,variables));
+            performReturnContent.setReturn(true);
             return null;
         }
         NestedCommandWrapper nestedCommandWrapper = new NestedCommandWrapper();

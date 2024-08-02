@@ -42,6 +42,6 @@ public class ForCommand extends NestedCommand {
 
     @Override
     public void compile() {
-
+        this.expression = new Expression(parameters[0]);
     }
 }

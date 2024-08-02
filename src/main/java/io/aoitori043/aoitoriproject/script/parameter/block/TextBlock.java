@@ -21,7 +21,11 @@ public class TextBlock implements Block {
         this.parse();
     }
 
+
     public static boolean isInt(String str) {
+        if(str.contains("+")){
+            return false;
+        }
         try {
             Integer.parseInt(str);
             return true;
@@ -44,9 +48,6 @@ public class TextBlock implements Block {
     }
 
     public static boolean isLong(String str) {
-        if (str == null || str.isEmpty()) {
-            return false;
-        }
         try {
             Long.parseLong(str);
             return true;
@@ -60,17 +61,19 @@ public class TextBlock implements Block {
             result =  "";
             return;
         }
-        if(isInt(content)){
-            result = Integer.valueOf(content);
-            return;
-        }
-        if(isLong(content)){
-            result = Long.valueOf(content);
-            return;
-        }
-        if(isDouble(content)){
-            result = Double.valueOf(content);
-            return;
+        if(!content.contains("+")){
+            if(isInt(content)){
+                result = Integer.valueOf(content);
+                return;
+            }
+            if(isLong(content)){
+                result = Long.valueOf(content);
+                return;
+            }
+            if(isDouble(content)){
+                result = Double.valueOf(content);
+                return;
+            }
         }
         if(isBoolean(content)){
             result = Boolean.valueOf(content);

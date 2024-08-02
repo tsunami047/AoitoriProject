@@ -42,7 +42,7 @@ public abstract class AoitoriEvent {
     protected void execute() {
         AbstractCommand.PerformReturnContent performReturnContent = new AbstractCommand.PerformReturnContent();
         FunctionExecutor.syncExecuteNotDelay(playerDataAccessor,functionBody,performReturnContent,this.varRuntime);
-        isCancel = performReturnContent.isCancel;
+        this.isCancel = performReturnContent.isCancel;
     }
 
     public abstract EventResult invoke();

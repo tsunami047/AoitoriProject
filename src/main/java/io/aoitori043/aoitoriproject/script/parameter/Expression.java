@@ -31,7 +31,7 @@ import static java.time.temporal.ChronoUnit.HOURS;
  * 纯文本类型，纯变量引用，直接返回object，不包装编译
  *
  */
-@Data
+@Getter
 public class Expression {
 
     public static JexlEngine jexl = new JexlBuilder().create();
@@ -39,11 +39,11 @@ public class Expression {
 
     private Block[] blocks;
 
-    public boolean cacheSafe = false;
     public boolean isMathExpression;
     public String variableExpression;
     private Block[] varaibleBlocks;
     private JexlExpression expression;
+
 
 
     public static Cache<String, Object> cache = Caffeine.newBuilder()
@@ -94,8 +94,19 @@ public class Expression {
         return expression.evaluate(context);
     }
 
+    @Override
+    public String toString() {
+        return "Expression{" +
+                "blocks=" + Arrays.toString(blocks) +
+                ", isMathExpression=" + isMathExpression +
+                ", variableExpression='" + variableExpression + '\'' +
+                ", varaibleBlocks=" + Arrays.toString(varaibleBlocks) +
+                ", expression=" + expression +
+                '}';
+    }
+
     public boolean executeAsBoolean(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> variables){
-        return (boolean) execute(playerDataAccessor,variables);
+        return Boolean.parseBoolean(execute(playerDataAccessor,variables).toString());
     }
 
     public static String extract(String input) {
@@ -121,7 +132,20 @@ public class Expression {
         this.compile(variableExpression);
     }
 
-    private static @NotNull StringBuilder getStringBuffer(StringBuilder buffer, List<Block> blockList) {
+    public enum CompiledType{
+        NORMAL,
+        NOT_CALCULATE
+    }
+
+    CompiledType compiledType = CompiledType.NORMAL;
+
+    public Expression(String expression,CompiledType compiledType) {
+        variableExpression = extract(expression);
+        this.compiledType = compiledType;
+        this.compile(variableExpression);
+    }
+
+    public static @NotNull StringBuilder getStringBuffer(StringBuilder buffer, List<Block> blockList) {
         if (buffer.length() > 0) {
             blockList.add(wrapperToTextBlock(buffer.toString()));
             buffer = new StringBuilder();
@@ -129,7 +153,7 @@ public class Expression {
         return buffer;
     }
 
-    private static int findCharIndex(String text, int startIndex, char anchor) {
+    static int findCharIndex(String text, int startIndex, char anchor) {
         for (int i = startIndex + 1; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == anchor && (i == 0 || text.charAt(i - 1) != '\\')) {
@@ -197,7 +221,6 @@ public class Expression {
         return new Block[]{};
     }
 
-    //"msg(replace('今天时间: %time%','%time%','getTime()')取公共冷却时间())"
     private void compile(String parameter) {
         if (parameter == null) {
             return;
@@ -244,6 +267,9 @@ public class Expression {
         this.blocks = blockList.toArray(new Block[0]);
         this.varaibleBlocks = variableBlockList.toArray(new Block[0]);
         this.variableExpression = generateEncodedExpression();
+        if(compiledType == CompiledType.NOT_CALCULATE){
+            return;
+        }
         if(isValidMathExpression(parameter)){
             if (this.blocks.length == 1) {
                 if(this.blocks[0] instanceof TextBlock){
@@ -264,11 +290,8 @@ public class Expression {
     }
 
     public static void main(String[] args) {
-        JexlExpression expression1 = jexl.createExpression("a + 3");
-        Map<String, Object> map = new HashMap<>();
-        map.put("a","1");
-        JexlContext context = new MapContext(map);
-        System.out.println(expression1.evaluate(context));
+        Expression sworddamaged1 = new Expression("sworddamaged1");
+        System.out.println(sworddamaged1.execute(null, null));
     }
 
     public static boolean isValidMathExpression(String expression) {

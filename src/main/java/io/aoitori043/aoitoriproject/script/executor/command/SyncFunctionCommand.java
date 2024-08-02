@@ -45,6 +45,7 @@ public class SyncFunctionCommand extends AbstractCommand {
         }
         NestedCommandWrapper nestedCommandWrapper = new NestedCommandWrapper();
         nestedCommandWrapper.setCommands(function.commands);
+        nestedCommandWrapper.setUseNewReturnContext(true);
 //        FunctionExecutor.syncExecute(playerDataAccessor,function.commands,performReturnContent,variables);
         return nestedCommandWrapper;
     }

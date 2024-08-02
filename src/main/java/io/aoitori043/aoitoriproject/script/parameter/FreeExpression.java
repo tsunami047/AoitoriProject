@@ -32,9 +32,15 @@ public class FreeExpression {
         }
     }
 
+    public FreeExpression(String cmd, Expression.CompiledType compiledType) {
+        if(cmd!=null){
+            expression = new Expression(cmd, compiledType);
+        }
+    }
+
     public Object interpret(PlayerDataAccessor playerDataAccessor) {
         if (expression != null) {
-            return expression.interpret(playerDataAccessor, null);
+            return expression.interpret(playerDataAccessor, new ConcurrentHashMap<>());
         } else if (abstractCommands != null) {
             AbstractCommand.PerformReturnContent performReturnContent = new AbstractCommand.PerformReturnContent();
             FunctionExecutor.syncExecuteNotDelay(playerDataAccessor,abstractCommands,performReturnContent,new ConcurrentHashMap<>());
@@ -48,7 +54,7 @@ public class FreeExpression {
             return expression.interpret(playerDataAccessor, formalVariables);
         } else if (abstractCommands != null) {
             AbstractCommand.PerformReturnContent performReturnContent = new AbstractCommand.PerformReturnContent();
-            FunctionExecutor.syncExecuteNotDelay(playerDataAccessor,abstractCommands,performReturnContent,new ConcurrentHashMap<>());
+            FunctionExecutor.syncExecuteNotDelay(playerDataAccessor,abstractCommands,performReturnContent,formalVariables);
             return performReturnContent.getResult();
         }
         return null;

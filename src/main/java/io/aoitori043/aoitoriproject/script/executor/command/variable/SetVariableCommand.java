@@ -37,7 +37,7 @@ public class SetVariableCommand extends AbstractCommand {
         if (playerDataAccessor.hasVariable(varNameText)) {
             playerDataAccessor.setValue(varNameText,value.interpret(playerDataAccessor,variables));
         }else{
-            variables.put(varNameText, value);
+            variables.put(varNameText, value.interpret(playerDataAccessor,variables));
         }
         return null;
     }

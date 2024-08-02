@@ -7,6 +7,7 @@ import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.IBasicCommand;
 import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
 import io.aoitori043.aoitoriproject.script.PlaceholderHook;
+import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,6 +28,7 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
         new PlaceholderHook(this).register();
         NBTLibraryMain.loadNBTLibrary(this);
         Bukkit.getPluginManager().registerEvents(this,this);
+        Bukkit.getPluginManager().registerEvents(new TemporaryDataManager(),this);
         BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
         ConfigHandler.load();
         afterLoadConfig();
@@ -36,6 +38,10 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
         DatabaseCenter.init();
+    }
+
+    public static boolean isPlayerOnline(String playerName){
+        return onlinePlayerNames.contains(playerName);
     }
 
     public static HashSet<String> onlinePlayerNames = new HashSet<>();

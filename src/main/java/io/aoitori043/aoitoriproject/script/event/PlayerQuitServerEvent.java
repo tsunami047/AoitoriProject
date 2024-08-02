@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PlayerQuitServerEvent extends AoitoriEvent{
 
-    public static final String PLAYER_LEAVE_SERVER = "playerLeaveServer";
+    public static final String PLAYER_LEAVE_SERVER = "playerQuitServer";
 
     public PlayerQuitServerEvent(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> functionBody, ConcurrentHashMap<String, Object> map) {
         super(playerDataAccessor, "playerLeaveServer", functionBody, map);

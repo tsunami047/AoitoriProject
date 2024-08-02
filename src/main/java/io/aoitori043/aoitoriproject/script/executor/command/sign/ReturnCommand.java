@@ -23,6 +23,10 @@ public class ReturnCommand extends AbstractCommand {
 
     Expression result;
 
+    public boolean hasReturnValue(){
+        return result!=null;
+    }
+
     public ReturnCommand(int depth, String[] parameters) {
         super(depth, "return", parameters);
     }

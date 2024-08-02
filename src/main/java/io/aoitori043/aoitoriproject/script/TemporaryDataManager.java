@@ -1,13 +1,18 @@
 package io.aoitori043.aoitoriproject.script;
 
+import io.aoitori043.aoitoriproject.AoitoriProject;
+import io.aoitori043.aoitoriproject.script.event.PlayerJoinServerEvent;
+import io.aoitori043.aoitoriproject.script.event.PlayerQuitServerEvent;
+import io.aoitori043.aoitoriproject.thread.AoitoriScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Author: natsumi
@@ -16,12 +21,41 @@ import java.util.HashMap;
  */
 public class TemporaryDataManager implements Listener {
 
-    public static HashMap<String,PlayerDataAccessor> playerDataAccessors = new HashMap<>();
+    public static ConcurrentHashMap<String,PlayerDataAccessor> playerDataAccessors = new ConcurrentHashMap<>();
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        Player player = e.getPlayer();
-        playerDataAccessors.remove(player.getName());
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        AoitoriScheduler.singleExecute("joinandquit",()->{
+            PlayerDataAccessor playerDataAccessor = getPlayerDataAccessor(event.getPlayer());
+            playerDataAccessor.setPlayer(event.getPlayer());
+            Bukkit.getPluginManager().callEvent(new AoitoriPlayerJoinEvent(event.getPlayer()));
+            PlayerJoinServerEvent.call(playerDataAccessor,new ConcurrentHashMap<>());
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        AoitoriScheduler.singleExecute("joinandquit",()-> {
+            PlayerDataAccessor playerDataAccessor = getPlayerDataAccessor(event.getPlayer());
+            Bukkit.getPluginManager().callEvent(new AoitoriPlayerQuitEvent(event.getPlayer()));
+            PlayerQuitServerEvent.call(playerDataAccessor, new ConcurrentHashMap<>());
+            playerDataAccessors.remove(event.getPlayer().getName());
+        });
+    }
+
+
+    public static PlayerDataAccessor getPlayerDataAccessor(Player player) {
+        String playerName = player.getName();
+        return playerDataAccessors.computeIfAbsent(playerName,k->{
+            PlayerDataAccessor playerDataAccessor = new PlayerDataAccessor(player);
+            PlayerDataAccessor.VariablesAttribute variablesAttribute = new PlayerDataAccessor.VariablesAttribute();
+            variablesAttribute.setValue(playerName);
+            variablesAttribute.setType(PlayerDataAccessor.VariableType.STRING);
+            variablesAttribute.setInitValue(playerName);
+            variablesAttribute.setVarName("player_name");
+            playerDataAccessor.addVariable(variablesAttribute);
+            return playerDataAccessor;
+        });
     }
 
     public static PlayerDataAccessor getPlayerDataAccessor(String playerName) {
@@ -29,7 +63,7 @@ public class TemporaryDataManager implements Listener {
             PlayerDataAccessor playerDataAccessor = new PlayerDataAccessor(Bukkit.getPlayer(playerName));
             PlayerDataAccessor.VariablesAttribute variablesAttribute = new PlayerDataAccessor.VariablesAttribute();
             variablesAttribute.setValue(playerName);
-            variablesAttribute.setType(PlayerDataAccessor.VariableType.TEXT);
+            variablesAttribute.setType(PlayerDataAccessor.VariableType.STRING);
             variablesAttribute.setInitValue(playerName);
             variablesAttribute.setVarName("player_name");
             playerDataAccessor.addVariable(variablesAttribute);

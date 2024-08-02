@@ -29,7 +29,7 @@ public class AsyncFunctionCommand extends AbstractCommand {
     }
 
     public AsyncFunctionCommand(int depth, String[] parameters) {
-        super(depth, "async", parameters);
+        super(depth, "asyncFunc", parameters);
     }
 
     @Override

@@ -14,8 +14,10 @@ import io.aoitori043.aoitoriproject.script.executor.command.nested.switch_.Switc
 import io.aoitori043.aoitoriproject.script.executor.command.sign.*;
 import io.aoitori043.aoitoriproject.script.executor.command.variable.NewVariableCommand;
 import io.aoitori043.aoitoriproject.script.executor.command.variable.SetVariableCommand;
+import io.aoitori043.aoitoriproject.script.parameter.JavaScriptExpression;
 import io.aoitori043.aoitoriproject.utils.lock.SemaphoreLock;
 import lombok.Data;
+import org.bukkit.Bukkit;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -87,6 +89,33 @@ public class CommandCompiler {
         return text.substring(startIndex, endIndex - 1);
     }
 
+//    public static String[] customSplit(String input, String delimiter) {
+//        List<String> parts = new ArrayList<>();
+//        String regex = "(?<!\\\\)" + Pattern.quote(delimiter);
+//        Pattern pattern = Pattern.compile(regex);
+//        Matcher matcher = pattern.matcher(input);
+//        int start = 0;
+//        int bracketCount = 0;
+//
+//        while (matcher.find()) {
+//            String substring = input.substring(start, matcher.start());
+//            for (char c : substring.toCharArray()) {
+//                if (c == '(') {
+//                    bracketCount++;
+//                } else if (c == ')') {
+//                    bracketCount--;
+//                }
+//            }
+//            if (bracketCount == 0) {
+//                String part = input.substring(start, matcher.start());
+//                parts.add(part);
+//                start = matcher.end();
+//            }
+//        }
+//        parts.add(input.substring(start));
+//        return parts.toArray(new String[0]);
+//    }
+
     public static String[] customSplit(String input, String delimiter) {
         List<String> parts = new ArrayList<>();
         String regex = "(?<!\\\\)" + Pattern.quote(delimiter);
@@ -94,23 +123,23 @@ public class CommandCompiler {
         Matcher matcher = pattern.matcher(input);
         int start = 0;
         int bracketCount = 0;
+        boolean inQuotes = false;
 
-        while (matcher.find()) {
-            String substring = input.substring(start, matcher.start());
-            for (char c : substring.toCharArray()) {
-                if (c == '(') {
-                    bracketCount++;
-                } else if (c == ')') {
-                    bracketCount--;
-                }
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '"' && (i == 0 || input.charAt(i - 1) != '\\')) {
+                inQuotes = !inQuotes;  // Toggle the inQuotes flag when encountering a non-escaped double quote
             }
-            if (bracketCount == 0) {
-                String part = input.substring(start, matcher.start());
-                parts.add(part);
-                start = matcher.end();
+            if (c == '(') {
+                bracketCount++;
+            } else if (c == ')') {
+                bracketCount--;
+            } else if (input.substring(i).startsWith(delimiter) && !inQuotes && bracketCount == 0) {
+                parts.add(input.substring(start, i));
+                start = i + delimiter.length();
             }
         }
-        parts.add(input.substring(start));
+        parts.add(input.substring(start)); // Add the last part
         return parts.toArray(new String[0]);
     }
 
@@ -133,13 +162,33 @@ public class CommandCompiler {
 //        list.add("    return");
 //        list.add("  setGermComponent(game_quick_bar,gif,'电脑画布.奶刀'+%old%,enable,false)");
 //        list.add("  setVariable(%old%,%old%-1)");
-        list.add("switch(getNormalAttackLayers())");
-        list.add("  case 1 -> 0.8");
-        list.add("  case 2 -> 0.9");
-        list.add("  case 3:");
-        list.add("    return 1.2");
+        /*
+        - "async"
+    - "  msg 2"
+    - "  delay 1.0"
+    - "  newVariable(long,temp,getTime())"
+    - "  setVariable(thread_interrput,%temp%)"
+    - "  delay 2.0"
+    - "  for(%temp% == %thread_interrput%)"
+    - "    println(perSecondSwordQiIncreme)"
+    - "    if(%剑气% < 5)"
+    - "      setVariable(剑气,%剑气%+0.5)"
+    - "    delay 1.0"
+         */
+        list.add("async");
+        list.add("  msg 2");
+        list.add("  delay 1.0");
+        list.add("  newVariable(long,temp,getTime())");
+        list.add("  setVariable(thread_interrput,%temp%)");
+        list.add("  delay 2.0");
+        list.add("  for(%temp% == %thread_interrput%)");
+        list.add("    println(perSecondSwordQiIncreme)");
+        list.add("    if(%剑气% < 5)");
+        list.add("      setVariable(剑气,%剑气%+0.5)");
+        list.add("    delay 1.0");
         nowCommandCompiler.currentLoadClass = new ClassImpl("test");
-        System.out.println(nowCommandCompiler.startParserFunction(list));
+        List<AbstractCommand> abstractCommands = nowCommandCompiler.startParserFunction(list);
+        System.out.println(abstractCommands);
 //        System.out.println(nowCommandCompiler.parsingStatement("if(getItemHand(nbt,'奶刀') == '蓝刀')", 0));
     }
 
@@ -205,6 +254,7 @@ public class CommandCompiler {
         registerCommands(ElseCommand.class,"else");
         registerCommands(ForCommand.class,"for");
         registerCommands(IfCommand.class,"if");
+        registerCommands(ElseIfCommand.class,"elseIf");
 
         registerCommands(BreakCommand.class,"break");
         registerCommands(DelayCommand.class,"delay");
@@ -219,6 +269,7 @@ public class CommandCompiler {
         registerCommands(NewVariableCommand.class,"newVariable","new-variable","new");
         registerCommands(SetVariableCommand.class,"setVariable","set-variable","set");
 
+        registerCommands(NotCalculateCommand.class,"notCalculate","notCal");
         registerCommands(SyncFunctionCommand.class,"sync","sync-run","sync-func","syncFunc","func");
         registerCommands(AsyncFunctionCommand.class,"async-run","async-func","asyncFunc");
         registerCommands(CalculateCommand.class,"calculate","cal");
@@ -226,11 +277,16 @@ public class CommandCompiler {
         registerCommands(GetHandItemCommand.class,"get-hand-item","getHandItem","getItemHand","get-item-hand");
         registerCommands(GetTimeCommand.class,"get-time","getTime");
         registerCommands(HasConeEntityCommand.class,"has-cone-entity","hasConeEntity");
-        registerCommands(JavaScriptCommand.class,"js");
+        registerCommands(JSMethodCommand.class,"js-method");
+        registerCommands(JSCodeCommand.class,"js-code");
         registerCommands(MsgCommand.class,"msg");
-        registerCommands(PrintlnCommand.class,"println");
+        registerCommands(PrintlnCommand.class,"println","print");
         registerCommands(RemovePotionCommand.class,"remove-potion","removePotion");
         registerCommands(ReplaceCommand.class,"replace");
+        registerCommands(RandomCommand.class,"getRandom","random");
+        registerCommands(ContainsCommand.class,"contains");
+        registerCommands(ParkCommand.class,"park");
+        registerCommands(SetResultCommand.class,"setResult");
     }
 
     public List<AbstractCommand> startParserFunction(List<String> originalList) {
@@ -304,6 +360,23 @@ public class CommandCompiler {
                     }
                     continue;
                 }
+                case "elseif": {
+                    List<AbstractCommand> parser = parserFunction(null,originalList, depth + 1, i + 1, endLine);
+                    ((NestedCommand) abstractCommand).setNestedCommands(parser);
+                    boolean isAdd = false;
+                    for (int i1 = compiledCommands.size() - 1; i1 >= 0; i1--) {
+                        AbstractCommand abstractCommandIter = compiledCommands.get(i1);
+                        if (abstractCommandIter.getType().equals("if") || abstractCommandIter.getType().equals("elseIf")) {
+                            ((IfCommand) abstractCommandIter).setElseIfCommand((ElseIfCommand) abstractCommand);
+                            isAdd = true;
+                            break;
+                        }
+                    }
+                    if (!isAdd) {
+                        System.out.println("else语句无法与任何一个if语句对应！");
+                    }
+                    continue;
+                }
                 case "else": {
                     List<AbstractCommand> parser = parserFunction(null,originalList, depth + 1, i + 1, endLine);
                     ((NestedCommand) abstractCommand).setNestedCommands(parser);
@@ -330,7 +403,7 @@ public class CommandCompiler {
             aoitoriScriptLoadEvent.setEndLine(endLine);
             aoitoriScriptLoadEvent.setOriginalList(originalList);
             aoitoriScriptLoadEvent.setCompiledCommands(compiledCommands);
-//            Bukkit.getPluginManager().callEvent(aoitoriScriptLoadEvent);
+            Bukkit.getPluginManager().callEvent(aoitoriScriptLoadEvent);
             AbstractCommand currentCommand = aoitoriScriptLoadEvent.getCurrentCommand();
             depth = aoitoriScriptLoadEvent.getDepth();
             startLine = aoitoriScriptLoadEvent.getStartLine();

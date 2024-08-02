@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IfCommand extends NestedCommand {
 
     public ElseCommand elseCommand;
+    public IfCommand elseIfCommand;
     public Expression expression;
     public String condition;
 
@@ -39,11 +40,11 @@ public class IfCommand extends NestedCommand {
         if (Boolean.parseBoolean(execute.toString())) {
             NestedCommandWrapper nestedCommandWrapper = new NestedCommandWrapper();
             nestedCommandWrapper.commands = nestedCommands;
-            performReturnContent.setResult(true);
             return nestedCommandWrapper;
         } else {
-            performReturnContent.setResult(false);
-            if (elseCommand != null) {
+            if (elseIfCommand != null) {
+                return elseIfCommand.execute(playerDataAccessor, performReturnContent, variables);
+            }else if (elseCommand != null) {
                 return elseCommand.execute(playerDataAccessor, performReturnContent, variables);
             }
         }

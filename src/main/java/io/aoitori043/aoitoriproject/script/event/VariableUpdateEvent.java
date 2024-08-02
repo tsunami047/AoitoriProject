@@ -3,6 +3,9 @@ package io.aoitori043.aoitoriproject.script.event;
 import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.script.PlayerDataAccessor;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +29,17 @@ public class VariableUpdateEvent extends AoitoriEvent {
         this.newValue = newValue;
     }
 
+    @Setter
+    @Getter
+    public static class VariableUpdateEventResult extends EventResult{
+        Object newVariable;
+        public VariableUpdateEventResult(boolean isCancel) {
+            super(isCancel);
+        }
+    }
+
     public static EventResult call(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> map, String variableName, Object oldValue, Object newValue) {
+        boolean cancelled = false;
         try {
             Collection<EventWrapper> events = playerDataAccessor.getEvent("variableUpdate$" + variableName);
             for (EventWrapper event : events) {
@@ -34,6 +47,9 @@ public class VariableUpdateEvent extends AoitoriEvent {
                     if (event != null) {
                         VariableUpdateEvent vue = new VariableUpdateEvent(playerDataAccessor, event.getCommands(), map, variableName, oldValue, newValue);
                         EventResult invoke = vue.invoke();
+                        if(invoke.isCancel){
+                            cancelled = true;
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -44,7 +60,10 @@ public class VariableUpdateEvent extends AoitoriEvent {
         }catch (Exception e){
             e.printStackTrace();
         }
-        return null;
+        VariableUpdateEventResult variableUpdateEventResult = new VariableUpdateEventResult(cancelled);
+        Object o = map.get("result");
+        variableUpdateEventResult.setNewVariable(o);
+        return variableUpdateEventResult;
     }
 
     @Override

@@ -37,6 +37,7 @@ public abstract class AbstractCommand {
         public boolean isAsync;
         public boolean isLoop;
         public Expression expression;
+        public boolean useNewReturnContext;
     }
 
     @Data

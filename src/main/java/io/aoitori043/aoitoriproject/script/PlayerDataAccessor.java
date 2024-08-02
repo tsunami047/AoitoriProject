@@ -1,6 +1,5 @@
 package io.aoitori043.aoitoriproject.script;
 
-import io.aoitori043.aoitoriproject.script.event.AoitoriEvent;
 import io.aoitori043.aoitoriproject.script.event.EventWrapper;
 import io.aoitori043.aoitoriproject.script.event.VariableUpdateEvent;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
@@ -104,7 +103,7 @@ public class PlayerDataAccessor {
     public void setValue(String varName, Object value) {
         String name = player.getName();
         VariablesAttribute variablesAttribute = variables.get(varName);
-        if(varName == null){
+        if(variablesAttribute == null){
             throw new NullPointerException(name+" 玩家不存在临时变量: "+value);
         }
         Object newValue;
@@ -118,7 +117,7 @@ public class PlayerDataAccessor {
             case LONG:
                 newValue = Long.valueOf(value.toString());
                 break;
-            case TEXT:
+            case STRING:
                 newValue = value.toString();
                 break;
             case DOUBLE:
@@ -128,47 +127,41 @@ public class PlayerDataAccessor {
                 return;
             }
         }
-        AoitoriEvent.EventResult eventResult = VariableUpdateEvent.call(this,new ConcurrentHashMap<>(), varName, variablesAttribute.getValue(), newValue);
-        if (eventResult != null && eventResult.isCancel) {
-            return;
-        }
-        variablesAttribute.value = newValue;
+        callVariableUpdateEvent(varName, variablesAttribute, newValue);
     }
 
     public void addValue(String varName, Object value) {
         String name = player.getName();
         VariablesAttribute variablesAttribute = variables.get(varName);
-        if(varName == null){
+        if(variablesAttribute == null){
             throw new NullPointerException(name+" 玩家不存在临时变量: "+value);
         }
         switch (variablesAttribute.type) {
             case INT: {
                 int result = (int)variablesAttribute.getValue() + Integer.parseInt(value.toString());
-                AoitoriEvent.EventResult eventResult = VariableUpdateEvent.call(this,new ConcurrentHashMap<>(), varName, variablesAttribute.getValue(), result);
-                if (eventResult != null && eventResult.isCancel) {
-                    return;
-                }
-                variablesAttribute.value = result;
-                break;
+                callVariableUpdateEvent(varName, variablesAttribute, result);
             }
             case LONG:{
                 long result = (long)variablesAttribute.getValue() + Long.parseLong(value.toString());
-                AoitoriEvent.EventResult eventResult = VariableUpdateEvent.call(this,new ConcurrentHashMap<>(), varName, variablesAttribute.getValue(), result);
-                if (eventResult != null && eventResult.isCancel) {
-                    return;
-                }
-                variablesAttribute.value = result;
-                break;
+                callVariableUpdateEvent(varName, variablesAttribute, result);
             }
             case DOUBLE: {
                 double result = (double)variablesAttribute.getValue() + Double.parseDouble(value.toString());
-                AoitoriEvent.EventResult eventResult = VariableUpdateEvent.call(this,new ConcurrentHashMap<>(), varName, variablesAttribute.getValue(), result);
-                if (eventResult != null && eventResult.isCancel) {
-                    return;
-                }
-                variablesAttribute.value = result;
+                callVariableUpdateEvent(varName, variablesAttribute, result);
                 break;
             }
+        }
+    }
+
+    private void callVariableUpdateEvent(String varName, VariablesAttribute variablesAttribute, Object result) {
+        VariableUpdateEvent.VariableUpdateEventResult eventResult = (VariableUpdateEvent.VariableUpdateEventResult) VariableUpdateEvent.call(this, new ConcurrentHashMap<>(), varName, variablesAttribute.getValue(), result);
+        if (eventResult.isCancel) {
+            return;
+        }
+        if(eventResult.getNewVariable()!=null){
+            variablesAttribute.value = eventResult.getNewVariable();
+        }else {
+            variablesAttribute.value = result;
         }
     }
 
@@ -178,7 +171,7 @@ public class PlayerDataAccessor {
 
 
     public enum VariableType {
-        INT, DOUBLE, TEXT, BOOLEAN,LONG
+        INT, DOUBLE, STRING, BOOLEAN,LONG
     }
 
     @Data
@@ -205,7 +198,7 @@ public class PlayerDataAccessor {
                 case INT:
                     initValue = Integer.valueOf(split[2]);
                     break;
-                case TEXT:
+                case STRING:
                     initValue = split[2];
                     break;
                 case LONG:

@@ -45,23 +45,23 @@ public class NewVariableCommand extends AbstractCommand {
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
         switch (fieldType) {
             case INT:{
-                variables.put(varName.toString(), Integer.parseInt(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Integer.parseInt(value.interpret(playerDataAccessor,variables).toString()));
                 break;
             }
             case DOUBLE:{
-                variables.put(varName.toString(), Double.parseDouble(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Double.parseDouble(value.interpret(playerDataAccessor,variables).toString()));
                 break;
             }
             case LONG:{
-                variables.put(varName.toString(), Long.parseLong(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Long.parseLong(value.interpret(playerDataAccessor,variables).toString()));
                 break;
             }
             case STRING:{
-                variables.put(varName.toString(), value.interpret(playerDataAccessor,variables).toString());
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), value.interpret(playerDataAccessor,variables).toString());
                 break;
             }
             case BOOLEAN:{
-                variables.put(varName.toString(), Boolean.parseBoolean(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Boolean.parseBoolean(value.interpret(playerDataAccessor,variables).toString()));
                 break;
             }
         }
