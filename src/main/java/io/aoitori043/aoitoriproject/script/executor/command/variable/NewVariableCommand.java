@@ -43,25 +43,29 @@ public class NewVariableCommand extends AbstractCommand {
     }
 
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
+        Object interpret = value.interpret(playerDataAccessor, variables);
+        if(interpret == null){
+            return null;
+        }
         switch (fieldType) {
             case INT:{
-                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Integer.parseInt(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Integer.parseInt(interpret.toString()));
                 break;
             }
             case DOUBLE:{
-                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Double.parseDouble(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Double.parseDouble(interpret.toString()));
                 break;
             }
             case LONG:{
-                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Long.parseLong(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Long.parseLong(interpret.toString()));
                 break;
             }
             case STRING:{
-                variables.put(varName.interpret(playerDataAccessor,variables).toString(), value.interpret(playerDataAccessor,variables).toString());
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), interpret);
                 break;
             }
             case BOOLEAN:{
-                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Boolean.parseBoolean(value.interpret(playerDataAccessor,variables).toString()));
+                variables.put(varName.interpret(playerDataAccessor,variables).toString(), Boolean.parseBoolean(interpret.toString()));
                 break;
             }
         }

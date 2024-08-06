@@ -59,8 +59,10 @@ public class GetHandItemCommand extends AbstractCommand {
                 }
                 List<String> lore = itemMeta.getLore();
                 try {
-                    int i = Integer.parseInt(expressionCompiler.interpret(playerDataAccessor, variables).toString());
-                    performReturnContent.setResult(lore.get(i));
+                    if(lore.size() <= line){
+                        return null;
+                    }
+                    performReturnContent.setResult(lore.get(line));
                     return nestedCommandWrapper;
                 } catch (NumberFormatException e) {
                     throw new RuntimeException("Could not interpret lore: " + expressionCompiler.interpret(playerDataAccessor, variables));

@@ -140,10 +140,12 @@ public class PlayerDataAccessor {
             case INT: {
                 int result = (int)variablesAttribute.getValue() + Integer.parseInt(value.toString());
                 callVariableUpdateEvent(varName, variablesAttribute, result);
+                break;
             }
             case LONG:{
                 long result = (long)variablesAttribute.getValue() + Long.parseLong(value.toString());
                 callVariableUpdateEvent(varName, variablesAttribute, result);
+                break;
             }
             case DOUBLE: {
                 double result = (double)variablesAttribute.getValue() + Double.parseDouble(value.toString());

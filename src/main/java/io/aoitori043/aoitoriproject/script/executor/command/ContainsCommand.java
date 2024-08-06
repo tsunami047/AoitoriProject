@@ -27,8 +27,9 @@ public class ContainsCommand extends AbstractCommand {
     }
 
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
+        Object interpret = arg1.interpret(playerDataAccessor, variables);
         performReturnContent.setResult(
-        arg1.interpret(playerDataAccessor, variables).toString().contains(arg2.interpret(playerDataAccessor, variables).toString()));
+        interpret.toString().contains(arg2.interpret(playerDataAccessor, variables).toString()));
         return null;
     }
 }
