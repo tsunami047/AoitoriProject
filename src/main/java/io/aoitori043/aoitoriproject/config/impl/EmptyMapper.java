@@ -17,9 +17,9 @@ public abstract class EmptyMapper extends MapperInjection {
     public EmptyMapper() {
         try {
             injectYaml(getPlugin(),this);
-            YamlMapping.loadFromConfig(this,getYaml(),"topConfig");
+            YamlMapping.loadFromConfig(this,this,getYaml(),"topConfig");
             runAnnotatedMethods(this);
-            injectMapper();
+            injectMapper(this);
             Debug annotation = getClass().getAnnotation(Debug.class);
             if (annotation != null) {
                 this.printToConsole();

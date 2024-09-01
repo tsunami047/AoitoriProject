@@ -104,12 +104,28 @@ public class TableBuilder {
 //
 //            });
         }
+        List<String> indexedFields = new ArrayList<>();
         for (Field field : fields) {
             if (field.isAnnotationPresent(Index.class)) {
                 String fieldName = sqlClient.nameStructure.getFieldName(field);
                 String indexSQL = "INDEX index_" +  fieldName + " (" + fieldName + "),";
                 sql.append(indexSQL);
+                indexedFields.add(fieldName);
             }
+        }
+        if (indexedFields.size() > 1) {
+            StringBuilder compositeIndexSQL = new StringBuilder("INDEX index_composite_");
+            for (String fieldName : indexedFields) {
+                compositeIndexSQL.append(fieldName).append("_");
+            }
+            compositeIndexSQL.deleteCharAt(compositeIndexSQL.length() - 1);  // 删除最后一个下划线
+            compositeIndexSQL.append(" (");
+            for (String fieldName : indexedFields) {
+                compositeIndexSQL.append(fieldName).append(", ");
+            }
+            compositeIndexSQL.delete(compositeIndexSQL.length() - 2, compositeIndexSQL.length());  // 删除最后一个逗号和空格
+            compositeIndexSQL.append("),");
+            sql.append(compositeIndexSQL);
         }
 
 

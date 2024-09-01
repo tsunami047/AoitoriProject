@@ -142,12 +142,12 @@ public abstract class MapperInjection extends AutoConfigPrinter {
 
     public abstract JavaPlugin getPlugin();
 
-    public void injectMapper() {
+    public void injectMapper(Object parent) {
         Class<? extends MapperInjection> aClass = this.getClass();
         for (Field field : aClass.getFields()) {
             try {
-                if (!injectMappers(field)) {
-                    injectMapper(field);
+                if (!injectMappers(parent,field)) {
+                    injectMapper(parent,field);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -156,7 +156,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
         }
     }
 
-    private boolean injectMappers(Field field) throws IllegalAccessException {
+    private boolean injectMappers(Object parent,Field field) throws IllegalAccessException {
         InjectMappers fieldAnnotation = field.getAnnotation(InjectMappers.class);
         if (fieldAnnotation != null) {
             if (Map.class.isAssignableFrom(field.getType())) {
@@ -174,7 +174,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                             try {
                                 Object instance = createInstance((Class<?>) deepestGenericType);
                                 injectFilePath(instance, file.getPath());
-                                ConfigMapping.loadFromConfig(instance, key, yaml.getConfigurationSection(key));
+                                ConfigMapping.loadFromConfig(parent,instance, key, yaml.getConfigurationSection(key));
                                 runAnnotatedMethods(instance);
                                 try {
                                     performNullCheck(instance);
@@ -206,7 +206,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                         try {
                             Object instance = createInstance((Class<?>) typeArguments[1]);
                             injectFilePath(instance, file.getPath());
-                            YamlMapping.loadFromConfig(instance, yaml, yamlName);
+                            YamlMapping.loadFromConfig(parent,instance, yaml, yamlName);
                             runAnnotatedMethods(instance);
                             try {
                                 performNullCheck(instance);
@@ -227,7 +227,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                                 Object instance = createInstance((Class<?>) typeArguments[1]);
                                 injectFilePath(instance, file.getPath() + "_" + key);
                                 ConfigurationSection section = yaml.getConfigurationSection(key);
-                                ConfigMapping.loadFromConfig(instance, key, section);
+                                ConfigMapping.loadFromConfig(parent,instance, key, section);
                                 runAnnotatedMethods(instance);
                                 try {
                                     performNullCheck(instance);
@@ -250,15 +250,16 @@ public abstract class MapperInjection extends AutoConfigPrinter {
         return false;
     }
 
-    private void injectMapper(Field field) {
+    private void injectMapper(Object parent,Field field) {
         InjectMapper annotation = field.getAnnotation(InjectMapper.class);
         if (annotation == null) {
             return;
         }
         YamlConfiguration yaml = FileLoader.releaseAndLoadFile(getPlugin(), annotation.path() + ".yml");
+        if (annotation.singe()) {
         try {
             Object instance = createInstance((Class<?>) field.getType());
-            YamlMapping.loadFromConfig(instance, yaml, annotation.path());
+            YamlMapping.loadFromConfig(parent,instance, yaml, annotation.path());
             field.set(isStaticField(field) ? null : this, instance);
             injectFilePath(isStaticField(field), annotation.path());
             runAnnotatedMethods(instance);
@@ -273,6 +274,29 @@ public abstract class MapperInjection extends AutoConfigPrinter {
             System.out.println("以下问题出自：" + annotation.path() + ".yml");
             e.printStackTrace();
             System.out.println("--------------------------------------------");
+        }
+        }else{
+            try {
+            AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
+            field.set(isStaticField(field) ? null : this, map);
+            Type deepestGenericType = getDeepestGenericType(field);
+            for (String key : yaml.getKeys(false)) {
+                Object instance = createInstance((Class<?>)deepestGenericType);
+                injectFilePath(instance, key);
+                ConfigurationSection section = yaml.getConfigurationSection(key);
+                ConfigMapping.loadFromConfig(parent,instance, key, section);
+                runAnnotatedMethods(instance);
+                try {
+                    performNullCheck(instance);
+                } catch (Exception e) {
+                    printlnError(instance);
+                    e.printStackTrace();
+                }
+                map.put(key, instance);
+            }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 }

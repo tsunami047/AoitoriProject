@@ -74,7 +74,7 @@ public class YamlMapping {
     }
 
 
-    public static void loadFromConfig(Object object, YamlConfiguration yamlConfiguration,String parentName) {
+    public static void loadFromConfig(Object parent,Object object, YamlConfiguration yamlConfiguration,String parentName) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -82,11 +82,11 @@ public class YamlMapping {
                     continue;
                 }
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, yamlConfiguration, field);
+                    findConversion(parent,object, yamlConfiguration, field);
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(object, yamlConfiguration, field, propertyName,parentName);
+                        getValue(parent,object, yamlConfiguration, field, propertyName,parentName);
                         runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
@@ -97,13 +97,13 @@ public class YamlMapping {
         }else {
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, yamlConfiguration, field);
+                    findConversion(parent,object, yamlConfiguration, field);
                 }
             }
         }
     }
 
-    private static void findConversion(Object object, YamlConfiguration yamlConfiguration, Field field) {
+    private static void findConversion(Object parent,Object object, YamlConfiguration yamlConfiguration, Field field) {
         ConfigProperty annotation = field.getAnnotation(ConfigProperty.class);
         String[] values = annotation.values();
         try {
@@ -124,7 +124,7 @@ public class YamlMapping {
             }else{
                 propertyName = field.getName();
             }
-            getValue(object, yamlConfiguration, field, propertyName,null);
+            getValue(parent,object, yamlConfiguration, field, propertyName,null);
             runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);

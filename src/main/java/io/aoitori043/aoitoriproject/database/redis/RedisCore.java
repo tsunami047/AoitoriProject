@@ -21,6 +21,10 @@ public class RedisCore {
         return mainRedis.jedisPool;
     }
 
+    public static Jedis getJedisResource() {
+        return mainRedis.jedisPool.getResource();
+    }
+
 
     public Jedis getConnection() {
         if (jedisPool == null) {

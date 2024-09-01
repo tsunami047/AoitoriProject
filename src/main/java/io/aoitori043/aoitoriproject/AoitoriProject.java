@@ -3,11 +3,15 @@ package io.aoitori043.aoitoriproject;
 import com.tuershen.nbtlibraryfix.NBTLibraryMain;
 import io.aoitori043.aoitoriproject.command.BasicCommandExecute;
 import io.aoitori043.aoitoriproject.database.DatabaseCenter;
+import io.aoitori043.aoitoriproject.database.point.PointManager;
+import io.aoitori043.aoitoriproject.database.point.RedisDataCache;
 import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.IBasicCommand;
 import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
 import io.aoitori043.aoitoriproject.script.PlaceholderHook;
 import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
+import io.aoitori043.aoitoriproject.thread.AoitoriScheduler;
+import io.aoitori043.aoitoriproject.thread.KilimScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,6 +25,8 @@ import java.util.HashSet;
 public final class AoitoriProject extends JavaPlugin implements Listener {
 
     public static AoitoriProject plugin;
+    public static PointManager pointManager = new PointManager();
+    public static KilimScheduler kilimScheduler = new KilimScheduler();
 
     @Override
     public void onEnable() {
@@ -29,6 +35,7 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
         NBTLibraryMain.loadNBTLibrary(this);
         Bukkit.getPluginManager().registerEvents(this,this);
         Bukkit.getPluginManager().registerEvents(new TemporaryDataManager(),this);
+        Bukkit.getPluginManager().registerEvents(new RedisDataCache(),this);
         BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
         ConfigHandler.load();
         afterLoadConfig();

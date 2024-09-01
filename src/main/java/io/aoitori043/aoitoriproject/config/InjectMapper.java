@@ -14,4 +14,5 @@ public @interface InjectMapper {
     @NotNull
     String path();
 
+    boolean singe() default true;
 }

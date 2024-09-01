@@ -18,15 +18,8 @@ public class KilimTask extends Task {
     }
     @Override
     public void execute() throws Pausable {
-        try {
-            runnable.run();
-        }catch (Exception e){
-            if(e instanceof Pausable){
-                throw (Pausable)e;
-            }else{
-                e.printStackTrace();
-            }
-        }
+        runnable.run();
     }
+
 
 }

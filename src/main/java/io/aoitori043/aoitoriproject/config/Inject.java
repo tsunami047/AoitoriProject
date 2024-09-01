@@ -17,6 +17,7 @@ public @interface Inject {
     InjectionType type();
 
     enum InjectionType {
-        PARENT_NAME
+        PARENT_NAME,
+        PARENT_OBJECT
     }
 }

@@ -13,7 +13,7 @@ public class JedisPoolMapping {
 
     // 是否启用 Jedis 连接池，默认为 true
     public boolean enable = true;
-    public int databaseIndex = 0;
+    public int databaseIndex = 1;
 
     // Redis 服务器的主机名，默认为 localhost
     @NotNullProperty

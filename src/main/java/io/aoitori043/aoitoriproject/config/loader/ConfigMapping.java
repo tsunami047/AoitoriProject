@@ -64,7 +64,7 @@ public class ConfigMapping {
         return className.contains("$");
     }
 
-    public static void loadFromConfig(Object object,String parentName,ConfigurationSection section) {
+    public static void loadFromConfig(Object parent,Object object,String parentName,ConfigurationSection section) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -72,11 +72,11 @@ public class ConfigMapping {
                     continue;
                 }
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, section, field,parentName);
+                    findConversion(parent,object, section, field,parentName);
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(object, section, field, propertyName,parentName);
+                        getValue(parent,object, section, field, propertyName,parentName);
                         runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         printlnError(object);
@@ -87,13 +87,13 @@ public class ConfigMapping {
         }else {
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
-                    findConversion(object, section, field,parentName);
+                    findConversion(parent,object, section, field,parentName);
                 }
             }
         }
     }
 
-    private static void findConversion(Object object, ConfigurationSection section, Field field,String parentName) {
+    private static void findConversion(Object parent,Object object, ConfigurationSection section, Field field,String parentName) {
         field.setAccessible(true);
         ConfigProperty annotation = field.getAnnotation(ConfigProperty.class);
         String[] values = annotation.values();
@@ -115,7 +115,7 @@ public class ConfigMapping {
             }else{
                 propertyName = field.getName();
             }
-            getValue(object, section, field, propertyName,parentName);
+            getValue(parent,object, section, field, propertyName,parentName);
             runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);

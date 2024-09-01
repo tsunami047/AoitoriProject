@@ -1,9 +1,6 @@
 package io.aoitori043.aoitoriproject.config.loader;
 
-import io.aoitori043.aoitoriproject.config.GetFlatMapping;
-import io.aoitori043.aoitoriproject.config.GetFoldMapping;
-import io.aoitori043.aoitoriproject.config.GetMapping;
-import io.aoitori043.aoitoriproject.config.InjectYaml;
+import io.aoitori043.aoitoriproject.config.*;
 import io.aoitori043.aoitoriproject.config.impl.MapperInjection;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import lombok.ToString;
@@ -48,12 +45,25 @@ public class MapperEvaluation {
         return map;
     }
 
-    public static void getValue(Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
+    public static void getValue(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
         if(field.isAnnotationPresent(InjectYaml.class)){
             return;
         }
         field.setAccessible(true);
         Object fieldSetObj = isStaticField(field) ? null : object;
+        if (field.isAnnotationPresent(Inject.class)){
+            Inject annotation = field.getAnnotation(Inject.class);
+            switch (annotation.type()) {
+                case PARENT_OBJECT:{
+                    field.set(fieldSetObj, parent);
+                    return;
+                }
+                case PARENT_NAME:{
+                    field.set(fieldSetObj, parentName);
+                    return;
+                }
+            }
+        }
         if(field.getName().equals("yaml")){
             field.set(fieldSetObj, section);
             return;
@@ -121,7 +131,7 @@ public class MapperEvaluation {
                 return;
             }
         }
-        if (mappingInject(fieldSetObj, section, field, propertyName)) {
+        if (mappingInject(parent,fieldSetObj, section, field, propertyName)) {
             return;
         }
         if (Map.class.isAssignableFrom(field.getType())) {
@@ -450,8 +460,8 @@ public class MapperEvaluation {
         }
     }
 
-    public static boolean mappingInject(Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
-        return injectMapping(object, section, field, propertyName) | injectFoldMapping(object, section, field, propertyName) | injectFlatMapping(object, section, field, propertyName);
+    public static boolean mappingInject(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
+        return injectMapping(parent,object, section, field, propertyName) | injectFoldMapping(parent,object, section, field, propertyName) | injectFlatMapping(parent,object, section, field, propertyName);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -490,7 +500,7 @@ public class MapperEvaluation {
         return null;
     }
 
-    private static boolean injectFlatMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
+    private static boolean injectFlatMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetFlatMapping getFlatMapping = field.getAnnotation(GetFlatMapping.class);
             Class<?> clazz = field.getType();
@@ -521,7 +531,7 @@ public class MapperEvaluation {
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, key, object);
-                    ConfigMapping.loadFromConfig(instance, null, subSection);
+                    ConfigMapping.loadFromConfig(object,instance, null, subSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
@@ -544,7 +554,7 @@ public class MapperEvaluation {
                     }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, enumConstant, object);
-                    ConfigMapping.loadFromConfig(instance, null, subSection);
+                    ConfigMapping.loadFromConfig(object,instance, null, subSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(enumConstant, instance);
                 }
@@ -555,7 +565,7 @@ public class MapperEvaluation {
         return true;
     }
 
-    private static boolean injectFoldMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
+    private static boolean injectFoldMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetFoldMapping getFoldMapping = field.getAnnotation(GetFoldMapping.class);
             if (!isInnerClass(field.getType()) && getFoldMapping == null) {
@@ -573,9 +583,9 @@ public class MapperEvaluation {
             injectDefaultValue(instance, propertyName, object);
             field.set(object, instance);
             if (foldSection == null) {
-                ConfigMapping.loadFromConfig(instance, null, null);
+                ConfigMapping.loadFromConfig(object,instance, null, null);
             } else {
-                ConfigMapping.loadFromConfig(instance, null, section.getConfigurationSection(propertyName));
+                ConfigMapping.loadFromConfig(object,instance, null, section.getConfigurationSection(propertyName));
             }
             MapperInjection.runAnnotatedMethods(instance);
             return true;
@@ -585,7 +595,7 @@ public class MapperEvaluation {
         return true;
     }
 
-    private static boolean injectMapping(Object object, ConfigurationSection section, Field field, String propertyName) {
+    private static boolean injectMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
             GetMapping getMapping = field.getAnnotation(GetMapping.class);
             if (getMapping == null || !Map.class.isAssignableFrom(field.getType())) {
@@ -609,7 +619,7 @@ public class MapperEvaluation {
                     ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, key, object);
-                    ConfigMapping.loadFromConfig(instance, null, configurationSection);
+                    ConfigMapping.loadFromConfig(object,instance, null, configurationSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }

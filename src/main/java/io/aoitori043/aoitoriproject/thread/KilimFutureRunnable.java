@@ -4,10 +4,10 @@ import kilim.Pausable;
 
 /**
  * @Author: natsumi
- * @CreateTime: 2024-05-24  21:04
+ * @CreateTime: 2024-08-30  03:37
  * @Description: ?
  */
 @FunctionalInterface
-public interface KilimRunnable {
-    void run() throws Pausable;
+public interface KilimFutureRunnable<T>  {
+     Object run() throws Pausable;
 }
