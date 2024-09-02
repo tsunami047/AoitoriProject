@@ -24,13 +24,15 @@ public class PlaceholderBlock implements Block {
 
     @Override
     public Object interpret(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> variables) {
+        if(variables!=null){
+            Object tempVariables = variables.get(removePercentSign);
+            if(tempVariables != null){
+                return tempVariables;
+            }
+        }
         Object value = playerDataAccessor.getValue(removePercentSign);
         if(value != null){
             return value;
-        }
-        Object tempVariables = variables.get(removePercentSign);
-        if(tempVariables != null){
-            return tempVariables;
         }
         return PlaceholderAPIUtil.throughPAPI(playerDataAccessor.player, original);
     }

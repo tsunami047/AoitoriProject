@@ -44,7 +44,7 @@ public class AsyncFunctionCommand extends AbstractCommand {
             Expression expressionParameter = expressionParameters[i+1];
             variables.put(varName,expressionParameter.interpret(playerDataAccessor, variables).toString());
         }
-        FunctionExecutor.asyncExecute(playerDataAccessor,function.commands,performReturnContent,variables);
+        FunctionExecutor.asyncExecute(playerDataAccessor,function.commands,new PerformReturnContent(),variables);
         return null;
     }
 }

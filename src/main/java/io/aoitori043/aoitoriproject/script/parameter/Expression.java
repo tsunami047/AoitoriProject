@@ -16,6 +16,7 @@ import org.apache.commons.jexl3.*;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.soap.Text;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -265,6 +266,13 @@ public class Expression {
         }
         getStringBuffer(buffer, blockList);
         this.blocks = blockList.toArray(new Block[0]);
+//        if (variableBlockList.size()>1) {
+//            for (Block block : variableBlockList) {
+//                if (block instanceof TextBlock) {
+//                    ((TextBlock) block).throwResult();
+//                }
+//            }
+//        }
         this.varaibleBlocks = variableBlockList.toArray(new Block[0]);
         this.variableExpression = generateEncodedExpression();
         if(compiledType == CompiledType.NOT_CALCULATE){
@@ -287,6 +295,7 @@ public class Expression {
         }catch (Exception e){
             this.isMathExpression = false;
         }
+
     }
 
     public static void main(String[] args) {

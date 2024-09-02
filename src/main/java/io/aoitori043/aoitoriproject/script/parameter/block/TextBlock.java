@@ -21,6 +21,11 @@ public class TextBlock implements Block {
         this.parse();
     }
 
+    public void throwResult(){
+        result = content;
+    }
+
+
 
     public static boolean isInt(String str) {
         if(str.contains("+")){
@@ -59,6 +64,10 @@ public class TextBlock implements Block {
     public void parse(){
         if (content == null || content.isEmpty()) {
             result =  "";
+            return;
+        }
+        if (content.contains(" ")){
+            result = content;
             return;
         }
         if(!content.contains("+")){

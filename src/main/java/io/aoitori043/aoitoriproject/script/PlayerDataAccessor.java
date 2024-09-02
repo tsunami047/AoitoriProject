@@ -23,6 +23,7 @@ public class PlayerDataAccessor {
     public LinkedHashMap<String,LinkedHashMap<String,EventWrapper>> events;
     public LinkedHashMap<String,Function> functions;
     public LinkedHashMap<String,ClassImpl> classImplMap;
+    private volatile int interruptSymbol;
 
     @Data
     public static class Function{
@@ -41,6 +42,11 @@ public class PlayerDataAccessor {
         this.events = new LinkedHashMap<>();
         this.functions = new LinkedHashMap<>();
         this.classImplMap = new LinkedHashMap<>();
+        this.interruptSymbol = 0;
+    }
+
+    public void interrupt(){
+        interruptSymbol++;
     }
 
 

@@ -9,8 +9,13 @@ import io.aoitori043.aoitoriproject.thread.AoitoriScheduler;
 import kilim.Pausable;
 import kilim.Task;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @Author: natsumi
@@ -35,7 +40,7 @@ public class FunctionExecutor {
                         if (execute.isAsync) {
                             AoitoriScheduler.forkJoinExecute(() -> {
                                 while (execute.expression.executeAsBoolean(playerDataAccessor, varsRuntime)) {
-                                    syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime);
+                                    syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime,playerDataAccessor.getInterruptSymbol());
                                     if (performReturnContent.isReturn) {
                                         return;
                                     }
@@ -76,7 +81,27 @@ public class FunctionExecutor {
         }
     }
 
-    public static void syncExecute(PlayerDataAccessor playerDataAccessor,List<AbstractCommand> commands, AbstractCommand.PerformReturnContent performReturnContent, ConcurrentHashMap<String, Object> varsRuntime) throws Pausable {
+    public static Object getGeneralVariable(String variableName,PlayerDataAccessor playerDataAccessor,ConcurrentHashMap<String, Object> varsRuntime){
+        Object o = varsRuntime.get(variableName);
+        if(o!=null){
+            return o;
+        }
+        PlayerDataAccessor.VariablesAttribute variablesAttribute = playerDataAccessor.getVariables().get(variableName);
+        if (variablesAttribute != null) {
+            return variablesAttribute.getValue();
+        }
+        return null;
+    }
+
+    public static HashMap<String,Function<PlayerDataAccessor,Boolean>> interruptMap = new HashMap<>();
+
+    //返回 true 确认打断
+    public static void registerInterrupt(String symbol,Function<PlayerDataAccessor,Boolean> function){
+        interruptMap.put(symbol,function);
+    }
+
+
+    public static void syncExecute(PlayerDataAccessor playerDataAccessor,List<AbstractCommand> commands, AbstractCommand.PerformReturnContent performReturnContent, ConcurrentHashMap<String, Object> varsRuntime,int interruptSymbol) throws Pausable {
         for (int i = 0; i < commands.size(); i++) {
             try {
                 AbstractCommand abstractCommand = commands.get(i);
@@ -87,6 +112,21 @@ public class FunctionExecutor {
                     if (!AoitoriProject.isPlayerOnline(playerDataAccessor.getPlayer().getName())) {
                         performReturnContent.setReturn(true);
                         return;
+                    }
+                    boolean isInterrupt = false;
+                    for (Map.Entry<String, Function<PlayerDataAccessor, Boolean>> entry : interruptMap.entrySet()) {
+                        Boolean apply = entry.getValue().apply(playerDataAccessor);
+                        if (apply){
+                            isInterrupt = true;
+                            break;
+                        }
+                    }
+                    if(isInterrupt || interruptSymbol!=playerDataAccessor.getInterruptSymbol()){
+                        Object interruptable = getGeneralVariable("interruptable", playerDataAccessor, varsRuntime);
+                        if(interruptable!=null && (boolean)interruptable){
+                            performReturnContent.setReturn(true);
+                            return;
+                        }
                     }
                     continue;
                 } else if (abstractCommand instanceof ParkCommand) {
@@ -117,7 +157,7 @@ public class FunctionExecutor {
                         if (execute.isAsync) {
                             AoitoriScheduler.forkJoinExecute(() -> {
                                 while (execute.expression.executeAsBoolean(playerDataAccessor, varsRuntime)) {
-                                    syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime);
+                                    syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime,interruptSymbol);
                                     if (performReturnContent.isReturn) {
                                         return;
                                     }
@@ -125,7 +165,7 @@ public class FunctionExecutor {
                             });
                         } else {
                             while (execute.expression.executeAsBoolean(playerDataAccessor, varsRuntime)) {
-                                syncExecute(playerDataAccessor, execute.commands, performReturnContent, varsRuntime);
+                                syncExecute(playerDataAccessor, execute.commands, performReturnContent, varsRuntime,interruptSymbol);
                                 if (performReturnContent.isReturn) {
                                     return;
                                 }
@@ -135,9 +175,9 @@ public class FunctionExecutor {
                         asyncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime);
                     } else if (execute.commands != null) {
                         if (execute.isUseNewReturnContext()) {
-                            syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime);
+                            syncExecute(playerDataAccessor, execute.commands, new AbstractCommand.PerformReturnContent(), varsRuntime,interruptSymbol);
                         }else {
-                            syncExecute(playerDataAccessor, execute.commands, performReturnContent, varsRuntime);
+                            syncExecute(playerDataAccessor, execute.commands, performReturnContent, varsRuntime,interruptSymbol);
                         }
                         if (performReturnContent.isReturn) {
                             return;
@@ -159,14 +199,13 @@ public class FunctionExecutor {
     }
 
     public static void asyncExecute(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> commands){
-        AoitoriScheduler.forkJoinExecute(()->{
-            syncExecute(playerDataAccessor, commands,new AbstractCommand.PerformReturnContent(),new ConcurrentHashMap<>());
-        });
+        asyncExecute(playerDataAccessor, commands,new AbstractCommand.PerformReturnContent(),new ConcurrentHashMap<>());
     }
 
+    //一定要重新new一个performReturnContent，不然会导致抽象问题，同步异步return导致异步线程返回
     public static void asyncExecute(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> commands, AbstractCommand.PerformReturnContent performReturnContent, ConcurrentHashMap<String, Object> varsRuntime) {
         AoitoriScheduler.forkJoinExecute(()->{
-            syncExecute(playerDataAccessor, commands,new AbstractCommand.PerformReturnContent(),varsRuntime);
+            syncExecute(playerDataAccessor, commands,performReturnContent,varsRuntime,playerDataAccessor.getInterruptSymbol());
         });
     }
 }

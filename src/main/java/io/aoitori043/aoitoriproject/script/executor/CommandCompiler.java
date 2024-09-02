@@ -311,7 +311,7 @@ public class CommandCompiler {
             if (abstractCommand == null) {
                 continue;
             }
-            switch (abstractCommand.getType()) {
+            switch (abstractCommand.getType().toLowerCase()) {
                 case "switch":{
                     compiledCommands.add(abstractCommand);
                     parserFunction(compiledCommands,originalList, depth + 1, i + 1, endLine);
@@ -366,7 +366,7 @@ public class CommandCompiler {
                     boolean isAdd = false;
                     for (int i1 = compiledCommands.size() - 1; i1 >= 0; i1--) {
                         AbstractCommand abstractCommandIter = compiledCommands.get(i1);
-                        if (abstractCommandIter.getType().equals("if") || abstractCommandIter.getType().equals("elseIf")) {
+                        if (abstractCommandIter.getType().equals("if") || abstractCommandIter.getType().equalsIgnoreCase("elseIf")) {
                             ((IfCommand) abstractCommandIter).setElseIfCommand((ElseIfCommand) abstractCommand);
                             isAdd = true;
                             break;
