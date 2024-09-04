@@ -125,9 +125,9 @@ public class RedisDataCache implements Listener {
     public static double getDouble(String playerName,String dataName,boolean force){
         Object s;
         if(force){
-            s = getForce(playerName,dataName).toString();
+            s = getForce(playerName,dataName);
         }else{
-            s = get(playerName, dataName).toString();
+            s = get(playerName, dataName);
         }
         return s==null?0:Double.parseDouble(s.toString());
     }

@@ -12,6 +12,7 @@ import io.aoitori043.aoitoriproject.script.executor.command.nested.switch_.CaseC
 import io.aoitori043.aoitoriproject.script.executor.command.nested.switch_.DefaultCommand;
 import io.aoitori043.aoitoriproject.script.executor.command.nested.switch_.SwitchCommand;
 import io.aoitori043.aoitoriproject.script.executor.command.sign.*;
+import io.aoitori043.aoitoriproject.script.executor.command.value.ToStringCommand;
 import io.aoitori043.aoitoriproject.script.executor.command.variable.NewVariableCommand;
 import io.aoitori043.aoitoriproject.script.executor.command.variable.SetVariableCommand;
 import io.aoitori043.aoitoriproject.script.parameter.JavaScriptExpression;
@@ -195,6 +196,9 @@ public class CommandCompiler {
 
     //  if(getMainHandItem(nbt,'形态') == '蓝刀')
     public AbstractCommand parsingStatement(String original, int depth) {
+        if (depth == 0 && original.charAt(0) == ' ') {
+            return null;
+        }
         if (depth < 0 || depth!=0 && original.charAt(depth * 2-1) != ' ') {
             System.out.println("缩进可能有误，错误指令为：{" + original + "}，缩进层数："+depth);
             return null;
@@ -287,6 +291,8 @@ public class CommandCompiler {
         registerCommands(ContainsCommand.class,"contains");
         registerCommands(ParkCommand.class,"park");
         registerCommands(SetResultCommand.class,"setResult");
+
+        registerCommands(ToStringCommand.class,"toString");
     }
 
     public List<AbstractCommand> startParserFunction(List<String> originalList) {

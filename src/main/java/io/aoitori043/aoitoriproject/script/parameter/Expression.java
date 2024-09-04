@@ -2,6 +2,7 @@ package io.aoitori043.aoitoriproject.script.parameter;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.aoitori043.aoitoriproject.script.ClassImpl;
 import io.aoitori043.aoitoriproject.script.PlayerDataAccessor;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
 import io.aoitori043.aoitoriproject.script.executor.CommandCompiler;
@@ -233,11 +234,9 @@ public class Expression {
         for (int index = 0; index < parameter.length(); index++) {
             char c = parameter.charAt(index);
             if (c == '(' && (index == 0 || parameter.charAt(index - 1) != '\\')) {
-//                buffer = getStringBuffer(buffer, blockList);
                 int closingIndex = findClosingBracketIndex(parameter, index-1);
                 String nestedText = parameter.substring(index, closingIndex + 1);
                 index = closingIndex;
-//                String[] parameters = customSplit(nestedText.substring(0, nestedText.length() - 1),",");
                 Block[] blocks = wrapperToFunctionBlock(buffer+nestedText);
                 buffer = new StringBuilder();
                 for (Block block : blocks) {
@@ -266,13 +265,6 @@ public class Expression {
         }
         getStringBuffer(buffer, blockList);
         this.blocks = blockList.toArray(new Block[0]);
-//        if (variableBlockList.size()>1) {
-//            for (Block block : variableBlockList) {
-//                if (block instanceof TextBlock) {
-//                    ((TextBlock) block).throwResult();
-//                }
-//            }
-//        }
         this.varaibleBlocks = variableBlockList.toArray(new Block[0]);
         this.variableExpression = generateEncodedExpression();
         if(compiledType == CompiledType.NOT_CALCULATE){
@@ -282,25 +274,39 @@ public class Expression {
             if (this.blocks.length == 1) {
                 if(this.blocks[0] instanceof TextBlock){
                     TextBlock block = (TextBlock) this.blocks[0];
-                    this.isMathExpression = block.getResult() instanceof String;
+                    if (block.getResult() instanceof String) {
+                        this.isMathExpression = true;
+                    }else{
+                        return;
+                    }
                 }else{
                     this.isMathExpression = false;
+                    return;
                 }
             }else {
                 this.isMathExpression = true;
             }
-        }
-        try {
-            this.expression = jexl.createExpression(variableExpression);
-        }catch (Exception e){
-            this.isMathExpression = false;
+            try {
+                this.expression = jexl.createExpression(variableExpression);
+                this.isMathExpression = true;
+            }catch (Exception e){
+                this.isMathExpression = false;
+            }
+        }else {
+            try {
+                this.expression = jexl.createExpression(variableExpression);
+            } catch (Exception e) {
+                this.isMathExpression = false;
+            }
         }
 
     }
 
     public static void main(String[] args) {
-        Expression sworddamaged1 = new Expression("sworddamaged1");
-        System.out.println(sworddamaged1.execute(null, null));
+        CommandCompiler.nowCommandCompiler.currentLoadClass = new ClassImpl("test");
+        Expression sworddamaged1 = new Expression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)");
+        System.out.println(isValidMathExpression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)"));
+        System.out.println(sworddamaged1);
     }
 
     public static boolean isValidMathExpression(String expression) {

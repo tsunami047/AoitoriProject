@@ -202,6 +202,13 @@ public class FunctionExecutor {
         asyncExecute(playerDataAccessor, commands,new AbstractCommand.PerformReturnContent(),new ConcurrentHashMap<>());
     }
 
+    public static void submitAsyncExecute(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> commands,Runnable runnable){
+        AoitoriScheduler.forkJoinExecute(()->{
+            syncExecute(playerDataAccessor, commands,new AbstractCommand.PerformReturnContent(),new ConcurrentHashMap<>(),playerDataAccessor.getInterruptSymbol());
+            runnable.run();
+        });
+    }
+
     //一定要重新new一个performReturnContent，不然会导致抽象问题，同步异步return导致异步线程返回
     public static void asyncExecute(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> commands, AbstractCommand.PerformReturnContent performReturnContent, ConcurrentHashMap<String, Object> varsRuntime) {
         AoitoriScheduler.forkJoinExecute(()->{

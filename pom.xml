@@ -107,31 +107,37 @@
           <groupId>org.db4j</groupId>
           <artifactId>kilim</artifactId>
           <version>2.0.1</version>
+          <scope>compile</scope>
       </dependency>
       <dependency>
           <groupId>com.esotericsoftware</groupId>
           <artifactId>reflectasm</artifactId>
           <version>1.11.9</version>
+          <scope>compile</scope>
       </dependency>
     <dependency>
         <groupId>com.zaxxer</groupId>
         <artifactId>HikariCP</artifactId>
         <version>4.0.3</version>
+        <scope>compile</scope>
     </dependency>
     <dependency>
-          <groupId>redis.clients</groupId>
-          <artifactId>jedis</artifactId>
-          <version>5.1.4</version>
+        <groupId>redis.clients</groupId>
+        <artifactId>jedis</artifactId>
+        <version>5.1.4</version>
+        <scope>compile</scope>
     </dependency>
     <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
         <version>2.8.2</version>
+        <scope>compile</scope>
     </dependency>
     <dependency>
         <groupId>mysql</groupId>
         <artifactId>mysql-connector-java</artifactId>
         <version>5.1.49</version> <!-- MySQL 5.7 版本对应的 MySQL JDBC 驱动版本 -->
+        <scope>compile</scope>
     </dependency>
       <dependency>
           <groupId>junit</groupId>

@@ -36,10 +36,12 @@ public class SQLUpdateImpl {
             List<String> updateNames = new ArrayList<>();
             for (int i = 0; i < entityAttribute.getUpdateFields().size(); i++) {
                 String fieldName = entityAttribute.getUpdateFields().get(i);
-                Object o = fieldAccess.get(entity, fieldName);
-                if(o != null){
-                    sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
-                }
+//                Object o = fieldAccess.get(entity, fieldName);
+//                if(o != null){
+//                    sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
+//                }
+                //空指针的时候也更新
+                sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
                 updateNames.add(fieldName);
             }
 

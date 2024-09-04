@@ -52,6 +52,7 @@ public class InvalidUtil {
             }
         }
         for (java.lang.reflect.Field field : obj.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
             if (field.isAnnotationPresent(DefaultValue.class)) {
                 DefaultValue annotation = field.getAnnotation(DefaultValue.class);
                 if (field.getType() == String.class) {
