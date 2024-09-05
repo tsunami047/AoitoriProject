@@ -93,6 +93,9 @@ public class Expression {
             map.put(varaibleBlock.getVariableName(), varaibleBlock.interpret(playerDataAccessor,variables));
         }
         JexlContext context = new MapContext(map);
+        if(expression == null){
+            throw new NullPointerException("jexl编译表达式为空指针： "+this);
+        }
         return expression.evaluate(context);
     }
 
