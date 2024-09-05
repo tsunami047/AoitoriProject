@@ -69,24 +69,6 @@ public class Expression {
         return stringBuilder.toString();
     }
 
-
-
-
-//    public Object execute(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> variables){
-////        if(cacheSafe){
-////            Object interpret = interpretFilling(playerDataAccessor, variables);
-////            Object ifPresent = cache.getIfPresent(interpret.toString());
-////            if(ifPresent != null){
-////                return ifPresent;
-////            }else{
-////                Object expressionResult = getExpressionResult(playerDataAccessor, variables);
-////                cache.put(interpret.toString(),expressionResult);
-////                return expressionResult;
-////            }
-////        }
-//        return getExpressionResult(playerDataAccessor, variables);
-//    }
-
     public Object execute(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> variables) {
         Map<String, Object> map = new HashMap<>();
         for (Block varaibleBlock : varaibleBlocks) {
@@ -94,7 +76,14 @@ public class Expression {
         }
         JexlContext context = new MapContext(map);
         if(expression == null){
-            throw new NullPointerException("jexl编译表达式为空指针： "+this);
+            try {
+                this.expression = jexl.createExpression(variableExpression);
+                this.isMathExpression = true;
+            }catch (Exception e){
+                this.isMathExpression = false;
+                e.printStackTrace();
+                throw new NullPointerException("jexl编译表达式为空指针： "+this);
+            }
         }
         return expression.evaluate(context);
     }
@@ -279,19 +268,13 @@ public class Expression {
                     TextBlock block = (TextBlock) this.blocks[0];
                     if (block.getResult() instanceof String) {
                         this.isMathExpression = true;
-                    }else{
-                        return;
                     }
-                }else{
-                    this.isMathExpression = false;
-                    return;
                 }
             }else {
                 this.isMathExpression = true;
             }
             try {
                 this.expression = jexl.createExpression(variableExpression);
-                this.isMathExpression = true;
             }catch (Exception e){
                 this.isMathExpression = false;
             }
@@ -306,10 +289,15 @@ public class Expression {
     }
 
     public static void main(String[] args) {
-        CommandCompiler.nowCommandCompiler.currentLoadClass = new ClassImpl("test");
-        Expression sworddamaged1 = new Expression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)");
-        System.out.println(isValidMathExpression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)"));
-        System.out.println(sworddamaged1);
+        JexlExpression expression1 = jexl.createExpression("a >= 3 && c");
+        if (expression1 == null) {
+            System.out.println(expression1);
+        }
+        System.out.println(expression1);
+//        CommandCompiler.nowCommandCompiler.currentLoadClass = new ClassImpl("test");
+//        Expression sworddamaged1 = new Expression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)");
+//        System.out.println(isValidMathExpression("%剑气% >= 3 && contains(getHandItem(lore,0),剑)"));
+//        System.out.println(sworddamaged1);
     }
 
     public static boolean isValidMathExpression(String expression) {
