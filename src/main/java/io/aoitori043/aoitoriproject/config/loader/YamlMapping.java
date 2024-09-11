@@ -77,6 +77,8 @@ public class YamlMapping {
     public static void loadFromConfig(Object parent,Object object, YamlConfiguration yamlConfiguration,String parentName) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
+            ConfigProperties annotation = clazz.getAnnotation(ConfigProperties.class);
+            String s = annotation.appendPath();
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(NonConfigProperty.class)) {
                     continue;
@@ -86,7 +88,7 @@ public class YamlMapping {
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(parent,object, yamlConfiguration, field, propertyName,parentName);
+                        getValue(parent,object, yamlConfiguration, field, s+propertyName,parentName);
                         runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
