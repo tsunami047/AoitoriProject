@@ -1,0 +1,232 @@
+Index: src/main/java/io/aoitori043/aoitoriproject/config/impl/MapperInjection.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/io/aoitori043/aoitoriproject/config/impl/MapperInjection.java b/src/main/java/io/aoitori043/aoitoriproject/config/impl/MapperInjection.java
+--- a/src/main/java/io/aoitori043/aoitoriproject/config/impl/MapperInjection.java	
++++ b/src/main/java/io/aoitori043/aoitoriproject/config/impl/MapperInjection.java	
+@@ -174,7 +174,7 @@
+                             try {
+                                 Object instance = createInstance((Class<?>) deepestGenericType);
+                                 injectFilePath(instance, file.getPath());
+-                                ConfigMapping.loadFromConfig(parent,instance, key, yaml.getConfigurationSection(key));
++                                ConfigMapping.loadFromConfig(parent,instance, key, yaml.getConfigurationSection(key),key);
+                                 runAnnotatedMethods(instance);
+                                 try {
+                                     performNullCheck(instance);
+@@ -227,7 +227,7 @@
+                                 Object instance = createInstance((Class<?>) typeArguments[1]);
+                                 injectFilePath(instance, file.getPath() + "_" + key);
+                                 ConfigurationSection section = yaml.getConfigurationSection(key);
+-                                ConfigMapping.loadFromConfig(parent,instance, key, section);
++                                ConfigMapping.loadFromConfig(parent,instance, key, section,key);
+                                 runAnnotatedMethods(instance);
+                                 try {
+                                     performNullCheck(instance);
+@@ -284,7 +284,7 @@
+                 Object instance = createInstance((Class<?>)deepestGenericType);
+                 injectFilePath(instance, key);
+                 ConfigurationSection section = yaml.getConfigurationSection(key);
+-                ConfigMapping.loadFromConfig(parent,instance, key, section);
++                ConfigMapping.loadFromConfig(parent,instance, key, section,key);
+                 runAnnotatedMethods(instance);
+                 try {
+                     performNullCheck(instance);
+Index: src/main/java/io/aoitori043/aoitoriproject/config/loader/ConfigMapping.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/io/aoitori043/aoitoriproject/config/loader/ConfigMapping.java b/src/main/java/io/aoitori043/aoitoriproject/config/loader/ConfigMapping.java
+--- a/src/main/java/io/aoitori043/aoitoriproject/config/loader/ConfigMapping.java	
++++ b/src/main/java/io/aoitori043/aoitoriproject/config/loader/ConfigMapping.java	
+@@ -64,7 +64,7 @@
+         return className.contains("$");
+     }
+ 
+-    public static void loadFromConfig(Object parent,Object object,String parentName,ConfigurationSection section) {
++    public static void loadFromConfig(Object parent,Object object,String parentName,ConfigurationSection section,String sectionName) {
+         Class<?> clazz = object.getClass();
+         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
+             for (Field field : object.getClass().getDeclaredFields()) {
+@@ -76,7 +76,7 @@
+                 }else{
+                     String propertyName = field.getName();
+                     try {
+-                        getValue(parent,object, section, field, propertyName,parentName);
++                        getValue(parent,object, section, field, propertyName,parentName,sectionName);
+                         runAnnotatedMethodByField(object,field.getName());
+                     } catch (IllegalAccessException e) {
+                         printlnError(object);
+@@ -115,7 +115,7 @@
+             }else{
+                 propertyName = field.getName();
+             }
+-            getValue(parent,object, section, field, propertyName,parentName);
++            getValue(parent,object, section, field, propertyName,parentName, propertyName);
+             runAnnotatedMethodByField(object,field.getName());
+         } catch (IllegalAccessException e) {
+             printlnError(object);
+Index: src/main/java/io/aoitori043/aoitoriproject/config/loader/MapperEvaluation.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/io/aoitori043/aoitoriproject/config/loader/MapperEvaluation.java b/src/main/java/io/aoitori043/aoitoriproject/config/loader/MapperEvaluation.java
+--- a/src/main/java/io/aoitori043/aoitoriproject/config/loader/MapperEvaluation.java	
++++ b/src/main/java/io/aoitori043/aoitoriproject/config/loader/MapperEvaluation.java	
+@@ -45,7 +45,7 @@
+         return map;
+     }
+ 
+-    public static void getValue(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
++    public static void getValue(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName,String sectionName) throws IllegalAccessException {
+         if(field.isAnnotationPresent(InjectYaml.class)){
+             return;
+         }
+@@ -62,6 +62,10 @@
+                     field.set(fieldSetObj, parentName);
+                     return;
+                 }
++                case SECTION_NAME:{
++                    field.set(fieldSetObj, sectionName);
++                    return;
++                }
+             }
+         }
+         if(field.getName().equals("yaml")){
+@@ -131,18 +135,18 @@
+                 return;
+             }
+         }
+-        if (mappingInject(parent,fieldSetObj, section, field, propertyName)) {
++        if (mappingInject(parent,fieldSetObj, section, field, propertyName,parentName)) {
+             return;
+         }
+         if (Map.class.isAssignableFrom(field.getType())) {
+-            executeMapTypeMapping(fieldSetObj, section, propertyName, field);
++            executeMapTypeMapping(fieldSetObj, section, propertyName, field,parentName);
+         }
+ 
+ 
+     }
+ 
+ 
+-    private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
++    private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field, String parentName) throws IllegalAccessException {
+         if(field.get(instance)!=null){
+             return null;
+         }
+@@ -161,7 +165,7 @@
+         if (typeArguments.length >= 2) {
+             if (((Class)typeArguments[0]).isEnum()) {
+                 HashMap<Enum<?>, String> enumMappingName = getEnumMappingName((Class) typeArguments[0]);
+-                injectMapping(section, propertyName, typeArguments, map, enumMappingName);
++                injectMapping(section, propertyName, typeArguments, map, enumMappingName,parentName);
+             } else {
+                 injectMapping(section, propertyName, typeArguments, map);
+             }
+@@ -295,7 +299,7 @@
+ 
+     }
+ 
+-    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map, HashMap<Enum<?>, String> enumMappingName) {
++    private static void injectMapping(ConfigurationSection section, String propertyName, Type[] typeArguments, AbstractMap<Object, Object> map, HashMap<Enum<?>, String> enumMappingName, String parentName) {
+         Type typeArgument = typeArguments[1];
+         if (typeArgument.getTypeName().equals("java.util.List<java.lang.String>")) {
+             if (section != null) {
+@@ -460,8 +464,8 @@
+         }
+     }
+ 
+-    public static boolean mappingInject(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
+-        return injectMapping(parent,object, section, field, propertyName) | injectFoldMapping(parent,object, section, field, propertyName) | injectFlatMapping(parent,object, section, field, propertyName);
++    public static boolean mappingInject(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
++        return injectMapping(parent,object, section, field, propertyName,parentName) | injectFoldMapping(parent,object, section, field, propertyName, parentName) | injectFlatMapping(parent,object, section, field, propertyName,parentName);
+     }
+ 
+     public static Object getObject(Object object, Field field) {
+@@ -500,7 +504,7 @@
+         return null;
+     }
+ 
+-    private static boolean injectFlatMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
++    private static boolean injectFlatMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) {
+         try {
+             GetFlatMapping getFlatMapping = field.getAnnotation(GetFlatMapping.class);
+             Class<?> clazz = field.getType();
+@@ -531,7 +535,7 @@
+                     }
+                     Object instance = createInstance((Class<?>) typeArguments[1]);
+                     injectDefaultValue(instance, key, object);
+-                    ConfigMapping.loadFromConfig(object,instance, null, subSection);
++                    ConfigMapping.loadFromConfig(object,instance, parentName, subSection,key);
+                     MapperInjection.runAnnotatedMethods(instance);
+                     map.put(key, instance);
+                 }
+@@ -554,7 +558,7 @@
+                     }
+                     Object instance = createInstance((Class<?>) typeArguments[1]);
+                     injectDefaultValue(instance, enumConstant, object);
+-                    ConfigMapping.loadFromConfig(object,instance, null, subSection);
++                    ConfigMapping.loadFromConfig(object,instance, parentName, subSection,propertyName);
+                     MapperInjection.runAnnotatedMethods(instance);
+                     map.put(enumConstant, instance);
+                 }
+@@ -565,7 +569,7 @@
+         return true;
+     }
+ 
+-    private static boolean injectFoldMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
++    private static boolean injectFoldMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) {
+         try {
+             GetFoldMapping getFoldMapping = field.getAnnotation(GetFoldMapping.class);
+             if (!isInnerClass(field.getType()) && getFoldMapping == null) {
+@@ -583,9 +587,9 @@
+             injectDefaultValue(instance, propertyName, object);
+             field.set(object, instance);
+             if (foldSection == null) {
+-                ConfigMapping.loadFromConfig(object,instance, null, null);
++                ConfigMapping.loadFromConfig(object,instance, parentName, null, propertyName);
+             } else {
+-                ConfigMapping.loadFromConfig(object,instance, null, section.getConfigurationSection(propertyName));
++                ConfigMapping.loadFromConfig(object,instance, parentName, section.getConfigurationSection(propertyName), propertyName);
+             }
+             MapperInjection.runAnnotatedMethods(instance);
+             return true;
+@@ -595,7 +599,7 @@
+         return true;
+     }
+ 
+-    private static boolean injectMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
++    private static boolean injectMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) {
+         try {
+             GetMapping getMapping = field.getAnnotation(GetMapping.class);
+             if (getMapping == null || !Map.class.isAssignableFrom(field.getType())) {
+@@ -619,7 +623,7 @@
+                     ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
+                     Object instance = createInstance((Class<?>) typeArguments[1]);
+                     injectDefaultValue(instance, key, object);
+-                    ConfigMapping.loadFromConfig(object,instance, null, configurationSection);
++                    ConfigMapping.loadFromConfig(object,instance, parentName, configurationSection, propertyName);
+                     MapperInjection.runAnnotatedMethods(instance);
+                     map.put(key, instance);
+                 }
+Index: src/main/java/io/aoitori043/aoitoriproject/config/Inject.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/io/aoitori043/aoitoriproject/config/Inject.java b/src/main/java/io/aoitori043/aoitoriproject/config/Inject.java
+--- a/src/main/java/io/aoitori043/aoitoriproject/config/Inject.java	
++++ b/src/main/java/io/aoitori043/aoitoriproject/config/Inject.java	
+@@ -18,6 +18,7 @@
+ 
+     enum InjectionType {
+         PARENT_NAME,
+-        PARENT_OBJECT
++        PARENT_OBJECT,
++        SECTION_NAME
+     }
+ }

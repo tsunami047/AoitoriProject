@@ -79,7 +79,7 @@ public class MapperEvaluation {
                 String value = section.getString(propertyName);
                 boolean hasMatch = false;
                 for (Enum enumConstant : enumConstants) {
-                    if (value.equals(enumConstant.name().replace("_", "")) || value.equals(enumConstant.name())) {
+                    if (value.equalsIgnoreCase(enumConstant.name().replace("_", "")) || value.equalsIgnoreCase(enumConstant.name())) {
                         field.set(fieldSetObj, enumConstant);
                         hasMatch = true;
                         break;
@@ -89,7 +89,7 @@ public class MapperEvaluation {
                     for (Enum enumConstant : enumConstants) {
                         try {
                             String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
-                            if (mappingName != null && mappingName.equals(value)) {
+                            if (mappingName != null && mappingName.equalsIgnoreCase(value)) {
                                 field.set(fieldSetObj, enumConstant);
                                 return;
                             }
@@ -130,6 +130,9 @@ public class MapperEvaluation {
                 field.set(fieldSetObj, new ArrayList<>());
                 return;
             }
+        }
+        if (field.getType().isEnum()) {
+            return;
         }
         if (mappingInject(parent,fieldSetObj, section, field, propertyName)) {
             return;
@@ -616,7 +619,13 @@ public class MapperEvaluation {
                 if (mapperSection == null) return true;
                 Set<String> keys = mapperSection.getKeys(false);
                 for (String key : keys) {
+                    if(Arrays.stream(getMapping.ignoreKey()).anyMatch(key::equalsIgnoreCase)){
+                        continue;
+                    }
                     ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
+                    if (configurationSection == null) {
+                        continue;
+                    }
                     Object instance = createInstance((Class<?>) typeArguments[1]);
                     injectDefaultValue(instance, key, object);
                     ConfigMapping.loadFromConfig(object,instance, null, configurationSection);

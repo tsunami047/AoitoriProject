@@ -27,4 +27,5 @@ A:
 public @interface GetMapping {
 //    @NotNull
 //    Class<?> mapper();
+    String[] ignoreKey() default {};
 }
