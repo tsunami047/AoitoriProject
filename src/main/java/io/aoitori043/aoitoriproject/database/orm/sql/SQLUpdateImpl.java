@@ -36,7 +36,7 @@ public class SQLUpdateImpl {
             List<String> updateNames = new ArrayList<>();
             for (int i = 0; i < entityAttribute.getUpdateFields().size(); i++) {
                 String fieldName = entityAttribute.getUpdateFields().get(i);
-//                Object o = fieldAccess.get(entity, fieldName);
+//                Object o = fieldAccess.getData(entity, fieldName);
 //                if(o != null){
 //                    sql.append(sqlClient.nameStructure.getFieldName(clazz, fieldName)).append(" = ?,");
 //                }

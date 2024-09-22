@@ -67,6 +67,8 @@ public class ConfigMapping {
     public static void loadFromConfig(Object parent,Object object,String parentName,ConfigurationSection section) {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
+            ConfigProperties annotation = clazz.getAnnotation(ConfigProperties.class);
+            String append = annotation!=null?annotation.appendPath():"";
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(NonConfigProperty.class)) {
                     continue;
@@ -76,7 +78,7 @@ public class ConfigMapping {
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(parent,object, section, field, propertyName,parentName);
+                        getValue(parent,object, section, field, append+propertyName,parentName);
                         runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         printlnError(object);

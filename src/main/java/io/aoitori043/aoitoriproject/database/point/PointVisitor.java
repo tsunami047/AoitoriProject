@@ -1,7 +1,6 @@
 package io.aoitori043.aoitoriproject.database.point;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.aoitori043.aoitoriproject.database.point.redis.RedisDataCache;
 
 /**
  * @Author: natsumi

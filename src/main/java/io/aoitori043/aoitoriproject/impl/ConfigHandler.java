@@ -2,6 +2,7 @@ package io.aoitori043.aoitoriproject.impl;
 
 
 import io.aoitori043.aoitoriproject.AoitoriProject;
+import io.aoitori043.aoitoriproject.config.ConfigProperties;
 import io.aoitori043.aoitoriproject.config.NonConfigProperty;
 import io.aoitori043.aoitoriproject.config.impl.BasicMapper;
 import io.aoitori043.aoitoriproject.database.DatabaseInjection;
@@ -13,7 +14,7 @@ import javax.script.ScriptEngineManager;
 import java.io.File;
 import java.io.FileReader;
 
-
+@ConfigProperties
 public class ConfigHandler extends BasicMapper {
 
     public static void load(){
@@ -33,8 +34,10 @@ public class ConfigHandler extends BasicMapper {
     @Override
     public void loadConfig(){
         loadJavaScript();
-        System.out.println("配置加载完毕.");
+        AoitoriProject.plugin.getLogger().info("配置加载完毕.");
     }
+
+    public static int delayRemovePlayerProfileTime;
 
     @NonConfigProperty
     public static ScriptEngine engine;

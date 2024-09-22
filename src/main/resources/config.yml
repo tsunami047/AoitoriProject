@@ -3,3 +3,4 @@ message:
   prefix: "&7AoitoriProject &f>> "
 
 safeOpCommands: []
+delayRemovePlayerProfileTime: 1000

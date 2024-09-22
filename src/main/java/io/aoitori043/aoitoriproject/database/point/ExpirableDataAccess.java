@@ -11,17 +11,18 @@ import java.time.ZonedDateTime;
  * @Author: natsumi
  * @CreateTime: 2024-08-10  07:38
  * @Description: ?
+ * redis数据全部丢失了也能顺利存取。
  */
 @Data
-public class ExpirableDataAccess implements DataAccess{
+public class ExpirableDataAccess implements DataAccess {
 
-    DataType varType = DataType.EXPIRED_DATA;
-    String varName;
-    String initValue;
-    ExpirableDateType expirableDateType;
-    int parameter;
+    public DataType varType = DataType.EXPIRED_DATA;
+    public String varName;
+    public String initValue;
+    public ExpirableDateType expirableDateType;
+    public int parameter;
 
-    long loadedTimestamp;
+    public long loadedTimestamp;
 
 
     public ExpirableDataAccess(String varName, String initValue, ExpirableDateType expirableDateType, int parameter) {

@@ -91,14 +91,14 @@ public class SQLClient {
 //            if(playerNameSuperClass!=null){
 //                EntityAttributes superClassEntityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(playerNameSuperClass);
 //                String foreignKey = getForeignKey(playerNameSuperClass);
-//                Object o = fieldAccess.get(entity, foreignKey);
+//                Object o = fieldAccess.getData(entity, foreignKey);
 //                Object superEntity = ReflectASMUtil.createInstance(playerNameSuperClass);
 //                superClassEntityAttribute.getFieldAccess().set(superEntity,superClassEntityAttribute.getIdFieldName(),o);
 //                List<Object> query = CanaryClientImpl.sqlClient.query(superEntity);
 //                if(query == null || query.isEmpty()){
 //                    return null;
 //                }
-//                return superClassEntityAttribute.getPlayerName(query.get(0));
+//                return superClassEntityAttribute.getPlayerName(query.getData(0));
 //            }
             if(playerNameSuperClass!=null){
                 EntityAttributes superClassEntityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(playerNameSuperClass);
@@ -324,7 +324,7 @@ public class SQLClient {
 //                    //要么插入数据获取聚合根
 //                    return null;
 //                }
-//                Object o1 = fieldAccess.get(query.get(0), idFieldName);
+//                Object o1 = fieldAccess.getData(query.getData(0), idFieldName);
 //                if(o1 == null){
 //                    return null;
 //                }

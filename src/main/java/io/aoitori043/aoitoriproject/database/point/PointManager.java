@@ -1,5 +1,7 @@
 package io.aoitori043.aoitoriproject.database.point;
 
+import io.aoitori043.aoitoriproject.database.point.redis.RedisDataCache;
+
 import java.util.HashMap;
 
 /**
@@ -20,7 +22,8 @@ public class PointManager extends PointVisitor{
     }
 
     public <T> void set(String playerName, String dataName, T value) {
-        RedisDataCache.set(playerName, dataName, value);
+        RedisDataCache.set(playerName, dataName,String.valueOf(value));
+//        DataOperateDistribute.dataOperateDistribute.set(playerName,dataName,String.valueOf(value));
     }
 
 }

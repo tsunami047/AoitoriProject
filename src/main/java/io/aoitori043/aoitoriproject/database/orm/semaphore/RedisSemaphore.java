@@ -36,7 +36,7 @@ public class RedisSemaphore implements LockSemaphore{
 
     public void releaseWriteLock(String lockKey) {
         try(Jedis connection = redisCore.getConnection()) {
-            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            String script = "if redis.call('getData', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
             Object result = connection.eval(script, Collections.singletonList(lockKey), Collections.singletonList(DatabaseProperties.cache.zeromq$serverId));
 //            RELEASE_SUCCESS.equals(result);
         }

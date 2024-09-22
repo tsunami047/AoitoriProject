@@ -78,7 +78,7 @@ public class YamlMapping {
         Class<?> clazz = object.getClass();
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             ConfigProperties annotation = clazz.getAnnotation(ConfigProperties.class);
-            String s = annotation.appendPath();
+            String append = annotation!=null?annotation.appendPath():"";
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(NonConfigProperty.class)) {
                     continue;
@@ -88,7 +88,7 @@ public class YamlMapping {
                 }else{
                     String propertyName = field.getName();
                     try {
-                        getValue(parent,object, yamlConfiguration, field, s+propertyName,parentName);
+                        getValue(parent,object, yamlConfiguration, field, append+propertyName,parentName);
                         runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();

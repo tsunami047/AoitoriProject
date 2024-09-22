@@ -363,7 +363,7 @@ public class Metrics {
                 chart.add("data", (JsonElement)data);
             } catch (Throwable t) {
                 if (logFailedRequests) {
-                    Bukkit.getLogger().log(Level.WARNING, "Failed to get data for custom chart with id " + this.chartId, t);
+                    Bukkit.getLogger().log(Level.WARNING, "Failed to getData data for custom chart with id " + this.chartId, t);
                 }
                 return null;
             }
