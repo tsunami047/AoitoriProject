@@ -8,11 +8,11 @@ import lombok.Data;
  * @Description: ?
  */
 @Data
-public class InitDataAccess implements DataAccess{
+public class InitDataAccess implements DataAccess {
 
-    DataType varType = DataType.INIT_DATA;
-    String varName;
-    String initValue;
+    public DataType varType = DataType.INIT_DATA;
+    public String varName;
+    public String initValue;
 
     public InitDataAccess(String varName, String initValue) {
         this.varName = varName;

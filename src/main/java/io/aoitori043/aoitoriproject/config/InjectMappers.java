@@ -19,6 +19,8 @@ public @interface InjectMappers {
     @NotNull
     String dir();
 
+
+    //一个文件里只有一个
     boolean singe() default false;
     boolean dependent() default false;
 

@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.utils;
 import io.aoitori043.aoitoriproject.AoitoriProject;
 import org.bukkit.Bukkit;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,6 +22,12 @@ public class CMDUtils {
                     Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
             });
         }
+    }
+
+    public static void performCmd(String playerName,List<String> cmds) {
+        List<String> myCommands = new ArrayList<>(cmds);
+        myCommands.replaceAll(k->k.replace("%player_name%",playerName));
+        performCmd(myCommands);
     }
 
     public static void performCmd(List<String> cmds) {

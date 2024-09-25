@@ -278,8 +278,8 @@ public class CommandCompiler {
         registerCommands(AsyncFunctionCommand.class,"async-run","async-func","asyncFunc");
         registerCommands(CalculateCommand.class,"calculate","cal");
         registerCommands(ChangeHandItemCommand.class,"change-hand-item","changeHandItem");
-        registerCommands(GetHandItemCommand.class,"get-hand-item","getHandItem","getItemHand","get-item-hand");
-        registerCommands(GetTimeCommand.class,"get-time","getTime");
+        registerCommands(GetHandItemCommand.class,"getData-hand-item","getHandItem","getItemHand","getData-item-hand");
+        registerCommands(GetTimeCommand.class,"getData-time","getTime");
         registerCommands(HasConeEntityCommand.class,"has-cone-entity","hasConeEntity");
         registerCommands(JSMethodCommand.class,"js-method");
         registerCommands(JSCodeCommand.class,"js-code");

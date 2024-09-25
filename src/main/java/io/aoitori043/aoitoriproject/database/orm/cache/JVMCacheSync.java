@@ -170,7 +170,7 @@
 //                        try(Jedis resource = RedisCore.mainRedis.getConnection()) {
 //                            //服务端也关闭自己的客户端对它的服务器的连接
 //                            int clientPort = Integer.parseInt(resource.hget(redisHashKey + "_" + split[1], "serverPort"));
-//                            ZMQ.Socket socket = map.get(clientPort);
+//                            ZMQ.Socket socket = map.getData(clientPort);
 //                            pushSocket.send(clientAddress, ZMQ.SNDMORE);
 //                            pushSocket.send(("03#" + DatabaseProperties.cache.zeromq$serverId).getBytes(), 0);
 //                            ports.remove(clientPort);
@@ -245,7 +245,7 @@
 //                zeroMQEntity.serverPort = DatabaseProperties.cache.zeromq$serverPort;
 //            }else{
 //                if(zeroMQEntity.serverPort == 0){
-//                    zeroMQEntity.serverPort = ports.get(0)+1;
+//                    zeroMQEntity.serverPort = ports.getData(0)+1;
 //                }
 //            }
 //            HashMap<String, String> map = zeroMQEntity.toMap();

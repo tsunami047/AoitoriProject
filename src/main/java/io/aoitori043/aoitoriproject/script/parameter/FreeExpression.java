@@ -38,6 +38,18 @@ public class FreeExpression {
         }
     }
 
+    public Boolean resolveAsBoolean(PlayerDataAccessor playerDataAccessor){
+        if (expression != null) {
+            return expression.executeAsBoolean(playerDataAccessor, new ConcurrentHashMap<>());
+        } else if (abstractCommands != null) {
+            AbstractCommand.PerformReturnContent performReturnContent = new AbstractCommand.PerformReturnContent();
+            FunctionExecutor.syncExecuteNotDelay(playerDataAccessor,abstractCommands,performReturnContent,new ConcurrentHashMap<>());
+            Object result = performReturnContent.getResult();
+            return result != null && Boolean.parseBoolean(result.toString());
+        }
+        return null;
+    }
+
     public Object interpret(PlayerDataAccessor playerDataAccessor) {
         if (expression != null) {
             return expression.interpret(playerDataAccessor, new ConcurrentHashMap<>());

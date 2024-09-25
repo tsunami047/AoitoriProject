@@ -204,7 +204,7 @@ public class NBTImp_v1_7_R1_R2_R3 extends AbstractNBTTagCompound {
 
     @Override
     public <T extends TagBase> T get(String key) {
-        Object tagObj = getBase(key,"get");
+        Object tagObj = getBase(key,"getData");
         String clazzType = NBTTypeEnum.getInstance(tagObj.getClass()).getType();
         return (T)fieldValueConversion(clazzType, tagObj);
     }

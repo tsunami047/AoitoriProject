@@ -11,9 +11,9 @@ import lombok.Data;
 @Data
 public abstract class ObjectDataAccess<T> implements DataAccess {
 
-    DataType varType = DataType.OBJECT_DATA;
+    public DataType varType = DataType.OBJECT_DATA;
     public static Gson gson = new Gson();
-    String varName;
+    public String varName;
     private final Class<T> type;
 
     public ObjectDataAccess(String varName, Class<T> type) {
