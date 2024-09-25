@@ -21,4 +21,6 @@ public class TableFetch {
         SQLClient.EntityAttributes entityAttribute = sqlClient.getEntityAttribute(clazz);
         return new FetchBuilder<T>();
     }
+
+
 }
