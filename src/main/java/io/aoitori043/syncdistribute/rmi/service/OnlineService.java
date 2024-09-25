@@ -1,4 +1,4 @@
-package io.aoitori043.aoitoriproject.connect.rmi.inter;
+package io.aoitori043.syncdistribute.rmi.service;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

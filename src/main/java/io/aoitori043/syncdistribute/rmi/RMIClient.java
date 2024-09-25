@@ -1,10 +1,11 @@
-package io.aoitori043.aoitoriproject.connect.rmi;
+package io.aoitori043.syncdistribute.rmi;
 
-import io.aoitori043.aoitoriproject.connect.rmi.inter.OnlineService;
+import io.aoitori043.syncdistribute.rmi.service.OnlineService;
 
-import java.rmi.Naming;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
-public class CMIClient {
+public class RMIClient {
 
     public static OnlineService onlineService;
 
@@ -19,7 +20,8 @@ public class CMIClient {
 
     public static void start(){
         try {
-            onlineService = (OnlineService) Naming.lookup("rmi://localhost:1900/online");
+            Registry registry = LocateRegistry.getRegistry("localhost", 1900);
+            onlineService = (OnlineService) registry.lookup("online");;
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -1,15 +1,11 @@
 package io.aoitori043.aoitoriproject.impl.command.sub;
 
 
-import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.command.*;
-import io.aoitori043.aoitoriproject.database.orm.impl.CacheImpl;
-import io.aoitori043.aoitoriproject.database.orm.impl.ExclusiveCacheImpl;
-import io.aoitori043.aoitoriproject.database.orm.sign.Cache;
+import io.aoitori043.syncdistribute.rmi.RMIClient;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: natsumi
@@ -22,20 +18,21 @@ import java.util.Map;
 public class ISubCommandTest extends SubCommand {
 
 
-    @TabCompletion(argument = "set")
-    public List<String> getTabCompletion(int index) {
-        return null;
-    }
-
-
-    @NotArgument(help = "测试")
+    @Parameter(argument = "t1", help = "测试")
+    @ExecutionEndMessage(message = "耗时 %time%s")
+    @ParameterSpecification(index = 0, tip = "player", type = ParameterSpecification.Type.Text)
     public void execute_test(CommandSender sender,List<ArgumentHelper> arguments) {
-        CacheImpl cache = CanaryClientImpl.sqlClient.getCacheHashMap().get(Cache.CacheType.PLAYER_EXCLUSIVE_DATA);
-        System.out.println(cache);
-//        com.github.benmanes.caffeine.cache.Cache<String, Object> cache1 = ((ExclusiveCacheImpl) cache).getCaffeineCache().cache;
-//        for (Map.Entry<String, Object> stringObjectEntry : cache1.asMap().entrySet()) {
-//            System.out.println(stringObjectEntry.getKey() +" "+ stringObjectEntry.getValue());
-//        }
+        for (int i = 0; i < 100; i++) {
+            RMIClient.isOnline(arguments.get(0).getOriginalArg());
+        }
+
     }
+
+    @Parameter(argument = "t2", help = "测试2")
+    @ParameterSpecification(index = 0, tip = "player", type = ParameterSpecification.Type.Text)
+    public void execute_test2(CommandSender sender,List<ArgumentHelper> arguments) {
+        RMIClient.start();
+    }
+
 
 }

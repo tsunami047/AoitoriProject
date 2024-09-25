@@ -44,6 +44,7 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
         DatabaseCenter.init();
+//        RMIClient.start();
     }
 
     public static boolean isPlayerOnline(String playerName){
