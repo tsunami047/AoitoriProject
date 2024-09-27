@@ -1,5 +1,6 @@
 package io.aoitori043.syncdistribute.rmi;
 
+import io.aoitori043.aoitoriproject.connect.rmi.inter.PlayerDataService;
 import io.aoitori043.syncdistribute.rmi.service.OnlineService;
 
 import java.rmi.registry.LocateRegistry;
@@ -8,6 +9,7 @@ import java.rmi.registry.Registry;
 public class RMIClient {
 
     public static OnlineService onlineService;
+    public static PlayerDataService playerDataService;
 
     public static boolean isOnline(String playerName) {
         try {
@@ -21,7 +23,8 @@ public class RMIClient {
     public static void start(){
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1900);
-            onlineService = (OnlineService) registry.lookup("online");;
+            onlineService = (OnlineService) registry.lookup("online");
+            playerDataService = (PlayerDataService) registry.lookup("player_data");
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -46,16 +46,7 @@ public class TemporaryDataManager implements Listener {
 
     public static PlayerDataAccessor getPlayerDataAccessor(Player player) {
         String playerName = player.getName();
-        return playerDataAccessors.computeIfAbsent(playerName,k->{
-            PlayerDataAccessor playerDataAccessor = new PlayerDataAccessor(player);
-            PlayerDataAccessor.VariablesAttribute variablesAttribute = new PlayerDataAccessor.VariablesAttribute();
-            variablesAttribute.setValue(playerName);
-            variablesAttribute.setType(PlayerDataAccessor.VariableType.STRING);
-            variablesAttribute.setInitValue(playerName);
-            variablesAttribute.setVarName("player_name");
-            playerDataAccessor.addVariable(variablesAttribute);
-            return playerDataAccessor;
-        });
+        return getPlayerDataAccessor(playerName);
     }
 
     public static PlayerDataAccessor getPlayerDataAccessor(String playerName) {

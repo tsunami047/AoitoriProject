@@ -11,6 +11,7 @@ import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
 import io.aoitori043.aoitoriproject.script.PlaceholderHook;
 import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
 import io.aoitori043.aoitoriproject.thread.KilimScheduler;
+import io.aoitori043.syncdistribute.rmi.RMIClient;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -44,7 +45,7 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
             e.printStackTrace();
         }
         DatabaseCenter.init();
-//        RMIClient.start();
+        RMIClient.start();
     }
 
     public static boolean isPlayerOnline(String playerName){

@@ -25,6 +25,10 @@ public class PlayerDataAccessor {
     public LinkedHashMap<String,ClassImpl> classImplMap;
     private volatile int interruptSymbol;
 
+    public ConcurrentHashMap<String,String> persistentVariables;
+
+
+
     @Data
     public static class Function{
         public String name;
