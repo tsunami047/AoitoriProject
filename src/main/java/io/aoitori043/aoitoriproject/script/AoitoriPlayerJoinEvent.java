@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @Author: natsumi
  * @CreateTime: 2024-08-01  02:41
- * @Description: ?
+ * @Description: 当数据暂时没有被存储进数据库时阻止玩家连接任何一个子服务器，但是玩家已经离开
  */
 @Getter
 @ToString
