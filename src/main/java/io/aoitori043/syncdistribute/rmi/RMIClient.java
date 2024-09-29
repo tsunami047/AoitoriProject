@@ -1,7 +1,7 @@
 package io.aoitori043.syncdistribute.rmi;
 
-import io.aoitori043.aoitoriproject.connect.rmi.inter.PlayerDataService;
 import io.aoitori043.syncdistribute.rmi.service.OnlineService;
+import io.aoitori043.syncdistribute.rmi.service.PlayerDataService;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;

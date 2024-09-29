@@ -1,6 +1,5 @@
 package io.aoitori043.aoitoriproject.script;
 
-import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.script.event.PlayerJoinServerEvent;
 import io.aoitori043.aoitoriproject.script.event.PlayerQuitServerEvent;
 import io.aoitori043.aoitoriproject.thread.AoitoriScheduler;

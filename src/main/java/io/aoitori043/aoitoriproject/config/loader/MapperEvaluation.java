@@ -112,7 +112,10 @@ public class MapperEvaluation {
             } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
                 field.set(fieldSetObj, section.getBoolean(propertyName));
                 return;
-            } else if (field.getType() == List.class) {
+            } else if (field.getType() == long.class || field.getType() == Long.class) {
+                field.set(fieldSetObj, section.getLong(propertyName));
+                return;
+            }else if (field.getType() == List.class) {
                 field.set(fieldSetObj, new ArrayList<>(section.getStringList(propertyName)));
                 return;
             }

@@ -5,6 +5,7 @@ import io.aoitori043.aoitoriproject.script.PlayerDataAccessor;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
 import io.aoitori043.aoitoriproject.script.parameter.Expression;
 import io.aoitori043.aoitoriproject.script.parameter.LabelPosition;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -34,8 +35,8 @@ public class GetHandItemCommand extends AbstractCommand {
     @Override
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
         Player player = playerDataAccessor.getPlayer();
-        ItemStack itemInHand = player.getItemInHand();
-        if (itemInHand == null) {
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        if (itemInHand == null || itemInHand.getType() == Material.AIR) {
             return null;
         }
         NestedCommandWrapper nestedCommandWrapper = new NestedCommandWrapper();

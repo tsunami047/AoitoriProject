@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 /**
  * @Author: natsumi
@@ -27,6 +28,13 @@ public class CMDUtils {
     public static void performCmd(String playerName,List<String> cmds) {
         List<String> myCommands = new ArrayList<>(cmds);
         myCommands.replaceAll(k->k.replace("%player_name%",playerName));
+        performCmd(myCommands);
+    }
+
+    public static void performCmd(String playerName, List<String> cmds, UnaryOperator<String> operator) {
+        List<String> myCommands = new ArrayList<>(cmds);
+        myCommands.replaceAll(k->k.replace("%player_name%",playerName));
+        myCommands.replaceAll(operator);
         performCmd(myCommands);
     }
 
