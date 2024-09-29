@@ -149,7 +149,7 @@ public class MapperEvaluation {
 
 
     private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
-        if(field.get(instance)!=null){
+        if(field.get(instance)!=null && !field.isAnnotationPresent(ConfigProperty.class)){
             return null;
         }
         AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
@@ -163,6 +163,7 @@ public class MapperEvaluation {
         }
         field.set(instance, map);
 
+        if (section.get(propertyName) == null) return map;
         // 判断第二个泛型参数的类型
         if (typeArguments.length >= 2) {
             if (((Class)typeArguments[0]).isEnum()) {

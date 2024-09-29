@@ -1,8 +1,8 @@
 package io.aoitori043.aoitoriproject.database.point;
 
-import io.aoitori043.aoitoriproject.database.point.redis.RedisDataCache;
-
-import java.util.HashMap;
+import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
+import io.aoitori043.syncdistribute.rmi.data.PersistentDataAccess;
+import io.aoitori043.syncdistribute.rmi.data.access.DataAccess;
 
 /**
  * @Author: natsumi
@@ -11,19 +11,18 @@ import java.util.HashMap;
  */
 public class PointManager extends PointVisitor{
 
-    public static HashMap<String, DataAccess> map = new HashMap<>();
-
     public void bind(DataAccess d) {
-        map.put(d.getVarName(),d);
+        PersistentDataAccess.registerDataAccess.put(d.getVarName(),d);
+
     }
 
-    public void unbind(ExpirableDataAccess d) {
-        map.remove(d.varName);
+    public void unbind(DataAccess d) {
+        PersistentDataAccess.registerDataAccess.remove(d.getVarName());
     }
 
     public <T> void set(String playerName, String dataName, T value) {
-        RedisDataCache.set(playerName, dataName,String.valueOf(value));
-//        DataOperateDistribute.dataOperateDistribute.set(playerName,dataName,String.valueOf(value));
+        PersistentDataAccess persistentDataAccess = TemporaryDataManager.getPlayerDataAccessor(playerName).getPersistentDataAccess();
+        persistentDataAccess.set(dataName,value);
     }
 
 }

@@ -16,39 +16,55 @@ public class CMDUtils {
 
 
     public static void performCmd(String cmd) {
-        if (Bukkit.isPrimaryThread()) {
+        try {
+            if (Bukkit.isPrimaryThread()) {
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
-        } else {
-            Bukkit.getScheduler().runTask(AoitoriProject.plugin, () -> {
+            } else {
+                Bukkit.getScheduler().runTask(AoitoriProject.plugin, () -> {
                     Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
-            });
+                });
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
     public static void performCmd(String playerName,List<String> cmds) {
-        List<String> myCommands = new ArrayList<>(cmds);
-        myCommands.replaceAll(k->k.replace("%player_name%",playerName));
-        performCmd(myCommands);
+        try {
+            List<String> myCommands = new ArrayList<>(cmds);
+            myCommands.replaceAll(k -> k.replace("%player_name%", playerName));
+            performCmd(myCommands);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static void performCmd(String playerName, List<String> cmds, UnaryOperator<String> operator) {
-        List<String> myCommands = new ArrayList<>(cmds);
-        myCommands.replaceAll(k->k.replace("%player_name%",playerName));
-        myCommands.replaceAll(operator);
-        performCmd(myCommands);
+        try {
+            List<String> myCommands = new ArrayList<>(cmds);
+            myCommands.replaceAll(k -> k.replace("%player_name%", playerName));
+            myCommands.replaceAll(operator);
+            performCmd(myCommands);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static void performCmd(List<String> cmds) {
-        if (Bukkit.isPrimaryThread()) {
-            for (String cmd : cmds) {
-                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
-            }
-        } else {
-            Bukkit.getScheduler().runTask(AoitoriProject.plugin, () -> {
+        try {
+            if (Bukkit.isPrimaryThread()) {
                 for (String cmd : cmds) {
                     Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
                 }
-            });
+            } else {
+                Bukkit.getScheduler().runTask(AoitoriProject.plugin, () -> {
+                    for (String cmd : cmds) {
+                        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                    }
+                });
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 }
