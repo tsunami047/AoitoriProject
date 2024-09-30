@@ -4,7 +4,6 @@ import com.tuershen.nbtlibraryfix.NBTLibraryMain;
 import io.aoitori043.aoitoriproject.command.BasicCommandExecute;
 import io.aoitori043.aoitoriproject.database.DatabaseCenter;
 import io.aoitori043.aoitoriproject.database.point.PointManager;
-import io.aoitori043.aoitoriproject.database.point.redis.RedisDataCache;
 import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.IBasicCommand;
 import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
@@ -35,7 +34,6 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
         NBTLibraryMain.loadNBTLibrary(this);
         Bukkit.getPluginManager().registerEvents(this,this);
         Bukkit.getPluginManager().registerEvents(new TemporaryDataManager(),this);
-        Bukkit.getPluginManager().registerEvents(new RedisDataCache(),this);
         BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
         ConfigHandler.load();
         afterLoadConfig();

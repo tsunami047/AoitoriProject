@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.script;
 import io.aoitori043.aoitoriproject.script.event.PlayerJoinServerEvent;
 import io.aoitori043.aoitoriproject.script.event.PlayerQuitServerEvent;
 import io.aoitori043.aoitoriproject.thread.AoitoriScheduler;
+import io.aoitori043.syncdistribute.rmi.PlayerSyndAccess;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -39,6 +40,7 @@ public class TemporaryDataManager implements Listener {
             Bukkit.getPluginManager().callEvent(new AoitoriPlayerQuitEvent(event.getPlayer()));
             PlayerQuitServerEvent.call(playerDataAccessor, new ConcurrentHashMap<>());
             playerDataAccessors.remove(event.getPlayer().getName());
+            PlayerSyndAccess.persistentMap.remove(event.getPlayer().getName());
         });
     }
 

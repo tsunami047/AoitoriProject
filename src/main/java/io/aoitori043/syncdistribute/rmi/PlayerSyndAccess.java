@@ -13,5 +13,11 @@ public class PlayerSyndAccess {
 
     public static ConcurrentHashMap<String, PersistentDataAccess> persistentMap = new ConcurrentHashMap<>();
 
+    public static PersistentDataAccess getPersistentDataAccess(String playerName){
+        return persistentMap.computeIfAbsent(playerName, k -> {
+            return new PersistentDataAccess(playerName);
+        });
+    }
+
 
 }
