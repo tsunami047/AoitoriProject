@@ -20,7 +20,7 @@ public class RMIClient {
         }
     }
 
-    public static void start(){
+    public static synchronized void start(){
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1900);
             onlineService = (OnlineService) registry.lookup("online");

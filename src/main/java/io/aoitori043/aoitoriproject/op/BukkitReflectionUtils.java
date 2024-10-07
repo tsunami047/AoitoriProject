@@ -2,6 +2,7 @@ package io.aoitori043.aoitoriproject.op;
 
 import com.google.gson.Gson;
 import com.mojang.authlib.GameProfile;
+import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import net.minecraft.server.v1_12_R1.MinecraftServer;
 import net.minecraft.server.v1_12_R1.OpListEntry;
@@ -52,17 +53,29 @@ public class BukkitReflectionUtils {
     }
 
     public static void syncSafeOpRunCommand(Player player, List<String> commands) {
-        if(BukkitReflectionUtils.oplist.contains(player.getName())){
-            for (String command : commands) player.performCommand(command);
-            return;
+        if (Bukkit.isPrimaryThread()){
+            executeOpCommand(player, commands);
+        }else{
+            Bukkit.getScheduler().runTask(AoitoriProject.plugin,()->{
+                executeOpCommand(player, commands);
+            });
         }
-        BukkitReflectionUtils.setOp(player, true);
-        try {
-            for (String command : commands) player.performCommand(command);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            BukkitReflectionUtils.setOp(player, false);
+    }
+
+    private static void executeOpCommand(Player player, List<String> commands) {
+        synchronized (player) {
+            if (BukkitReflectionUtils.oplist.contains(player.getName())) {
+                for (String command : commands) player.performCommand(command);
+                return;
+            }
+            BukkitReflectionUtils.setOp(player, true);
+            try {
+                for (String command : commands) player.performCommand(command);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                BukkitReflectionUtils.setOp(player, false);
+            }
         }
     }
 

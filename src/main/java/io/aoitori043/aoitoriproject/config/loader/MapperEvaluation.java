@@ -163,7 +163,7 @@ public class MapperEvaluation {
         }
         field.set(instance, map);
 
-        if (section.get(propertyName) == null) return map;
+        if (section == null || section.get(propertyName) == null) return map;
         // 判断第二个泛型参数的类型
         if (typeArguments.length >= 2) {
             if (((Class)typeArguments[0]).isEnum()) {
@@ -468,7 +468,7 @@ public class MapperEvaluation {
     }
 
     public static boolean mappingInject(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) throws IllegalAccessException {
-        return injectMapping(parent,object, section, field, propertyName) | injectFoldMapping(parent,object, section, field, propertyName) | injectFlatMapping(parent,object, section, field, propertyName);
+        return injectMapping(parent,object, section, field, propertyName) | injectFoldMapping(parent,object, section, field, propertyName) | injectFlatMapping(parent,object, section, field, propertyName) | injectClassifyMapping(parent,object, section, field, propertyName);
     }
 
     public static Object getObject(Object object, Field field) {
@@ -595,6 +595,55 @@ public class MapperEvaluation {
                 ConfigMapping.loadFromConfig(object,instance, null, section.getConfigurationSection(propertyName));
             }
             MapperInjection.runAnnotatedMethods(instance);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private static boolean injectClassifyMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
+        try {
+            GetClassifyMapping getClassifyMapping = field.getAnnotation(GetClassifyMapping.class);
+            if (getClassifyMapping == null || !Map.class.isAssignableFrom(field.getType())) {
+                return false;
+            }
+            Type type = field.getGenericType();
+            Type[] typeArguments;
+            if (type instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) type;
+                typeArguments = parameterizedType.getActualTypeArguments();
+            } else {
+                throw new IllegalArgumentException("泛型参数缺少");
+            }
+            Map<String, Object> map = (Map) createInstance(field.getType());
+            field.set(object, map);
+            String anchor = getClassifyMapping.anchor();
+            if (section != null) {
+                ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
+                if (mapperSection == null) return true;
+                Set<String> keys = mapperSection.getKeys(false);
+                for (String key : keys) {
+                    ConfigurationSection configurationSection = mapperSection.getConfigurationSection(key);
+                    if (configurationSection == null) {
+                        continue;
+                    }
+                    Class designateClass = null;
+                    String sectionType = configurationSection.getString(anchor);
+                    GetClassifyMapping.ClassDesignation[] appoint = getClassifyMapping.appoint();
+                    for (GetClassifyMapping.ClassDesignation classDesignation : appoint) {
+                        if (classDesignation.key().equals(sectionType)) {
+                            designateClass = classDesignation.value();
+                        }
+                    }
+                    if (designateClass == null) continue;
+                    Object instance = createInstance(designateClass);
+                    injectDefaultValue(instance, key, object);
+                    ConfigMapping.loadFromConfig(object,instance, null, configurationSection);
+                    MapperInjection.runAnnotatedMethods(instance);
+                    map.put(key, instance);
+                }
+            }
             return true;
         } catch (Exception e) {
             e.printStackTrace();

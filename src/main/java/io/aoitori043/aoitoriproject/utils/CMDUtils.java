@@ -16,6 +16,7 @@ public class CMDUtils {
 
 
     public static void performCmd(String cmd) {
+        if (cmd == null || cmd.isEmpty()) return;
         try {
             if (Bukkit.isPrimaryThread()) {
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
@@ -30,6 +31,7 @@ public class CMDUtils {
     }
 
     public static void performCmd(String playerName,List<String> cmds) {
+        if (cmds == null || cmds.isEmpty()) return;
         try {
             List<String> myCommands = new ArrayList<>(cmds);
             myCommands.replaceAll(k -> k.replace("%player_name%", playerName));
@@ -40,6 +42,7 @@ public class CMDUtils {
     }
 
     public static void performCmd(String playerName, List<String> cmds, UnaryOperator<String> operator) {
+        if (cmds == null || cmds.isEmpty()) return;
         try {
             List<String> myCommands = new ArrayList<>(cmds);
             myCommands.replaceAll(k -> k.replace("%player_name%", playerName));
@@ -51,6 +54,7 @@ public class CMDUtils {
     }
 
     public static void performCmd(List<String> cmds) {
+        if (cmds == null || cmds.isEmpty()) return;
         try {
             if (Bukkit.isPrimaryThread()) {
                 for (String cmd : cmds) {

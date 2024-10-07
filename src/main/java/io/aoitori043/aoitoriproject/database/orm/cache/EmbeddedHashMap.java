@@ -60,7 +60,12 @@ public class EmbeddedHashMap<K,V> extends ConcurrentHashMap<K,V> {
             V v1 = super.get(k);
             CanaryClientImpl.sqlClient.update(v,v1, CacheImpl.UpdateType.NOT_COPY_NULL);
             List<V> query = CanaryClientImpl.sqlClient.query(v1);
-            directPut(k,query.get(0));
+            if (query.isEmpty()){
+                newInsertPut(k, v);
+                return v;
+            }else {
+                directPut(k, query.get(0));
+            }
             return query.get(0);
         }
         if(superEntityAggregateRoot == -1){
@@ -68,12 +73,16 @@ public class EmbeddedHashMap<K,V> extends ConcurrentHashMap<K,V> {
             super.put(k,v);
             return v;
         }
+        newInsertPut(k, v);
+        //执行对应的方法
+        return v;
+    }
+
+    private void newInsertPut(K k, @NotNull V v) {
         SQLClient.EntityAttributes entityAttribute = CanaryClientImpl.sqlClient.getEntityAttribute(v.getClass());
         entityAttribute.setForeignRootFieldValue(v,superEntity.getClass(),superEntityAggregateRoot);
         CanaryClientImpl.sqlClient.apply(v);
-        super.put(k,v);
-        //执行对应的方法
-        return v;
+        super.put(k, v);
     }
 
     @Override

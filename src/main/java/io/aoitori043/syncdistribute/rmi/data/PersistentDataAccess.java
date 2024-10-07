@@ -1,10 +1,12 @@
 package io.aoitori043.syncdistribute.rmi.data;
 
 
+import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.syncdistribute.rmi.data.access.DataAccess;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
 import lombok.Data;
 
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,13 +20,29 @@ public class PersistentDataAccess {
     public ConcurrentHashMap<String, String> persistentVariables;
 
     public PersistentDataAccess(String playerName) {
+        initPlayerData(playerName,true);
+    }
+
+    private void initPlayerData(String playerName,boolean recursion) {
         try {
             this.playerName = playerName;
-            Map<String, String> currentData = RMIClient.playerDataService.getCurrentData(playerName);
-            persistentVariables = new ConcurrentHashMap<>(currentData);
+            fetchData(playerName);
+        }catch (java.rmi.ConnectException e){
+            RMIClient.start();
+            if (recursion) {
+                initPlayerData(playerName,false);
+            }else {
+                AoitoriProject.plugin.getLogger().warning("Unable to connect to the BC server！");
+                e.printStackTrace();
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    private void fetchData(String playerName) throws RemoteException {
+        Map<String, String> currentData = RMIClient.playerDataService.getCurrentData(playerName);
+        persistentVariables = new ConcurrentHashMap<>(currentData);
     }
 
     public String get(String varName){
