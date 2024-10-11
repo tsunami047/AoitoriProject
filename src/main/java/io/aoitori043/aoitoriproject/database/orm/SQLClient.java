@@ -1,6 +1,7 @@
 package io.aoitori043.aoitoriproject.database.orm;
 
 import com.esotericsoftware.reflectasm.FieldAccess;
+import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.CanaryClientImpl;
 import io.aoitori043.aoitoriproject.database.orm.cache.EmbeddedHashMap;
 import io.aoitori043.aoitoriproject.database.orm.impl.*;
@@ -358,7 +359,7 @@ public class SQLClient {
         FieldAccess fieldAccess = FieldAccess.get(clazz);
         for (Field field : fieldAccess.getFields()) {
             if (field.getType().isPrimitive()) {
-                System.out.println(clazz.getSimpleName()+"实体定义成员："+field.getName() + " 是基元类型，这会导致严重错误，此实体绑定失败。");
+                AoitoriProject.plugin.getLogger().info(clazz.getSimpleName()+"实体定义成员："+field.getName() + " 是基元类型，这会导致严重错误，此实体绑定失败。");
                 return;
             }
         }
@@ -369,11 +370,11 @@ public class SQLClient {
             case ONLY_MYSQL:
                 switch (tableBuilder.createTable(clazz)) {
                     case LOST_FOREIGN_TABLE:
-                        System.out.println(tEntityAttributes.getTableName()+" 表创建失败，缺少外键，将再下一次实体绑定中重新创建");
+                        AoitoriProject.plugin.getLogger().info(tEntityAttributes.getTableName()+" 表创建失败，缺少外键，将再下一次实体绑定中重新创建");
                         lostForeignKeyClasses.add(clazz);
                         break;
                     case CREATE_SUCCESS:{
-                        System.out.println("成功绑定实体："+clazz.getSimpleName());
+                        AoitoriProject.plugin.getLogger().info("成功绑定实体："+clazz.getSimpleName());
                         break;
                     }
                 }
@@ -383,7 +384,7 @@ public class SQLClient {
         for (Class aClass : classes) {
             switch (tableBuilder.createTable(aClass)) {
                 case CREATE_SUCCESS:
-                    System.out.println("成功绑定实体："+clazz.getSimpleName());
+                    AoitoriProject.plugin.getLogger().info("成功绑定实体："+clazz.getSimpleName());
                     break;
                 case CREATE_FAILURE:
                     lostForeignKeyClasses.remove(aClass);

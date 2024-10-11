@@ -27,7 +27,7 @@ public abstract class SubCommand implements Cloneable {
     }
 
     public List<ArgumentHelper> fillParameters(String[] args){
-        List<ArgumentHelper> list = new ArrayList<>();
+        List<ArgumentHelper> list = new ArgumentList<>();
         for (int i = isNotArgument?1:2; i < args.length; i++) {
             ArgumentHelper argumentHelper = new ArgumentHelper(i, args[i]);
             list.add(argumentHelper);
