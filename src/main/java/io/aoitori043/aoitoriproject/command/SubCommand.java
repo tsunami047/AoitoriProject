@@ -1,6 +1,8 @@
 package io.aoitori043.aoitoriproject.command;
 
+import io.aoitori043.aoitoriproject.utils.raytrace.MethodSupplement;
 import lombok.Data;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -17,7 +19,12 @@ import java.util.TreeMap;
  * @Description: ?
  */
 @Data
-public abstract class SubCommand {
+public abstract class SubCommand implements Cloneable {
+
+    @Override
+    public SubCommand clone() throws CloneNotSupportedException {
+        return (SubCommand) super.clone();
+    }
 
     public List<ArgumentHelper> fillParameters(String[] args){
         List<ArgumentHelper> list = new ArrayList<>();
@@ -108,9 +115,11 @@ public abstract class SubCommand {
 
     public void executeNotArgumentMethod(CommandSender sender,String[] arguments) {
         try {
-            Class[] parameterTypes = new Class[]{CommandSender.class, List.class};
-            Method method = this.getClass().getMethod(this.notArgumentMethodName, parameterTypes);
-            method.invoke(this,sender,this.fillParameters(arguments));
+            if (isInBasicCommand){
+                this.notArgumentMethod.invoke(basicCommand,sender,this.fillParameters(arguments));
+            }else{
+                this.notArgumentMethod.invoke(this,sender,this.fillParameters(arguments));
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -118,9 +127,11 @@ public abstract class SubCommand {
 
     public HashMap<String,SubCommandExecutor> subCommands = new HashMap<>();
 
+    public boolean isInBasicCommand;
+
     public BasicCommand basicCommand;
     public int weight;
-    public String notArgumentMethodName;
+    public Method notArgumentMethod;
     public TreeMap<Integer,ParameterSpecification> map;
     public boolean isNotArgument = false;
     public String help;
@@ -131,6 +142,7 @@ public abstract class SubCommand {
     public boolean isOp = false;
     public String permission = null;
     public String executionStartMessage = null;
+    @Getter
     public String executionEndMessage = null;
 
     public int minLength = -1;

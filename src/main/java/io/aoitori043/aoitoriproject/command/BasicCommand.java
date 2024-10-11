@@ -8,9 +8,10 @@ import java.util.List;
 /**
  * @Author: natsumi
  * @CreateTime: 2024-03-23  14:49
- * @Description: ?
+ * @Description:
+ * 如果要在这个类定义方法必须实现克隆方法
  */
-public abstract class BasicCommand  {
+public abstract class BasicCommand {
     public JavaPlugin plugin;
     public String parentName;
 
@@ -19,9 +20,15 @@ public abstract class BasicCommand  {
         this.parentName = parentName;
     }
 
+
     public abstract Class<? extends SubCommand>[] getSubCommands();
 
     public abstract List<String> getAllAlias();
+
+
+    public BasicCommand clone() throws CloneNotSupportedException {
+        return (BasicCommand) super.clone();
+    }
 
     public String getAlias(){
         if(getAllAlias() == null || getAllAlias().isEmpty()){

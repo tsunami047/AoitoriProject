@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.aoitori043.aoitoriproject.AoitoriProject.onlinePlayerNames;
-import static io.aoitori043.aoitoriproject.database.orm.impl.CacheImplUtil.map;
 
 /**
  * @Author: natsumi
@@ -118,6 +117,61 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         }
 
         subCommands = new LinkedHashMap<>();
+        for (Method method : basicCommand.getClass().getDeclaredMethods()) {
+            method.setAccessible(true);
+            Parameter parameter = method.getAnnotation(Parameter.class);
+            if (parameter != null) {
+                try {
+//                    BasicCommand newBasicCommand = (BasicCommand) basicCommand.clone();
+//                    BasicCommand newBasicCommand = null;
+                    SubCommand newBasicCommand = new SubCommand(){};
+                    newBasicCommand.setBasicCommand(basicCommand);
+                    newBasicCommand.isInBasicCommand = true;
+                    newBasicCommand.setCommandprefix(parameter.argument());
+                    newBasicCommand.setNotArgumentMethod(method);
+                    ParameterSpecifications parameterSpecificationsAnnotation = method.getAnnotation(ParameterSpecifications.class);
+                    if (parameterSpecificationsAnnotation != null) {
+                        ParameterSpecification[] parameterSpecifications = parameterSpecificationsAnnotation.value();
+                        if (newBasicCommand.minLength == -1) {
+                            newBasicCommand.minLength = 1;
+                        }
+                        for (ParameterSpecification parameterSpecification : parameterSpecifications) {
+                            if (!parameterSpecification.nullable()) {
+                                newBasicCommand.minLength++;
+                            }
+                        }
+                    } else if (method.getAnnotation(ParameterSpecification.class) != null) {
+                        if (method.getAnnotation(ParameterSpecification.class).nullable()) {
+                            newBasicCommand.minLength = 1;
+                        }else{
+                            newBasicCommand.minLength = 2;
+                        }
+                    }
+                    newBasicCommand.isNotArgument = true;
+                    newBasicCommand.help = parameter.help();
+                    newBasicCommand.notArgumentMethod = method;
+                    ExecutePermission executePermission = method.getAnnotation(ExecutePermission.class);
+                    if (executePermission != null) {
+                        newBasicCommand.isOp = executePermission.isOp();
+                        newBasicCommand.permission = executePermission.permission();
+                    }else{
+                        newBasicCommand.isOp = true;
+                        newBasicCommand.permission = "nope.";
+                    }
+                    ExecutionStartMessage executionStartMessage = method.getAnnotation(ExecutionStartMessage.class);
+                    if (executionStartMessage != null) {
+                        newBasicCommand.executionStartMessage = executionStartMessage.message();
+                    }
+                    ExecutionEndMessage executionEndMessage = method.getAnnotation(ExecutionEndMessage.class);
+                    if (executionEndMessage != null) {
+                        newBasicCommand.executionEndMessage = executionEndMessage.message();
+                    }
+                    subCommands.put(parameter.argument(), newBasicCommand);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         for (SubCommand subCommand : subCommandList) {
             SubArgument subArgument = subCommand.getClass().getAnnotation(SubArgument.class);
             if (subArgument == null) {
@@ -152,7 +206,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
 
                     subCommand.isNotArgument = true;
                     subCommand.help = notArgument.help();
-                    subCommand.notArgumentMethodName = method.getName();
+                    subCommand.notArgumentMethod = method;
                     ExecutePermission executePermission = method.getAnnotation(ExecutePermission.class);
                     if (executePermission != null) {
                         subCommand.isOp = executePermission.isOp();
@@ -234,7 +288,7 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
     }
 
     private void generateNotArgumentHelp(BasicCommand basicCommand, SubCommand subCommand) {
-        Method executeMethod = subCommand.getMethod();
+        Method executeMethod = subCommand.getNotArgumentMethod();
         ParameterSpecifications parameterSpecificationsAnnotation = executeMethod.getAnnotation(ParameterSpecifications.class);
         TreeMap<Integer, ParameterSpecification> treeMap = new TreeMap<>(Comparator.naturalOrder());
         if (parameterSpecificationsAnnotation != null) {
@@ -343,20 +397,23 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             if (tabList != null) {
                 return tabList;
             }else{
-                return Collections.emptyList();
+//                return Collections.emptyList();
+                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
             }
         }
         SubCommand.SubCommandExecutor subCommandExecutor;
         if (args.length == 2) {
             subCommandExecutor = subCommand.subCommands.get("notArgument");
             if (subCommandExecutor == null) {
-                return Collections.emptyList();
+//                return Collections.emptyList();
+                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
             }
         }
         String firstArgument = args[1];
         subCommandExecutor = subCommand.subCommands.get(firstArgument);
         if (subCommandExecutor == null) {
-            return Collections.emptyList();
+//            return Collections.emptyList();
+            return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
         }
         String tabMethodName = subCommandExecutor.getTabMethodName();
         List<String> tabList = getTabList(args.length - 3, subCommand, tabMethodName,args[args.length-1]);
@@ -380,9 +437,9 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
             case Double:
                 return new ArrayList<>(Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0"));
             case Text:
-                return Collections.singletonList("可莉不知道哦");
+                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
         }
-        return Collections.emptyList();
+        return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
     }
 
     public static boolean isInteger(String str) {
@@ -508,13 +565,13 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 }
             }
             if (subCommand.executionStartMessage != null) {
-                myBasicCommand.sendMessage(sender, subCommand.executionStartMessage);
+                myBasicCommand.sendMessageWithPrefix(sender,subCommand.executionStartMessage);
             }
             long startTime = System.nanoTime();
             subCommand.executeNotArgumentMethod(sender, args);
             long endTime = System.nanoTime();
             if (subCommand.executionEndMessage != null) {
-                myBasicCommand.sendMessage(sender, subCommand.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
+                myBasicCommand.sendMessageWithPrefix(sender, subCommand.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
             }
             return true;
         }
@@ -587,13 +644,13 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         }
 
         if (subCommandExecutor.executionStartMessage != null) {
-            myBasicCommand.sendMessage(sender, subCommandExecutor.executionStartMessage);
+            myBasicCommand.sendMessageWithPrefix(sender, subCommandExecutor.executionStartMessage);
         }
         long startTime = System.nanoTime();
         subCommandExecutor.executeCommand(sender, args);
         long endTime = System.nanoTime();
         if (subCommandExecutor.executionEndMessage != null) {
-            myBasicCommand.sendMessage(sender, subCommandExecutor.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
+            myBasicCommand.sendMessageWithPrefix(sender, subCommandExecutor.executionEndMessage.replace("%time%", convertNanosecondsToSeconds(endTime - startTime)));
         }
         return true;
     }

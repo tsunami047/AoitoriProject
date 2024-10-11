@@ -21,4 +21,6 @@ public @interface Parameter {
     String help();
     ParameterSpecification.Type type() default ParameterSpecification.Type.Text;
     boolean nullable() default false;
+
+    ParameterSpecification[] appoint() default @ParameterSpecification(index = 0, tip = "null");
 }
