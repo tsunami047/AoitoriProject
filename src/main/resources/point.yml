@@ -1,0 +1,6 @@
+init:
+  - "anchors_1 0"
+
+#day week month
+expirable:
+  - "satiety 10 day 4"

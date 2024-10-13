@@ -2,6 +2,7 @@ package io.aoitori043.syncdistribute.rmi.data.access;
 
 import io.aoitori043.syncdistribute.rmi.data.PersistentDataAccess;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
+import lombok.Builder;
 
 public class InitDataAccess extends DataAccess {
 
@@ -22,6 +23,12 @@ public class InitDataAccess extends DataAccess {
             e.printStackTrace();
         }
         return originValue;
+    }
+
+    @Builder
+    public InitDataAccess(String varName, String initValue) {
+        super(varName);
+        this.initValue = initValue;
     }
 
     @Override

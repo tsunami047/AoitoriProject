@@ -3,9 +3,11 @@ package io.aoitori043.aoitoriproject.impl;
 
 import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.config.ConfigProperties;
+import io.aoitori043.aoitoriproject.config.InjectMapper;
 import io.aoitori043.aoitoriproject.config.NonConfigProperty;
 import io.aoitori043.aoitoriproject.config.impl.BasicMapper;
 import io.aoitori043.aoitoriproject.database.DatabaseInjection;
+import io.aoitori043.aoitoriproject.impl.mapper.PointMapper;
 import io.aoitori043.aoitoriproject.utils.ResourceUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,6 +26,8 @@ public class ConfigHandler extends BasicMapper {
 
     public static ConfigHandler instance;
     public static DatabaseInjection database;
+    @InjectMapper(path = "point")
+    public static PointMapper pointMapper;
 
     @Override
     public JavaPlugin getPlugin() {

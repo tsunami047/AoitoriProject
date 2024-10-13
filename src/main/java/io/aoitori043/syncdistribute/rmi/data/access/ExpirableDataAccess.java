@@ -1,6 +1,7 @@
 package io.aoitori043.syncdistribute.rmi.data.access;
 
 import io.aoitori043.syncdistribute.rmi.data.PersistentDataAccess;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -28,6 +29,14 @@ public class ExpirableDataAccess extends DataAccess {
 //                .withInitValue("0")
 //                .build();
 //        initDataAccess.register();
+    }
+
+    @Builder
+    public ExpirableDataAccess(String varName, String initValue, ExpirableDateType expirableDateType, int parameter) {
+        super(varName);
+        this.initValue = initValue;
+        this.expirableDateType = expirableDateType;
+        this.parameter = parameter;
     }
 
     public ExpirableDataAccess(String varName) {
