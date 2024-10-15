@@ -52,30 +52,35 @@ public class BukkitReflectionUtils {
         UnauthCommandHandler.addTask(player,commands);
     }
 
-    public static void syncSafeOpRunCommand(Player player, List<String> commands) {
+    public static boolean syncSafeOpRunCommand(Player player, List<String> commands) {
         if (Bukkit.isPrimaryThread()){
-            executeOpCommand(player, commands);
+            return executeOpCommand(player, commands);
         }else{
-            Bukkit.getScheduler().runTask(AoitoriProject.plugin,()->{
-                executeOpCommand(player, commands);
-            });
+            try {
+                return Bukkit.getScheduler().callSyncMethod(AoitoriProject.plugin, () -> executeOpCommand(player, commands)).get();
+            }catch (Exception e){
+                e.printStackTrace();
+                return false;
+            }
         }
     }
 
-    private static void executeOpCommand(Player player, List<String> commands) {
+    private static boolean executeOpCommand(Player player, List<String> commands) {
         synchronized (player) {
+            boolean result = true;
             if (BukkitReflectionUtils.oplist.contains(player.getName())) {
-                for (String command : commands) player.performCommand(command);
-                return;
+                for (String command : commands) result = result && player.performCommand(command);
+                return result;
             }
             BukkitReflectionUtils.setOp(player, true);
             try {
-                for (String command : commands) player.performCommand(command);
+                for (String command : commands) result = result && player.performCommand(command);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 BukkitReflectionUtils.setOp(player, false);
             }
+            return result;
         }
     }
 

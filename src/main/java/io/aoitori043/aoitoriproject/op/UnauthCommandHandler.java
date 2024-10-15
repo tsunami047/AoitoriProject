@@ -1,6 +1,7 @@
 package io.aoitori043.aoitoriproject.op;
 
 import com.google.gson.Gson;
+import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.PluginProvider;
 import net.minecraft.server.v1_12_R1.PlayerList;
 import org.bukkit.Bukkit;
@@ -26,24 +27,25 @@ import java.util.stream.Collectors;
  */
 public class UnauthCommandHandler implements Listener {
 
-    private static final ExecutorService executorService = Executors.newCachedThreadPool();
+//    private static final ExecutorService executorService = Executors.newCachedThreadPool();
     public volatile static ConcurrentHashMap<Player, OPCommandExecutor> executor = new ConcurrentHashMap<>();
 
     public synchronized static void addTask(Player player, List<String> commands) {
-        executorService.execute(() -> {
-            OPCommandExecutor opCommandExecutor;
-            if (executor.containsKey(player)) {
-                opCommandExecutor = executor.get(player);
-            } else {
-                opCommandExecutor = new OPCommandExecutor(player);
-                executor.put(player, opCommandExecutor);
-            }
-            try {
-                opCommandExecutor.addTask(commands);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        AoitoriProject.plugin.getLogger().warning("废弃");
+//        executorService.execute(() -> {
+//            OPCommandExecutor opCommandExecutor;
+//            if (executor.containsKey(player)) {
+//                opCommandExecutor = executor.get(player);
+//            } else {
+//                opCommandExecutor = new OPCommandExecutor(player);
+//                executor.put(player, opCommandExecutor);
+//            }
+//            try {
+//                opCommandExecutor.addTask(commands);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

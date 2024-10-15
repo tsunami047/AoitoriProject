@@ -119,12 +119,20 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         subCommands = new LinkedHashMap<>();
         for (Method method : basicCommand.getClass().getDeclaredMethods()) {
             method.setAccessible(true);
+            TabCompletion tabCompletion = method.getAnnotation(TabCompletion.class);
+            if (tabCompletion != null) {
+                SubCommand newBasicCommand = subCommands.computeIfAbsent(tabCompletion.argument(), k -> new SubCommand() {
+                });
+                newBasicCommand.tabMethodName = method.getName();
+                continue;
+            }
             Parameter parameter = method.getAnnotation(Parameter.class);
             if (parameter != null) {
                 try {
 //                    BasicCommand newBasicCommand = (BasicCommand) basicCommand.clone();
 //                    BasicCommand newBasicCommand = null;
-                    SubCommand newBasicCommand = new SubCommand(){};
+                    SubCommand newBasicCommand = subCommands.computeIfAbsent(parameter.argument(), k -> new SubCommand() {
+                    });
                     newBasicCommand.setBasicCommand(basicCommand);
                     newBasicCommand.isInBasicCommand = true;
                     newBasicCommand.setCommandprefix(parameter.argument());
@@ -166,7 +174,6 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                     if (executionEndMessage != null) {
                         newBasicCommand.executionEndMessage = executionEndMessage.message();
                     }
-                    subCommands.put(parameter.argument(), newBasicCommand);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -227,12 +234,13 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                 }
                 TabCompletion tabCompletion = method.getAnnotation(TabCompletion.class);
                 if (tabCompletion != null) {
-                    if(subCommand.isNotArgument){
-                        subCommand.tabMethodName = method.getName();
-                    }else {
+                    subCommand.tabMethodName = method.getName();
+//                    if(subCommand.isNotArgument){
+//                        subCommand.tabMethodName = method.getName();
+//                    }else {
                         SubCommand.SubCommandExecutor subCommandExecutor = subCommand.subCommands.computeIfAbsent(tabCompletion.argument(), k -> new SubCommand.SubCommandExecutor(subCommand));
                         subCommandExecutor.tabMethodName = method.getName();
-                    }
+//                    }
                     continue;
                 }
                 Parameter parameter = method.getAnnotation(Parameter.class);

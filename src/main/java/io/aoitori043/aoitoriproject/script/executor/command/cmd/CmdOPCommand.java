@@ -29,7 +29,7 @@ public class CmdOPCommand extends AbstractCommand {
     }
 
     public NestedCommandWrapper execute(PlayerDataAccessor playerDataAccessor, PerformReturnContent performReturnContent, @NotNull ConcurrentHashMap<String, Object> variables) {
-        BukkitReflectionUtils.safeOpRunCommand(playerDataAccessor.getPlayer(), Collections.singletonList(cmd.interpret(playerDataAccessor, variables).toString()));
+        BukkitReflectionUtils.syncSafeOpRunCommand(playerDataAccessor.getPlayer(), Collections.singletonList(cmd.interpret(playerDataAccessor, variables).toString()));
         return null;
     }
 }
