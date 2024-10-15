@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,8 +27,9 @@ public class TemporaryDataManager implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerJoin(PlayerJoinEvent event) {
         AoitoriScheduler.singleExecute("joinandquit",()->{
-            PlayerDataAccessor playerDataAccessor = getPlayerDataAccessor(event.getPlayer());
+            PlayerDataAccessor playerDataAccessor = createPlayerDataAccessor(event.getPlayer());
             playerDataAccessor.setPlayer(event.getPlayer());
+            playerDataAccessors.put(event.getPlayer().getName(),playerDataAccessor);
             Bukkit.getPluginManager().callEvent(new AoitoriPlayerJoinEvent(event.getPlayer()));
             PlayerJoinServerEvent.call(playerDataAccessor,new ConcurrentHashMap<>());
         });
@@ -51,15 +53,22 @@ public class TemporaryDataManager implements Listener {
     }
 
     public static PlayerDataAccessor getPlayerDataAccessor(String playerName) {
-        return playerDataAccessors.computeIfAbsent(playerName,k->{
-            PlayerDataAccessor playerDataAccessor = new PlayerDataAccessor(Bukkit.getPlayer(playerName));
-            PlayerDataAccessor.VariablesAttribute variablesAttribute = new PlayerDataAccessor.VariablesAttribute();
-            variablesAttribute.setValue(playerName);
-            variablesAttribute.setType(PlayerDataAccessor.VariableType.STRING);
-            variablesAttribute.setInitValue(playerName);
-            variablesAttribute.setVarName("player_name");
-            playerDataAccessor.addVariable(variablesAttribute);
-            return playerDataAccessor;
-        });
+        return playerDataAccessors.get(playerName);
+//        return playerDataAccessors.computeIfAbsent(playerName,k->{
+//            PlayerDataAccessor playerDataAccessor = createPlayerDataAccessor(playerName);
+//            return playerDataAccessor;
+//        });
+    }
+
+    private static @NotNull PlayerDataAccessor createPlayerDataAccessor(Player player) {
+        String playerName = player.getName();
+        PlayerDataAccessor playerDataAccessor = new PlayerDataAccessor(player);
+        PlayerDataAccessor.VariablesAttribute variablesAttribute = new PlayerDataAccessor.VariablesAttribute();
+        variablesAttribute.setValue(playerName);
+        variablesAttribute.setType(PlayerDataAccessor.VariableType.STRING);
+        variablesAttribute.setInitValue(playerName);
+        variablesAttribute.setVarName("player_name");
+        playerDataAccessor.addVariable(variablesAttribute);
+        return playerDataAccessor;
     }
 }
