@@ -29,12 +29,38 @@ import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnErro
 public abstract class MapperInjection extends AutoConfigPrinter {
 
     public static void runAnnotatedMethodByField(Object obj, String fieldName) {
-        Class<?> clazz = obj.getClass();
-        Method[] methods = clazz.getDeclaredMethods();
-        for (Method method : methods) {
-            if (method.isAnnotationPresent(Run.class)) {
-                Run annotation = method.getAnnotation(Run.class);
-                if (annotation.after().equals(fieldName)) {
+        try {
+            Class<?> clazz = obj.getClass();
+            Method[] methods = clazz.getMethods();
+            for (Method method : methods) {
+                if (method.isAnnotationPresent(Run.class)) {
+                    Run annotation = method.getAnnotation(Run.class);
+                    if (annotation.after().equals(fieldName)) {
+                        method.setAccessible(true);
+                        try {
+                            method.invoke(obj);
+                        } catch (Exception e) {
+                            printlnError(obj);
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void runAnnotatedMethods(Object obj) {
+        try {
+            Class<?> clazz = obj.getClass();
+            Method[] methods = clazz.getMethods();
+            for (Method method : methods) {
+                if (method.isAnnotationPresent(Run.class)) {
+                    Run annotation = method.getAnnotation(Run.class);
+                    if (!annotation.after().equals("%%%default")) {
+                        continue;
+                    }
                     method.setAccessible(true);
                     try {
                         method.invoke(obj);
@@ -44,26 +70,8 @@ public abstract class MapperInjection extends AutoConfigPrinter {
                     }
                 }
             }
-        }
-    }
-
-    public static void runAnnotatedMethods(Object obj) {
-        Class<?> clazz = obj.getClass();
-        Method[] methods = clazz.getDeclaredMethods();
-        for (Method method : methods) {
-            if (method.isAnnotationPresent(Run.class)) {
-                Run annotation = method.getAnnotation(Run.class);
-                if (!annotation.after().equals("%%%default")) {
-                    continue;
-                }
-                method.setAccessible(true);
-                try {
-                    method.invoke(obj);
-                } catch (Exception e) {
-                    printlnError(obj);
-                    e.printStackTrace();
-                }
-            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 

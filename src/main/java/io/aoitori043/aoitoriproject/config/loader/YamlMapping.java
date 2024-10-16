@@ -31,7 +31,7 @@ public class YamlMapping {
     }
 
     public static void performJS(Object object) {
-        Field[] fields = object.getClass().getDeclaredFields();
+        Field[] fields = ConfigMapping.getAllFields(object.getClass());
         for (Field field : fields) {
             if (field.isAnnotationPresent(ExecuteJS.class)) {
                 try {
@@ -58,7 +58,7 @@ public class YamlMapping {
     }
 
     public static void printlnError(Object object){
-        Field[] fields = object.getClass().getDeclaredFields();
+        Field[] fields = ConfigMapping.getAllFields(object.getClass());
         for (Field field : fields) {
             field.setAccessible(true);
             if (field.getName().equals("index")) {
@@ -79,7 +79,7 @@ public class YamlMapping {
         if (isInnerClass(clazz) || clazz.isAnnotationPresent(ConfigProperties.class)) {
             ConfigProperties annotation = clazz.getAnnotation(ConfigProperties.class);
             String append = annotation!=null?annotation.appendPath():"";
-            for (Field field : object.getClass().getDeclaredFields()) {
+            for (Field field : ConfigMapping.getAllFields(object.getClass())) {
                 if (field.isAnnotationPresent(NonConfigProperty.class)) {
                     continue;
                 }
@@ -97,7 +97,7 @@ public class YamlMapping {
                 }
             }
         }else {
-            for (Field field : object.getClass().getDeclaredFields()) {
+            for (Field field : ConfigMapping.getAllFields(object.getClass())) {
                 if (field.isAnnotationPresent(ConfigProperty.class)) {
                     findConversion(parent,object, yamlConfiguration, field);
                 }

@@ -62,6 +62,14 @@ public class MapperEvaluation {
                     field.set(fieldSetObj, parentName);
                     return;
                 }
+                case YAML:{
+                    field.set(fieldSetObj, section);
+                    return;
+                }
+                case CONFIG:{
+                    field.set(null, object);
+                    return;
+                }
             }
         }
         if(field.getName().equals("yaml")){
@@ -481,13 +489,25 @@ public class MapperEvaluation {
     }
 
     public static void injectDefaultValue(Object instance, Object indexData, Object parentData) {
-        for (Field declaredField : instance.getClass().getDeclaredFields()) {
+        for (Field declaredField : ConfigMapping.getAllFields(instance.getClass())) {
             try {
+                Inject annotation = declaredField.getAnnotation(Inject.class);
+                declaredField.setAccessible(true);
+                if (annotation !=null) {
+                    switch (annotation.type()) {
+                        case INDEX: {
+                            declaredField.set(instance, indexData);
+                            continue;
+                        }
+                        case PARENT: {
+                            declaredField.set(instance, parentData);
+                            continue;
+                        }
+                    }
+                }
                 if (declaredField.getName().equals("index")) {
-                    declaredField.setAccessible(true);
                     declaredField.set(instance, indexData);
                 } else if (declaredField.getName().equals("parent")) {
-                    declaredField.setAccessible(true);
                     declaredField.set(instance, parentData);
                 }
             } catch (Exception e) {

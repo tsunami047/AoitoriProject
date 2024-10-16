@@ -14,9 +14,13 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Inject {
 
-    InjectionType type();
+    InjectType type();
 
-    enum InjectionType {
+    enum InjectType {
+        PARENT,
+        INDEX,
+        YAML,
+        CONFIG,
         PARENT_NAME,
         PARENT_OBJECT
     }
