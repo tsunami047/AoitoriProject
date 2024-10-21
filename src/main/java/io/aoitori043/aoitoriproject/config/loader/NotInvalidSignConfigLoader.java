@@ -48,7 +48,11 @@ public class NotInvalidSignConfigLoader extends YamlConfiguration {
 
     @Override
     public void loadFromString(String contents) throws InvalidConfigurationException {
-            super.loadFromString(contents.replace("&", "§"));
+            if (contents.contains("http")){
+                super.loadFromString(contents);
+            }else{
+                super.loadFromString(contents.replace("&", "§"));
+            }
     }
 
 

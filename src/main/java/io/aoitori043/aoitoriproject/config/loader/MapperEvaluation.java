@@ -10,8 +10,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.lang.reflect.*;
 import java.util.*;
 
-import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isInnerClass;
-import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.isStaticField;
+import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.*;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 import static io.aoitori043.aoitoriproject.utils.ReflectionUtil.getPrivateAndSuperField;
 
@@ -621,6 +620,27 @@ public class MapperEvaluation {
         }
         return true;
     }
+    
+    public static String getIndexByReflection(Object object){
+        try {
+            Field index = object.getClass().getDeclaredField("index");
+            index.setAccessible(true);
+            return (String) index.get(object);
+        }catch (NoSuchFieldException e){
+            for (Field declaredField : getAllFields(object.getClass())) {
+                Inject annotation = declaredField.getAnnotation(Inject.class);
+                if (annotation!=null && annotation.type() == Inject.InjectType.INDEX){
+                    declaredField.setAccessible(true);
+                    try {
+                        return (String) declaredField.get(object);
+                    }catch (Exception e2){
+                        return null;
+                    }
+                }
+            }
+        }catch (Exception ignore){}
+        return null;
+    }
 
     private static boolean injectClassifyMapping(Object parent,Object object, ConfigurationSection section, Field field, String propertyName) {
         try {
@@ -639,6 +659,7 @@ public class MapperEvaluation {
             Map<String, Object> map = (Map) createInstance(field.getType());
             field.set(object, map);
             String anchor = getClassifyMapping.anchor();
+            String indexByReflection = getIndexByReflection(object);
             if (section != null) {
                 ConfigurationSection mapperSection = section.getConfigurationSection(propertyName);
                 if (mapperSection == null) return true;
@@ -658,8 +679,8 @@ public class MapperEvaluation {
                     }
                     if (designateClass == null) continue;
                     Object instance = createInstance(designateClass);
+                    ConfigMapping.loadFromConfig(object,instance, indexByReflection, configurationSection);
                     injectDefaultValue(instance, key, object);
-                    ConfigMapping.loadFromConfig(object,instance, null, configurationSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }
