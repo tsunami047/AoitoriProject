@@ -89,7 +89,6 @@ public class YamlMapping {
                     String propertyName = field.getName();
                     try {
                         getValue(parent,object, yamlConfiguration, field, append+propertyName,parentName);
-                        runAnnotatedMethodByField(object,field.getName());
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                         printlnError(object);
@@ -127,7 +126,6 @@ public class YamlMapping {
                 propertyName = field.getName();
             }
             getValue(parent,object, yamlConfiguration, field, propertyName,null);
-            runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);
             e.printStackTrace();

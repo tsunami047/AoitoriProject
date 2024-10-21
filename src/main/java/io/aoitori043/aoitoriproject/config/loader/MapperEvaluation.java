@@ -10,6 +10,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static io.aoitori043.aoitoriproject.config.impl.MapperInjection.runAnnotatedMethodByField;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.*;
 import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnError;
 import static io.aoitori043.aoitoriproject.utils.ReflectionUtil.getPrivateAndSuperField;
@@ -45,110 +46,114 @@ public class MapperEvaluation {
     }
 
     public static void getValue(Object parent,Object object, ConfigurationSection section, Field field, String propertyName, String parentName) throws IllegalAccessException {
-        if(field.isAnnotationPresent(InjectYaml.class)){
-            return;
-        }
-        field.setAccessible(true);
-        Object fieldSetObj = isStaticField(field) ? null : object;
-        if (field.isAnnotationPresent(Inject.class)){
-            Inject annotation = field.getAnnotation(Inject.class);
-            switch (annotation.type()) {
-                case PARENT_OBJECT:{
-                    field.set(fieldSetObj, parent);
-                    return;
-                }
-                case PARENT_NAME:{
-                    field.set(fieldSetObj, parentName);
-                    return;
-                }
-                case YAML:{
-                    field.set(fieldSetObj, section);
-                    return;
-                }
-                case CONFIG:{
-                    field.set(null, object);
-                    return;
-                }
+        try {
+            if (field.isAnnotationPresent(InjectYaml.class)) {
+                return;
             }
-        }
-        if(field.getName().equals("yaml")){
-            field.set(fieldSetObj, section);
-            return;
-        }
-        if (isStaticField(field) && field.getName().equals("config")) {
-            field.set(null, object);
-            return;
-        }
-        propertyName = propertyName.replace("$", ".");
-        if (section != null && section.get(propertyName) != null) {
-            if (field.getType().isEnum()) {
-                Enum[] enumConstants = (Enum[]) field.getType().getEnumConstants();
-                String value = section.getString(propertyName);
-                boolean hasMatch = false;
-                for (Enum enumConstant : enumConstants) {
-                    if (value.equalsIgnoreCase(enumConstant.name().replace("_", "")) || value.equalsIgnoreCase(enumConstant.name())) {
-                        field.set(fieldSetObj, enumConstant);
-                        hasMatch = true;
-                        break;
+            field.setAccessible(true);
+            Object fieldSetObj = isStaticField(field) ? null : object;
+            if (field.isAnnotationPresent(Inject.class)) {
+                Inject annotation = field.getAnnotation(Inject.class);
+                switch (annotation.type()) {
+                    case PARENT_OBJECT: {
+                        field.set(fieldSetObj, parent);
+                        return;
+                    }
+                    case PARENT_NAME: {
+                        field.set(fieldSetObj, parentName);
+                        return;
+                    }
+                    case YAML: {
+                        field.set(fieldSetObj, section);
+                        return;
+                    }
+                    case CONFIG: {
+                        field.set(null, object);
+                        return;
                     }
                 }
-                if(!hasMatch){
+            }
+            if (field.getName().equals("yaml")) {
+                field.set(fieldSetObj, section);
+                return;
+            }
+            if (isStaticField(field) && field.getName().equals("config")) {
+                field.set(null, object);
+                return;
+            }
+            propertyName = propertyName.replace("$", ".");
+            if (section != null && section.get(propertyName) != null) {
+                if (field.getType().isEnum()) {
+                    Enum[] enumConstants = (Enum[]) field.getType().getEnumConstants();
+                    String value = section.getString(propertyName);
+                    boolean hasMatch = false;
                     for (Enum enumConstant : enumConstants) {
-                        try {
-                            String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
-                            if (mappingName != null && mappingName.equalsIgnoreCase(value)) {
-                                field.set(fieldSetObj, enumConstant);
-                                return;
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if (value.equalsIgnoreCase(enumConstant.name().replace("_", "")) || value.equalsIgnoreCase(enumConstant.name())) {
+                            field.set(fieldSetObj, enumConstant);
+                            hasMatch = true;
+                            break;
                         }
                     }
-                    System.out.println(parentName+" "+ propertyName+ " 不能是 "+value);
+                    if (!hasMatch) {
+                        for (Enum enumConstant : enumConstants) {
+                            try {
+                                String mappingName = (String) getPrivateAndSuperField(enumConstant, "mappingName");
+                                if (mappingName != null && mappingName.equalsIgnoreCase(value)) {
+                                    field.set(fieldSetObj, enumConstant);
+                                    return;
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        System.out.println(parentName + " " + propertyName + " 不能是 " + value);
+                    }
+                } else if (field.getType() == String.class) {
+                    if (!section.getString(propertyName).equals("null")) {
+                        field.set(fieldSetObj, section.getString(propertyName));
+                    }
+                } else if (field.getType() == int.class || field.getType() == Integer.class) {
+                    field.set(fieldSetObj, section.getInt(propertyName));
+                    return;
+                } else if (field.getType() == double.class || field.getType() == float.class || field.getType() == Double.class || field.getType() == Float.class) {
+                    field.set(fieldSetObj, section.getDouble(propertyName));
+                    return;
+                } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
+                    field.set(fieldSetObj, section.getBoolean(propertyName));
+                    return;
+                } else if (field.getType() == long.class || field.getType() == Long.class) {
+                    field.set(fieldSetObj, section.getLong(propertyName));
+                    return;
+                } else if (field.getType() == List.class) {
+                    field.set(fieldSetObj, new ArrayList<>(section.getStringList(propertyName)));
+                    return;
                 }
-            } else if (field.getType() == String.class) {
-                if (!section.getString(propertyName).equals("null")) {
-                    field.set(fieldSetObj, section.getString(propertyName));
+            } else if (parentName != null && field.getName().equals("index") && object != null) {
+                try {
+                    field.setAccessible(true);
+                    field.set(fieldSetObj, parentName);
+                    return;
+                } catch (Exception e) {
+                    printlnError(object);
+                    e.printStackTrace();
                 }
-            } else if (field.getType() == int.class || field.getType() == Integer.class ) {
-                field.set(fieldSetObj, section.getInt(propertyName));
-                return;
-            } else if (field.getType() == double.class || field.getType() == float.class || field.getType() == Double.class || field.getType() == Float.class) {
-                field.set(fieldSetObj, section.getDouble(propertyName));
-                return;
-            } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
-                field.set(fieldSetObj, section.getBoolean(propertyName));
-                return;
-            } else if (field.getType() == long.class || field.getType() == Long.class) {
-                field.set(fieldSetObj, section.getLong(propertyName));
-                return;
-            }else if (field.getType() == List.class) {
-                field.set(fieldSetObj, new ArrayList<>(section.getStringList(propertyName)));
+            } else {
+                if (field.getType() == List.class) {
+                    field.set(fieldSetObj, new ArrayList<>());
+                    return;
+                }
+            }
+            if (field.getType().isEnum()) {
                 return;
             }
-        } else if (parentName != null && field.getName().equals("index") && object != null) {
-            try {
-                field.setAccessible(true);
-                field.set(fieldSetObj, parentName);
-                return;
-            } catch (Exception e) {
-                printlnError(object);
-                e.printStackTrace();
-            }
-        } else {
-            if (field.getType() == List.class) {
-                field.set(fieldSetObj, new ArrayList<>());
+            if (mappingInject(parent, fieldSetObj, section, field, propertyName)) {
                 return;
             }
-        }
-        if (field.getType().isEnum()) {
-            return;
-        }
-        if (mappingInject(parent,fieldSetObj, section, field, propertyName)) {
-            return;
-        }
-        if (Map.class.isAssignableFrom(field.getType())) {
-            executeMapTypeMapping(fieldSetObj, section, propertyName, field);
+            if (Map.class.isAssignableFrom(field.getType())) {
+                executeMapTypeMapping(fieldSetObj, section, propertyName, field);
+            }
+        }finally {
+            runAnnotatedMethodByField(object,field.getName());
         }
 
 

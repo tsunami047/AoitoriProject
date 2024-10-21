@@ -91,7 +91,6 @@ public class ConfigMapping {
                     String propertyName = field.getName();
                     try {
                         getValue(parent,beInjectedObject, section, field, append+propertyName,parentName);
-                        runAnnotatedMethodByField(beInjectedObject,field.getName());
                     } catch (IllegalAccessException e) {
                         printlnError(beInjectedObject);
                         e.printStackTrace();
@@ -131,7 +130,6 @@ public class ConfigMapping {
                 propertyName = field.getName();
             }
             getValue(parent,object, section, field, propertyName,parentName);
-            runAnnotatedMethodByField(object,field.getName());
         } catch (IllegalAccessException e) {
             printlnError(object);
             e.printStackTrace();

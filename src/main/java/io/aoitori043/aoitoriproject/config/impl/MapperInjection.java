@@ -31,7 +31,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
     public static void runAnnotatedMethodByField(Object obj, String fieldName) {
         try {
             Class<?> clazz = obj.getClass();
-            Method[] methods = clazz.getMethods();
+            Method[] methods = clazz.getDeclaredMethods();
             for (Method method : methods) {
                 if (method.isAnnotationPresent(Run.class)) {
                     Run annotation = method.getAnnotation(Run.class);
@@ -54,7 +54,7 @@ public abstract class MapperInjection extends AutoConfigPrinter {
     public static void runAnnotatedMethods(Object obj) {
         try {
             Class<?> clazz = obj.getClass();
-            Method[] methods = clazz.getMethods();
+            Method[] methods = clazz.getDeclaredMethods();
             for (Method method : methods) {
                 if (method.isAnnotationPresent(Run.class)) {
                     Run annotation = method.getAnnotation(Run.class);
