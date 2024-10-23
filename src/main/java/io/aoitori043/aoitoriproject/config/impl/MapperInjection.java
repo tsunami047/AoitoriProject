@@ -13,8 +13,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.AbstractMap;
-import java.util.Map;
+import java.util.*;
 
 import static io.aoitori043.aoitoriproject.config.InvalidUtil.performNullCheck;
 import static io.aoitori043.aoitoriproject.config.loader.ConfigMapping.createInstance;
@@ -28,11 +27,20 @@ import static io.aoitori043.aoitoriproject.config.loader.YamlMapping.printlnErro
  */
 public abstract class MapperInjection extends AutoConfigPrinter {
 
+    public static Set<Method> getAllMethods(Class<?> clazz) {
+        Set<Method> methods = new HashSet<>();
+        Method[] declaredMethods = clazz.getDeclaredMethods();
+        Collections.addAll(methods, declaredMethods);
+        Method[] publicMethods = clazz.getMethods();
+        Collections.addAll(methods, publicMethods);
+        return methods;
+    }
+
     public static void runAnnotatedMethodByField(Object obj, String fieldName) {
         try {
             Class<?> clazz = obj.getClass();
-            Method[] methods = clazz.getDeclaredMethods();
-            for (Method method : methods) {
+            Set<Method> allMethods = getAllMethods(clazz);
+            for (Method method : allMethods) {
                 if (method.isAnnotationPresent(Run.class)) {
                     Run annotation = method.getAnnotation(Run.class);
                     if (annotation.after().equals(fieldName)) {

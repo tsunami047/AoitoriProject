@@ -24,26 +24,22 @@ public class TemporaryDataManager implements Listener {
 
     public static ConcurrentHashMap<String,PlayerDataAccessor> playerDataAccessors = new ConcurrentHashMap<>();
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        AoitoriScheduler.singleExecute("joinandquit",()->{
-            PlayerDataAccessor playerDataAccessor = createPlayerDataAccessor(event.getPlayer());
-            playerDataAccessor.setPlayer(event.getPlayer());
-            playerDataAccessors.put(event.getPlayer().getName(),playerDataAccessor);
-            Bukkit.getPluginManager().callEvent(new AoitoriPlayerJoinEvent(event.getPlayer()));
-            PlayerJoinServerEvent.call(playerDataAccessor,new ConcurrentHashMap<>());
-        });
+        PlayerDataAccessor playerDataAccessor = createPlayerDataAccessor(event.getPlayer());
+        playerDataAccessor.setPlayer(event.getPlayer());
+        playerDataAccessors.put(event.getPlayer().getName(),playerDataAccessor);
+        Bukkit.getPluginManager().callEvent(new AoitoriPlayerJoinEvent(event.getPlayer()));
+//        PlayerJoinServerEvent.call(playerDataAccessor,new ConcurrentHashMap<>());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        AoitoriScheduler.singleExecute("joinandquit",()-> {
-            PlayerDataAccessor playerDataAccessor = getPlayerDataAccessor(event.getPlayer());
-            Bukkit.getPluginManager().callEvent(new AoitoriPlayerQuitEvent(event.getPlayer()));
-            PlayerQuitServerEvent.call(playerDataAccessor, new ConcurrentHashMap<>());
-            playerDataAccessors.remove(event.getPlayer().getName());
-            PlayerSyndAccess.persistentMap.remove(event.getPlayer().getName());
-        });
+        PlayerDataAccessor playerDataAccessor = getPlayerDataAccessor(event.getPlayer());
+        Bukkit.getPluginManager().callEvent(new AoitoriPlayerQuitEvent(event.getPlayer()));
+        PlayerQuitServerEvent.call(playerDataAccessor, new ConcurrentHashMap<>());
+        playerDataAccessors.remove(event.getPlayer().getName());
+        PlayerSyndAccess.remove(event.getPlayer().getName());
     }
 
 

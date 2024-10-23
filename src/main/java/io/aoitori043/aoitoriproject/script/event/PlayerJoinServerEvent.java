@@ -29,18 +29,21 @@ public class PlayerJoinServerEvent extends AoitoriEvent {
 
     public static EventResult call(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> map) {
         try {
-            Collection<EventWrapper> events = playerDataAccessor.getEvent(PLAYER_JOIN_SERVER);
-            for (EventWrapper event : events) {
-                try {
-                    if (event != null) {
-                        PlayerJoinServerEvent vue = new PlayerJoinServerEvent(playerDataAccessor, event.getCommands(), map);
-                        vue.invoke();
+            AoitoriProject.kilimScheduler.forkJoinExecute(()->{
+                Collection<EventWrapper> events = playerDataAccessor.getEvent(PLAYER_JOIN_SERVER);
+                for (EventWrapper event : events) {
+                    try {
+                        if (event != null) {
+                            PlayerJoinServerEvent vue = new PlayerJoinServerEvent(playerDataAccessor, event.getCommands(), map);
+                            vue.invoke();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return new EventResult(true);
                 }
-            }
+            });
+            return new EventResult(true);
         }catch (Exception e){
             e.printStackTrace();
         }

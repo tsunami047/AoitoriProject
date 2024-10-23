@@ -1,5 +1,7 @@
 package io.aoitori043.aoitoriproject.script.event;
 
+import io.aoitori043.aoitoriproject.AoitoriProject;
+import io.aoitori043.aoitoriproject.script.AoitoriPlayerJoinEvent;
 import io.aoitori043.aoitoriproject.script.PlayerDataAccessor;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
 
@@ -17,7 +19,7 @@ public class PlayerQuitServerEvent extends AoitoriEvent{
     public static final String PLAYER_LEAVE_SERVER = "playerQuitServer";
 
     public PlayerQuitServerEvent(PlayerDataAccessor playerDataAccessor, List<AbstractCommand> functionBody, ConcurrentHashMap<String, Object> map) {
-        super(playerDataAccessor, "playerLeaveServer", functionBody, map);
+        super(playerDataAccessor, "playerQuitServer", functionBody, map);
     }
 
     @Override
@@ -28,18 +30,20 @@ public class PlayerQuitServerEvent extends AoitoriEvent{
 
     public static EventResult call(PlayerDataAccessor playerDataAccessor, ConcurrentHashMap<String, Object> map) {
         try {
-            Collection<EventWrapper> events = playerDataAccessor.getEvent(PLAYER_LEAVE_SERVER);
-            for (EventWrapper event : events) {
-                try {
-                    if (event != null) {
-                        PlayerQuitServerEvent vue = new PlayerQuitServerEvent(playerDataAccessor, event.getCommands(), map);
-                        vue.invoke();
+            AoitoriProject.kilimScheduler.forkJoinExecute(()->{
+                Collection<EventWrapper> events = playerDataAccessor.getEvent(PLAYER_LEAVE_SERVER);
+                for (EventWrapper event : events) {
+                    try {
+                        if (event != null) {
+                            PlayerQuitServerEvent vue = new PlayerQuitServerEvent(playerDataAccessor, event.getCommands(), map);
+                            vue.invoke();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return new EventResult(true);
                 }
-            }
+            });
+            return new EventResult(true);
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -389,6 +389,91 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         }
     }
 
+    /**
+     * 根据给定的字符串，将列表中最相似的字符串放在第一位，并返回新的列表。
+     *
+     * @param target 目标字符串
+     * @param stringList 原始字符串列表
+     * @return 排序后的新列表
+     */
+    public List<String> sortMostSimilarFirst(String target, List<String> stringList) {
+        if (stringList == null) return null;
+        // 创建一个新的列表以避免修改原始列表
+        List<String> sortedList = new ArrayList<>(stringList);
+
+        // 按照与目标字符串的相似度排序
+        Collections.sort(sortedList, new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                return Double.compare(similarity(s2, target), similarity(s1, target));
+            }
+        });
+
+        return sortedList;
+    }
+
+    /**
+     * 计算两个字符串的相似度。
+     *
+     * @param s1 字符串1
+     * @param s2 字符串2
+     * @return 相似度分数，范围在0到1之间
+     */
+    private double similarity(String s1, String s2) {
+        if (s1 == null || s2 == null) {
+            return 0.0;
+        }
+
+        String longer = s1.length() > s2.length() ? s1 : s2;
+        String shorter = s1.length() > s2.length() ? s2 : s1;
+
+        if (shorter.length() == 0) {
+            return 0.0;
+        }
+
+        longer = longer.toLowerCase();
+        shorter = shorter.toLowerCase();
+
+        int longerLength = longer.length();
+        if (longerLength == 0) {
+            return 1.0;
+        }
+
+        return (longerLength - computeEditDistance(longer, shorter)) / (double) longerLength;
+    }
+
+    /**
+     * 计算两个字符串的编辑距离。
+     *
+     * @param s1 字符串1
+     * @param s2 字符串2
+     * @return 编辑距离
+     */
+    private int computeEditDistance(String s1, String s2) {
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0) {
+                    costs[j] = j;
+                } else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0) {
+                costs[s2.length()] = lastValue;
+            }
+        }
+        return costs[s2.length()];
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
@@ -397,36 +482,35 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
         String argsHead = args[0].toLowerCase();
         SubCommand subCommand = subCommands.get(argsHead);
         if (subCommand == null || subCommand.subCommands == null) {
-            return Collections.emptyList();
+            return sortMostSimilarFirst(args[args.length-1],new ArrayList<>(subCommands.keySet()));
         }
         if(subCommand.isNotArgument){
             String tabMethodName = subCommand.tabMethodName;
             List<String> tabList = getTabList(args.length - 2, subCommand, tabMethodName,args[args.length-1]);
             if (tabList != null) {
-                return tabList;
+                return sortMostSimilarFirst(args[args.length-1],tabList);
             }else{
 //                return Collections.emptyList();
-                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+                return sortMostSimilarFirst(args[args.length-1],Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList()));
             }
         }
         SubCommand.SubCommandExecutor subCommandExecutor;
         if (args.length == 2) {
             subCommandExecutor = subCommand.subCommands.get("notArgument");
             if (subCommandExecutor == null) {
-//                return Collections.emptyList();
-                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+//                return Collections.emptyList()return sortMostSimilarFirst(args[args.length-1],new ArrayList<>(subCommand.subCommands.keySet()));
             }
         }
         String firstArgument = args[1];
         subCommandExecutor = subCommand.subCommands.get(firstArgument);
         if (subCommandExecutor == null) {
 //            return Collections.emptyList();
-            return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+            return sortMostSimilarFirst(args[args.length-1],Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList()));
         }
         String tabMethodName = subCommandExecutor.getTabMethodName();
         List<String> tabList = getTabList(args.length - 3, subCommand, tabMethodName,args[args.length-1]);
         if (tabList != null) {
-            return tabList;
+            return sortMostSimilarFirst(args[args.length-1],tabList);
         }
         TreeMap<Integer, ParameterSpecification> map = subCommandExecutor.getMap();
         ParameterSpecification parameterSpecification = map.get(args.length - 3);
@@ -438,16 +522,16 @@ public class BasicCommandExecute implements CommandExecutor, TabExecutor {
                     players.addAll(Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).filter(name -> !name.equals(sender.getName())).collect(Collectors.toList()));
                     return players;
                 }
-                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+                return sortMostSimilarFirst(args[args.length-1],Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList()));
             }
             case Int:
                 return new ArrayList<>(Arrays.asList("1", "2", "3", "4", "5"));
             case Double:
                 return new ArrayList<>(Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0"));
             case Text:
-                return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+                return sortMostSimilarFirst(args[args.length-1],Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList()));
         }
-        return Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList());
+        return sortMostSimilarFirst(args[args.length-1],Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).collect(Collectors.toList()));
     }
 
     public static boolean isInteger(String str) {

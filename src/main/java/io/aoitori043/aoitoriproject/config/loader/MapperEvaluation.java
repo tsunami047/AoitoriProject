@@ -131,6 +131,7 @@ public class MapperEvaluation {
             } else if (parentName != null && field.getName().equals("index") && object != null) {
                 try {
                     field.setAccessible(true);
+                    if (field.get(fieldSetObj)!=null) return;
                     field.set(fieldSetObj, parentName);
                     return;
                 } catch (Exception e) {
@@ -684,8 +685,8 @@ public class MapperEvaluation {
                     }
                     if (designateClass == null) continue;
                     Object instance = createInstance(designateClass);
-                    ConfigMapping.loadFromConfig(object,instance, indexByReflection, configurationSection);
                     injectDefaultValue(instance, key, object);
+                    ConfigMapping.loadFromConfig(object,instance, indexByReflection, configurationSection);
                     MapperInjection.runAnnotatedMethods(instance);
                     map.put(key, instance);
                 }

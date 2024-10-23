@@ -15,14 +15,21 @@ public class PlayerSyndAccess {
     public static ConcurrentHashMap<String, PersistentDataAccess> persistentMap = new ConcurrentHashMap<>();
 
     public static PersistentDataAccess createPersistentDataAccess(String playerName){
-        return new PersistentDataAccess(playerName);
+        PersistentDataAccess persistentDataAccess = new PersistentDataAccess(playerName);
+        persistentMap.put(playerName,persistentDataAccess);
+        return persistentDataAccess;
+    }
+
+    public static void remove(String playerName){
+        persistentMap.remove(playerName);
     }
 
     public static PersistentDataAccess getPersistentDataAccess(String playerName){
         return persistentMap.get(playerName);
-//        return persistentMap.computeIfAbsent(playerName, k -> {
-//            return new PersistentDataAccess(playerName);
-//        });
+    }
+
+    public static PersistentDataAccess getOfflinePersistentDataAccess(String playerName){
+        return new PersistentDataAccess(playerName);
     }
 
 

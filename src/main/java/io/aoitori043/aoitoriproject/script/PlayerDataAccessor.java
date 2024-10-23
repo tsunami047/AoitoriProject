@@ -3,6 +3,7 @@ package io.aoitori043.aoitoriproject.script;
 import io.aoitori043.aoitoriproject.script.event.EventWrapper;
 import io.aoitori043.aoitoriproject.script.event.VariableUpdateEvent;
 import io.aoitori043.aoitoriproject.script.executor.AbstractCommand;
+import io.aoitori043.syncdistribute.rmi.PlayerSyndAccess;
 import io.aoitori043.syncdistribute.rmi.data.PersistentDataAccess;
 import lombok.Data;
 import org.bukkit.entity.Player;
@@ -48,7 +49,7 @@ public class PlayerDataAccessor {
         this.functions = new LinkedHashMap<>();
         this.classImplMap = new LinkedHashMap<>();
         this.interruptSymbol = 0;
-        persistentDataAccess = new PersistentDataAccess(player.getName());
+        persistentDataAccess = PlayerSyndAccess.createPersistentDataAccess(player.getName());
     }
 
     public void interrupt(){
