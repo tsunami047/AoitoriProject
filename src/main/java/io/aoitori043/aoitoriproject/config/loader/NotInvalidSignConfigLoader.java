@@ -51,7 +51,18 @@ public class NotInvalidSignConfigLoader extends YamlConfiguration {
             if (contents.contains("http")){
                 super.loadFromString(contents);
             }else{
-                super.loadFromString(contents.replace("&&","and").replace("&", "§"));
+                StringBuilder result = new StringBuilder();
+                for (int i = 0; i < contents.length(); i++) {
+                    char current = contents.charAt(i);
+                    if (current == '&' && (i == 0 || contents.charAt(i - 1) != '&') &&
+                            (i == contents.length() - 1 || !Character.isDigit(contents.charAt(i + 1)) &&
+                                    "abcdef".indexOf(Character.toLowerCase(contents.charAt(i + 1))) != -1)) {
+                        result.append('§');
+                    } else {
+                        result.append(current);
+                    }
+                }
+                super.loadFromString(result.toString());
             }
     }
 

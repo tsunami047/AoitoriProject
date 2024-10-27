@@ -4,11 +4,13 @@ import io.aoitori043.aoitoriproject.command.*;
 import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandReload;
 import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
+import io.aoitori043.syncdistribute.rmi.RMIClient;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,17 +54,17 @@ public class IBasicCommand extends BasicCommand {
         }
     }
 
-    @ExecutePermission(isOp = false)
-    @Parameter(argument = "test1",help = "op指令")
-    public void test1(CommandSender sender,List<SubCommand.ArgumentHelper> arguments){
-
-        System.out.println(sender.isOp());
+    @Parameter(argument = "bclink",help = "连接bc")
+    public void test(CommandSender sender,List<SubCommand.ArgumentHelper> arguments){
+        RMIClient.start();
     }
 
-    @Parameter(argument = "test",help = "测试权限")
-    public void test(CommandSender sender,List<SubCommand.ArgumentHelper> arguments){
-        for (int i = 0; i < 1000; i++) {
-            BukkitReflectionUtils.syncSafeOpRunCommand((Player) arguments.get(0).getAsPlayer(), Arrays.asList("aoitoriproject test1"));
+    @Parameter(argument = "test",help = "连接bc")
+    public void test2(CommandSender sender,List<SubCommand.ArgumentHelper> arguments) {
+        try {
+            RMIClient.messageService.sendMessage("Aoitori", "t1newbee");
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 }

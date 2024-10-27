@@ -10,6 +10,7 @@ import io.aoitori043.aoitoriproject.op.BukkitReflectionUtils;
 import io.aoitori043.aoitoriproject.script.PlaceholderHook;
 import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
 import io.aoitori043.aoitoriproject.thread.KilimScheduler;
+import io.aoitori043.syncdistribute.rmi.MessageChannelListener;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -19,6 +20,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.rmi.RemoteException;
 import java.util.HashSet;
 
 public final class AoitoriProject extends JavaPlugin implements Listener {

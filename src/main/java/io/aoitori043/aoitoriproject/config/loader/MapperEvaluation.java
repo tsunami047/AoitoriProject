@@ -4,6 +4,7 @@ import io.aoitori043.aoitoriproject.config.*;
 import io.aoitori043.aoitoriproject.config.impl.MapperInjection;
 import io.aoitori043.aoitoriproject.utils.ReflectASMUtil;
 import lombok.ToString;
+import lombok.var;
 import org.bukkit.configuration.ConfigurationSection;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
@@ -162,7 +163,16 @@ public class MapperEvaluation {
 
 
     private static AbstractMap<Object, Object> executeMapTypeMapping(Object instance, ConfigurationSection section, String propertyName, Field field) throws IllegalAccessException {
-        if(field.get(instance)!=null && !field.isAnnotationPresent(ConfigProperty.class)){
+        Object o = field.get(instance);
+        //防止之前被注入了map
+        boolean pass = false;
+        try{
+            var o1 = (LinkedHashMap) o;
+            if (o1.isEmpty()) {
+                pass = true;
+            }
+        }catch (Exception e){}
+        if(!pass && o !=null && !field.isAnnotationPresent(ConfigProperty.class)){
             return null;
         }
         AbstractMap<Object, Object> map = (AbstractMap<Object, Object>) ReflectASMUtil.createInstance(field.getType());
@@ -741,25 +751,9 @@ public class MapperEvaluation {
     }
 
 
-    @ToString
-    public enum Quality {
-        COMMON("普通"), RARE("稀有"), EPIC("精致"), PERFECT("完美"), LEGENDARY("传说");
-
-
-        public String mappingName;
-
-        Quality(String mappingName) {
-            this.mappingName = mappingName;
-        }
-    }
-
     public static class Test {
         public static HashMap<String, HashMap<String, List<String>>> gemLevelQualityMapping = new HashMap<>();
     }
 
-    public static class MapAttribute {
-        Class key;
-
-    }
 
 }
