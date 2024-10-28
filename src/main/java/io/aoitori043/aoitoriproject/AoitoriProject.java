@@ -12,6 +12,10 @@ import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
 import io.aoitori043.aoitoriproject.thread.KilimScheduler;
 import io.aoitori043.syncdistribute.rmi.MessageChannelListener;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
+import io.aoitori043.syncdistribute.rmi.service.DistributedLock;
+import io.aoitori043.syncdistribute.rmi.service.MessageService;
+import io.aoitori043.syncdistribute.rmi.service.OnlineService;
+import io.aoitori043.syncdistribute.rmi.service.PlayerDataService;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,6 +32,10 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
     public static AoitoriProject plugin;
     public static PointManager pointManager = new PointManager();
     public static KilimScheduler kilimScheduler = new KilimScheduler();
+    public static MessageService messageService;
+    public static DistributedLock distributedLock;
+    public static OnlineService onlineService;
+    public static PlayerDataService playerDataService;
 
     @Override
     public void onEnable() {
