@@ -29,6 +29,7 @@ public class ConfigHandler extends BasicMapper {
     @InjectMapper(path = "point")
     public static PointMapper pointMapper;
 
+
     @Override
     public JavaPlugin getPlugin() {
         return AoitoriProject.plugin;

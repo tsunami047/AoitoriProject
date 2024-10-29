@@ -41,7 +41,7 @@ public class PersistentDataAccess {
     }
 
     private void fetchData(String playerName) throws RemoteException {
-        Map<String, String> currentData = RMIClient.playerDataService.getCurrentData(playerName);
+        Map<String, String> currentData = AoitoriProject.playerDataService.getCurrentData(playerName);
         persistentVariables = new ConcurrentHashMap<>(currentData);
     }
 
@@ -81,7 +81,7 @@ public class PersistentDataAccess {
 
     public void del(String varName){
         try {
-            RMIClient.playerDataService.set(playerName, varName, null);
+            AoitoriProject.playerDataService.set(playerName, varName, null);
             persistentVariables.remove(varName);
         }catch (Exception e){
             e.printStackTrace();
@@ -92,7 +92,7 @@ public class PersistentDataAccess {
     public void set(String varName, Object o){
         try {
             String value = String.valueOf(o);
-            RMIClient.playerDataService.set(playerName, varName, value);
+            AoitoriProject.playerDataService.set(playerName, varName, value);
             if (o == null){
                 persistentVariables.remove(varName);
             }else {
@@ -105,7 +105,7 @@ public class PersistentDataAccess {
 
     public void set(String varName, String value){
         try {
-            RMIClient.playerDataService.set(playerName, varName, value);
+            AoitoriProject.playerDataService.set(playerName, varName, value);
             if (value == null){
                 persistentVariables.remove(varName);
             }else {

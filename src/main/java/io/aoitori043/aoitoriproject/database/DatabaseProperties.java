@@ -24,6 +24,11 @@ public class DatabaseProperties {
         public int kafka$port;
     }
 
+    public static String bc$serverId;
+    public static String bc$host;
+    public static int bc$port;
+    public static int bc$heartBeatPort;
+
     @GetFoldMapping
     public static Cache cache;
 

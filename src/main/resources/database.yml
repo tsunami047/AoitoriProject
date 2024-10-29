@@ -1,14 +1,11 @@
+bc:
+  serverId: auto
+  host: 127.0.0.1
+  port: 1900
+  heartBeatPort: 1901
 cache:
-  zeromq:
-    serverId: "test1"
-    serverPort: 7000
   redis:
     databaseIndex: 2
-  kafka:
-    groupId: "mc"
-    topic: "maxwell"
-    host: "localhost"
-    port: 9092
 hikariMySQLProperties:
   enable: true
   jdbcUrl: "jdbc:mysql://数据库地址:数据库端口/数据库名称?useSSL=false&characterEncoding=UTF-8&autoReconnect=true"
