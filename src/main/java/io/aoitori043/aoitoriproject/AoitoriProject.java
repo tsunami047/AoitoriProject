@@ -43,26 +43,31 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
     public static PlayerDataService playerDataService;
     public static DistributedLock distributedLock;
     public static PlayerResourceLock playerResourceLock;
+    public int test;
 
     @Override
     public void onEnable() {
-        plugin = this;
-        new PlaceholderHook(this).register();
-        NBTLibraryMain.loadNBTLibrary(this);
-        Bukkit.getPluginManager().registerEvents(this,this);
-        Bukkit.getPluginManager().registerEvents(new TemporaryDataManager(),this);
-        BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
-        ConfigHandler.load();
-        afterLoadConfig();
         try {
-            BukkitReflectionUtils.init(this);
+            plugin = this;
+            new PlaceholderHook(this).register();
+            NBTLibraryMain.loadNBTLibrary(this);
+            Bukkit.getPluginManager().registerEvents(this, this);
+            Bukkit.getPluginManager().registerEvents(new TemporaryDataManager(), this);
+            BasicCommandExecute.registerCommandExecute(new IBasicCommand(this));
+            ConfigHandler.load();
+            afterLoadConfig();
+            try {
+                BukkitReflectionUtils.init(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            DatabaseCenter.init();
+            port = plugin.getServer().getPort();
+            NodeServer.start();
+            RMIClient.start();
         }catch (Exception e){
             e.printStackTrace();
         }
-        DatabaseCenter.init();
-        NodeServer.start();
-        RMIClient.start();
-        port = plugin.getServer().getPort();
     }
 
     public static boolean isPlayerOnline(String playerName){
@@ -82,9 +87,13 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
     }
 
     public static void afterLoadConfig(){
-        File serverFolder = AoitoriProject.plugin.getDataFolder().getParentFile().getParentFile();
-        String serverName = serverFolder.getName();
-        serverId = DatabaseProperties.bc$serverId == null || DatabaseProperties.bc$serverId.equals("auto") ? serverName : DatabaseProperties.bc$serverId;
+        try {
+//            File serverFolder = AoitoriProject.plugin.getDataFolder().getParentFile().getParentFile();
+//            String serverName = serverFolder.getName();
+//        serverId = DatabaseProperties.bc$serverId == null || DatabaseProperties.bc$serverId.equals("auto") ? serverName : DatabaseProperties.bc$serverId;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override

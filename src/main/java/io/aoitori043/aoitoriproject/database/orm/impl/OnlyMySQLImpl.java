@@ -57,6 +57,16 @@ public class OnlyMySQLImpl extends CacheImpl {
         return tEntities;
     }
 
+    public <T> List<T> findAll(Class<T> clazz) {
+        List<T> tEntities = sqlClient.sqlQuery.findAll(clazz);
+        for (T tEntity : tEntities) {
+            this.injectForeignEntities(tEntity);
+        }
+        return tEntities;
+    }
+
+
+
     @Override
     public boolean hasApplyOverride() {
         return false;

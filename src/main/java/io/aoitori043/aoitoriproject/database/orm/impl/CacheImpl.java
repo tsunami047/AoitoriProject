@@ -33,6 +33,10 @@ public abstract class CacheImpl {
     }
     public abstract <T> boolean insert(T entity);
     public abstract <T> List<T> find(T whereEntity);
+    public <T> List<T> findAll(Class<T> clazz){
+        return null;
+    }
+
 
     public abstract boolean hasApplyOverride();
 

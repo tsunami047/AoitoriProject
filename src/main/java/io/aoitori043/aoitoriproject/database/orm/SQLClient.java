@@ -426,6 +426,12 @@ public class SQLClient {
         return this.query(instance);
     }
 
+    public <T> List<T> queryAll(Class<T> clazz){
+        EntityAttributes entityAttributes = attributesHashMap.get(clazz);
+        this.nonnull(entityAttributes);
+        return cacheHashMap.get(entityAttributes.cacheType).findAll(clazz);
+    }
+
     //从redis查询数据的时候，根据离散根查询到的数据，还需要判断其它变量是否对得上！
     public <T> List<T> query(T insertEntity){
         EntityAttributes entityAttributes = attributesHashMap.get(insertEntity.getClass());

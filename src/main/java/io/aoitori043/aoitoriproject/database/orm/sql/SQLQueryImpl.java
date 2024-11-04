@@ -29,25 +29,23 @@ public class SQLQueryImpl {
         this.sqlClient = sqlClient;
     }
 
-    public <T> List<T> findAllRecords(Class<T> clazz) {
+    public <T> List<T> findAll(Class<T> clazz) {
         List<T> resultList = new ArrayList<>();
         try (Connection connection = HikariConnectionPool.getConnection()) {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(sqlClient.nameStructure.getTableName(clazz));
+            String sql = "SELECT * FROM " + sqlClient.nameStructure.getTableName(clazz);
 
-            // 打印SQL语句，用于调试
-            SQLService.sql(sql.toString());
+            try (PreparedStatement statement = connection.prepareStatement(sql);
+                 ResultSet resultSet = statement.executeQuery()) {
 
-            try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(clazz);
-                    FieldAccess fieldAccess = entityAttribute.getFieldAccess();
-                    while (resultSet.next()) {
-                        T resultInstance = (T) ReflectASMUtil.createInstance(clazz);
-                        for (String fieldName : entityAttribute.getDeclaredFieldNames()) {
-                            fieldAccess.set(resultInstance, fieldName, resultSet.getObject(sqlClient.nameStructure.getFieldName(clazz, fieldName)));
-                        }
-                        resultList.add(resultInstance);
+                SQLClient.EntityAttributes entityAttribute = this.sqlClient.getEntityAttribute(clazz);
+                FieldAccess fieldAccess = entityAttribute.getFieldAccess();
+
+                while (resultSet.next()) {
+                    T resultInstance = (T) ReflectASMUtil.createInstance(clazz);
+                    for (String fieldName : entityAttribute.getDeclaredFieldNames()) {
+                        fieldAccess.set(resultInstance, fieldName, resultSet.getObject(sqlClient.nameStructure.getFieldName(clazz, fieldName)));
                     }
+                    resultList.add(resultInstance);
                 }
             }
         } catch (Exception e) {
@@ -56,7 +54,6 @@ public class SQLQueryImpl {
 
         return resultList;
     }
-
     public <T> List<T> directFindByIds(T instance) {
         Class<?> clazz = instance.getClass();
         List<T> resultList = new ArrayList<>();

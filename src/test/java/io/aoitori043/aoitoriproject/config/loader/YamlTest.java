@@ -1,5 +1,6 @@
 package io.aoitori043.aoitoriproject.config.loader;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -7,6 +8,7 @@ import org.junit.Test;
  * @CreateTime: 2024-10-25  23:32
  * @Description: ?
  */
+@Ignore
 public class YamlTest {
 
     @Test

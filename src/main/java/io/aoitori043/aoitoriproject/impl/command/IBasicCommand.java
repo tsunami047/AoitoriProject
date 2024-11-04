@@ -1,5 +1,6 @@
 package io.aoitori043.aoitoriproject.impl.command;
 
+import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.aoitoriproject.command.*;
 import io.aoitori043.aoitoriproject.impl.ConfigHandler;
 import io.aoitori043.aoitoriproject.impl.command.sub.ISubCommandReload;
@@ -62,7 +63,7 @@ public class IBasicCommand extends BasicCommand {
     @Parameter(argument = "test",help = "连接bc")
     public void test2(CommandSender sender,List<SubCommand.ArgumentHelper> arguments) {
         try {
-            RMIClient.messageService.sendMessage("Aoitori", "t1newbee");
+            AoitoriProject.messageService.sendMessage("Aoitori", "t1newbee");
         }catch (Exception e){
             e.printStackTrace();
         }

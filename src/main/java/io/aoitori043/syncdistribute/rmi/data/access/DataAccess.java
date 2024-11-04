@@ -12,7 +12,7 @@ public abstract class DataAccess {
         this.varName = varName;
     }
 
-    public abstract String get(PersistentDataAccess persistentDataAccess,String originValue);
+    public abstract Object get(PersistentDataAccess persistentDataAccess,String originValue);
 
     public void register(){
         PersistentDataAccess.registerDataAccess.put(varName,this);

@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
 public @interface GetFlatMapping {
 //    @NotNull
 //    Class<?> mapper();
+    String[] ignoreKeys() default {};
     String[] stringKeys() default {};
     boolean nested() default false;
 //    @NotNull

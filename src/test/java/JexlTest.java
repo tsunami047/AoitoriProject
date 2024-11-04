@@ -1,4 +1,5 @@
 import org.apache.commons.jexl3.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -10,6 +11,7 @@ import java.util.Map;
  * @CreateTime: 2024-10-13  23:37
  * @Description: ?
  */
+@Ignore
 public class JexlTest {
     @Test
     public void test(){

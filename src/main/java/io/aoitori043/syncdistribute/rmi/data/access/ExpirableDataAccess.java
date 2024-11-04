@@ -3,10 +3,13 @@ package io.aoitori043.syncdistribute.rmi.data.access;
 import io.aoitori043.syncdistribute.rmi.data.PersistentDataAccess;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 
 /**
  * @Author: natsumi
@@ -14,72 +17,98 @@ import java.time.ZonedDateTime;
  * @Description: ?
  */
 @Getter
+@Setter
 public class ExpirableDataAccess extends DataAccess {
 
     public String initValue;
-    public ExpirableDateType expirableDateType;
-    public int parameter;
-
-    public void register(){
-        super.register();
-//        InitDataAccess initDataAccess = InitDataAccess
-//                .InitDataAccessBuilder
-//                .anInitDataAccess()
-//                .withVarName("$expirable" + varName)
-//                .withInitValue("0")
-//                .build();
-//        initDataAccess.register();
-    }
+    public ExpirableMap expirableMap;
+//    public HashMap<ExpirableDateType,Integer> expirableMap;
 
     @Builder
-    public ExpirableDataAccess(String varName, String initValue, ExpirableDateType expirableDateType, int parameter) {
+    public ExpirableDataAccess(String varName, String initValue, ExpirableMap expirableMap) {
         super(varName);
         this.initValue = initValue;
-        this.expirableDateType = expirableDateType;
-        this.parameter = parameter;
+        this.expirableMap = expirableMap;
+    }
+
+    @Getter
+    public static class ExpirableMap{
+        Integer hours;
+        Integer week;
+        Integer month;
+
+        @Builder
+        public ExpirableMap(Integer hours, Integer month, Integer week) {
+            this.hours = hours;
+            this.month = month;
+            this.week = week;
+        }
     }
 
     public ExpirableDataAccess(String varName) {
         super(varName);
     }
 
+    public void register(){
+        super.register();
+    }
 
-//    public long getLoadedTimestamp() {
-//        if (lastUpdateTimestamp > System.currentTimeMillis()-10_000){
-//            lastUpdateTimestamp = System.currentTimeMillis();
-//            generateExpiredTimestamp();
-//        }
-//        return loadedTimestamp;
-//    }
 
-    long generateExpiredTimestamp() {
-        switch (this.expirableDateType) {
-            case DAY: {
-                LocalDate tomorrow = LocalDate.now().plusDays(1);
-                ZonedDateTime zonedDateTime = tomorrow.atStartOfDay(ZoneId.systemDefault()).plusHours(parameter);
-                return zonedDateTime.toInstant().toEpochMilli();
+    public long generateExpiredTimestamp() {
+        LocalDate now = LocalDate.now();
+        ZonedDateTime zonedDateTime;
 
-            }
-            case WEEK: {
-                LocalDate today = LocalDate.now();
-                int currentDayOfWeek = today.getDayOfWeek().getValue();
-                int daysUntilNext = (parameter - currentDayOfWeek + 7) % 7;
-                LocalDate nextWeekDay = today.plusDays(daysUntilNext);
-                ZonedDateTime zonedDateTime = nextWeekDay.atStartOfDay(ZoneId.systemDefault());
-                return zonedDateTime.toInstant().toEpochMilli();
-            }
-            case MONTH: {
-                LocalDate today = LocalDate.now();
-                LocalDate nextMonthDay = today.withDayOfMonth(1).plusMonths(1).withDayOfMonth(Math.min(parameter, today.withDayOfMonth(1).plusMonths(1).lengthOfMonth()));
-                ZonedDateTime zonedDateTime = nextMonthDay.atStartOfDay(ZoneId.systemDefault());
-                return zonedDateTime.toInstant().toEpochMilli();
-            }
+        if (expirableMap.getHours()!=null && expirableMap.getWeek()!=null) {
+            int dayHour = expirableMap.getHours();
+            int weekDay = expirableMap.getWeek();
+            DayOfWeek targetDayOfWeek = DayOfWeek.of(weekDay);
+            int daysUntilNext = (targetDayOfWeek.getValue() - now.getDayOfWeek().getValue() + 7) % 7;
+
+            LocalDate nextWeekDay = now.plusDays(daysUntilNext);
+            zonedDateTime = nextWeekDay.atStartOfDay(ZoneId.systemDefault()).plusHours(dayHour);
+            return zonedDateTime.toInstant().toEpochMilli();
         }
+
+        if (expirableMap.getMonth()!=null && expirableMap.getHours()!=null) {
+            int monthDay = expirableMap.getMonth();
+            int dayHour = expirableMap.getHours();
+
+            LocalDate nextMonthDay = now.withDayOfMonth(1).plusMonths(1)
+                    .withDayOfMonth(Math.min(monthDay, now.plusMonths(1).lengthOfMonth()));
+            zonedDateTime = nextMonthDay.atStartOfDay(ZoneId.systemDefault()).plusHours(dayHour);
+            return zonedDateTime.toInstant().toEpochMilli();
+        }
+
+        if (expirableMap.getHours()!=null) {
+            int dayHour = expirableMap.getHours();
+            zonedDateTime = now.plusDays(1).atStartOfDay(ZoneId.systemDefault()).plusHours(dayHour);
+            return zonedDateTime.toInstant().toEpochMilli();
+        }
+
+        if (expirableMap.getWeek()!=null) {
+            int weekDay = expirableMap.getWeek();
+            DayOfWeek targetDayOfWeek = DayOfWeek.of(weekDay);
+            int daysUntilNext = (targetDayOfWeek.getValue() - now.getDayOfWeek().getValue() + 7) % 7;
+
+            LocalDate nextWeekDay = now.plusDays(daysUntilNext);
+            zonedDateTime = nextWeekDay.atStartOfDay(ZoneId.systemDefault());
+            return zonedDateTime.toInstant().toEpochMilli();
+        }
+
+        if (expirableMap.getMonth()!=null) {
+            int monthDay = expirableMap.getMonth();
+            LocalDate nextMonthDay = now.withDayOfMonth(1).plusMonths(1)
+                    .withDayOfMonth(Math.min(monthDay, now.plusMonths(1).lengthOfMonth()));
+            zonedDateTime = nextMonthDay.atStartOfDay(ZoneId.systemDefault());
+            return zonedDateTime.toInstant().toEpochMilli();
+        }
+
         return Long.MAX_VALUE;
     }
 
+
     @Override
-    public String get(PersistentDataAccess persistentDataAccess, String originValue) {
+    public Object get(PersistentDataAccess persistentDataAccess, String originValue) {
         String timestampIndex = "$expirable" + varName;
         long expiredTime = persistentDataAccess.getAsLong(timestampIndex);
         if (System.currentTimeMillis() > expiredTime) {
@@ -96,58 +125,4 @@ public class ExpirableDataAccess extends DataAccess {
         MONTH
     }
 
-
-    public static final class ExpirableDataAccessBuilder {
-        private String initValue;
-        private ExpirableDateType expirableDateType;
-        private int parameter;
-        private long loadedTimestamp;
-        private long lastUpdateTimestamp;
-        private String varName;
-
-        private ExpirableDataAccessBuilder() {
-        }
-
-        public static ExpirableDataAccessBuilder anExpirableDataAccess() {
-            return new ExpirableDataAccessBuilder();
-        }
-
-        public ExpirableDataAccessBuilder withInitValue(String initValue) {
-            this.initValue = initValue;
-            return this;
-        }
-
-        public ExpirableDataAccessBuilder withExpirableDateType(ExpirableDateType expirableDateType) {
-            this.expirableDateType = expirableDateType;
-            return this;
-        }
-
-        public ExpirableDataAccessBuilder withParameter(int parameter) {
-            this.parameter = parameter;
-            return this;
-        }
-
-        public ExpirableDataAccessBuilder withLoadedTimestamp(long loadedTimestamp) {
-            this.loadedTimestamp = loadedTimestamp;
-            return this;
-        }
-
-        public ExpirableDataAccessBuilder withLastUpdateTimestamp(long lastUpdateTimestamp) {
-            this.lastUpdateTimestamp = lastUpdateTimestamp;
-            return this;
-        }
-
-        public ExpirableDataAccessBuilder withVarName(String varName) {
-            this.varName = varName;
-            return this;
-        }
-
-        public ExpirableDataAccess build() {
-            ExpirableDataAccess expirableDataAccess = new ExpirableDataAccess(varName);
-            expirableDataAccess.initValue = this.initValue;
-            expirableDataAccess.expirableDateType = this.expirableDateType;
-            expirableDataAccess.parameter = this.parameter;
-            return expirableDataAccess;
-        }
-    }
 }

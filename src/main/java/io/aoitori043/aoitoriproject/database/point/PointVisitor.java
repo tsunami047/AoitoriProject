@@ -36,7 +36,7 @@ public class PointVisitor {
 
     public String get(String playerName,String dataName){
         PersistentDataAccess persistentDataAccess = TemporaryDataManager.getPlayerDataAccessor(playerName).getPersistentDataAccess();
-        return persistentDataAccess.get(dataName);
+        return persistentDataAccess.get(dataName).toString();
     }
 
     public double getAsDoubleForce(String playerName,String dataName){

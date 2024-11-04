@@ -561,7 +561,22 @@ public class MapperEvaluation {
             //(Class<?>)
             Map<Object, Object> map = (Map) createInstance(clazz);
             field.set(object, map);
-            if (getFlatMapping.stringKeys().length != 0) {
+            if (getFlatMapping.ignoreKeys().length != 0){
+                for (String key : section.getKeys(false)) {
+                    if (Arrays.asList(getFlatMapping.ignoreKeys()).contains(key)) continue;
+                    ConfigurationSection subSection = null;
+                    if (getFlatMapping.nested()) {
+                        subSection = section.getConfigurationSection(propertyName + "." + key.replace("$", "."));
+                    } else {
+                        subSection = section.getConfigurationSection(key.replace("$", "."));
+                    }
+                    Object instance = createInstance((Class<?>) typeArguments[1]);
+                    injectDefaultValue(instance, key, object);
+                    ConfigMapping.loadFromConfig(object,instance, null, subSection);
+                    MapperInjection.runAnnotatedMethods(instance);
+                    map.put(key, instance);
+                }
+            }else if (getFlatMapping.stringKeys().length != 0) {
                 for (String key : getFlatMapping.stringKeys()) {
                     ConfigurationSection subSection = null;
                     if (section != null) {

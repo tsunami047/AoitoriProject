@@ -30,11 +30,33 @@ public class PointMapper {
         }
         for (String label : this.expirable) {
             String[] split = label.split(" ");
-            ExpirableDataAccess.builder()
-                    .withVarName(split[0])
-                    .withInitValue(split[1])
-                    .withExpirableDateType(ExpirableDataAccess.ExpirableDateType.valueOf(split[2].toUpperCase()))
-                    .withParameter(Integer.parseInt(split[3]));
+            ExpirableDataAccess.ExpirableDataAccessBuilder expirableDataAccessBuilder = ExpirableDataAccess.builder()
+                    .varName(split[0])
+                    .initValue(split[1]);
+            ExpirableDataAccess.ExpirableMap.ExpirableMapBuilder expirableMapBuilder = ExpirableDataAccess.ExpirableMap.builder();
+            for (int i = 2; i < split.length; i++) {
+                String s = split[i];
+                String[] split1 = s.split("-");
+                switch (split1[0]) {
+                    case "hour":{
+                        expirableMapBuilder.hours(Integer.parseInt(split1[1]));
+                        break;
+                    }
+                    case "week":{
+                        expirableMapBuilder.week(Integer.parseInt(split1[1]));
+                        break;
+                    }
+                    case "month":{
+                        expirableMapBuilder.month(Integer.parseInt(split1[1]));
+                        break;
+                    }
+                }
+            }
+            ExpirableDataAccess.ExpirableMap expirableMap = expirableMapBuilder.build();
+            expirableDataAccessBuilder
+                    .expirableMap(expirableMap)
+                    .build()
+                    .register();
         }
     }
 }

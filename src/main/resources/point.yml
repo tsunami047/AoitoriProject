@@ -1,6 +1,12 @@
 init:
   - "anchors_1 0"
 
-#day week month
+#papi变量 %aoitoriproject_ipoint_satiety%
+#int->i
+#boolean->b 如果是真就是 √ 假就是 X
+#double->d
+#原始值 ->o 判断boolean值用这个
+#hour week month
 expirable:
-  - "satiety 10 day 4"
+  - "satiety 10 hour-4 week-1"
+  - "satiety2 10 hour-4 month-1"

@@ -13,7 +13,7 @@ public class InitDataAccess extends DataAccess {
     }
 
     @Override
-    public String get(PersistentDataAccess persistentDataAccess, String originValue){
+    public Object get(PersistentDataAccess persistentDataAccess, String originValue){
         try {
             if (originValue == null) {
                 persistentDataAccess.set(varName,initValue);

@@ -1,6 +1,7 @@
 package io.aoitori043.syncdistribute.rmi.data;
 
 
+import com.google.gson.Gson;
 import io.aoitori043.aoitoriproject.AoitoriProject;
 import io.aoitori043.syncdistribute.rmi.data.access.DataAccess;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
@@ -15,9 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PersistentDataAccess {
 
     public static HashMap<String, DataAccess> registerDataAccess = new HashMap<>();
+    public static Gson gson = new Gson();
 
     public String playerName;
     public ConcurrentHashMap<String, String> persistentVariables;
+
 
     public PersistentDataAccess(String playerName) {
         initPlayerData(playerName,true);
@@ -45,11 +48,15 @@ public class PersistentDataAccess {
         persistentVariables = new ConcurrentHashMap<>(currentData);
     }
 
+    public <T> T getAsObject(String varName){
+        return (T)this.get(varName);
+    }
+
     public String get(String varName){
         DataAccess dataAccess = registerDataAccess.get(varName);
         String currentValue = persistentVariables.get(varName);
         if(dataAccess!=null){
-            return dataAccess.get(this, currentValue);
+            return (String) dataAccess.get(this, currentValue);
         }
         return currentValue;
     }
