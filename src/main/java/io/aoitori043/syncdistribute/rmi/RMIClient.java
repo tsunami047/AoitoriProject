@@ -18,6 +18,7 @@ public class RMIClient {
     public static PlayerResourceLock playerResourceLock;
     public static ClassLoadingService classLoadingService;
     public static PlayerUUIDService playerUUIDService;
+    public static LeaderElectionService leaderElectionService;
 
     public static synchronized void start(){
         try {
@@ -30,6 +31,7 @@ public class RMIClient {
             playerResourceLock = (PlayerResourceLock)registry.lookup("player_resource");
             classLoadingService = (ClassLoadingService)registry.lookup("classloader");
             playerUUIDService = (PlayerUUIDService)registry.lookup("uuid");
+            leaderElectionService = (LeaderElectionService)registry.lookup("elect");
             AoitoriProject.playerResourceLock = new io.aoitori043.aoitoriproject.utils.lock.PlayerResourceLock(RMIClient.playerResourceLock);
         }catch (Exception e){
             e.printStackTrace();

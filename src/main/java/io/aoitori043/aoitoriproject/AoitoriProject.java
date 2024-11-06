@@ -14,7 +14,9 @@ import io.aoitori043.aoitoriproject.script.TemporaryDataManager;
 import io.aoitori043.aoitoriproject.thread.KilimScheduler;
 import io.aoitori043.aoitoriproject.utils.lock.DistributedLock;
 import io.aoitori043.aoitoriproject.utils.lock.PlayerResourceLock;
+import io.aoitori043.syncdistribute.rmi.ElectMessageChannel;
 import io.aoitori043.syncdistribute.rmi.MessageChannelListener;
+import io.aoitori043.syncdistribute.rmi.NodeLeaderService;
 import io.aoitori043.syncdistribute.rmi.RMIClient;
 import io.aoitori043.syncdistribute.rmi.heartbeat.NodeServer;
 import io.aoitori043.syncdistribute.rmi.service.MessageService;
@@ -43,6 +45,7 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
     public static PlayerDataService playerDataService;
     public static DistributedLock distributedLock;
     public static PlayerResourceLock playerResourceLock;
+    public static NodeLeaderService nodeLeaderService;
     public int test;
 
     @Override
@@ -65,6 +68,9 @@ public final class AoitoriProject extends JavaPlugin implements Listener {
             port = plugin.getServer().getPort();
             NodeServer.start();
             RMIClient.start();
+            nodeLeaderService = new NodeLeaderService();
+            ElectMessageChannel electMessageChannel = new ElectMessageChannel();
+            messageService.registerChannel("elect",electMessageChannel);
         }catch (Exception e){
             e.printStackTrace();
         }
