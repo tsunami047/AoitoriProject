@@ -17,6 +17,7 @@ public class RMIClient {
     public static DistributedLock distributedLock;
     public static PlayerResourceLock playerResourceLock;
     public static ClassLoadingService classLoadingService;
+    public static PlayerUUIDService playerUUIDService;
 
     public static synchronized void start(){
         try {
@@ -28,6 +29,7 @@ public class RMIClient {
             AoitoriProject.distributedLock = new io.aoitori043.aoitoriproject.utils.lock.DistributedLock(distributedLock);
             playerResourceLock = (PlayerResourceLock)registry.lookup("player_resource");
             classLoadingService = (ClassLoadingService)registry.lookup("classloader");
+            playerUUIDService = (PlayerUUIDService)registry.lookup("uuid");
             AoitoriProject.playerResourceLock = new io.aoitori043.aoitoriproject.utils.lock.PlayerResourceLock(RMIClient.playerResourceLock);
         }catch (Exception e){
             e.printStackTrace();
